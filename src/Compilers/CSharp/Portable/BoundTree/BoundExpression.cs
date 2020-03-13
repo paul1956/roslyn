@@ -114,6 +114,9 @@ namespace Microsoft.CodeAnalysis.CSharp
             get => base.TopLevelNullability;
             set => base.TopLevelNullability = value;
         }
+
+        public CodeAnalysis.ITypeSymbol GetPublicTypeSymbol()
+            => Type?.GetITypeSymbol(TopLevelNullability.Annotation);
     }
 
     internal partial class BoundPassByCopy
