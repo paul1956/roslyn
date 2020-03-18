@@ -17,6 +17,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator
         Friend Overrides Function GetBoundMethodBody(compilationState As TypeCompilationState, diagnostics As DiagnosticBag, <Out> ByRef Optional methodBodyBinder As Binder = Nothing) As BoundBlock
             Return New BoundBlock(
                 Me.Syntax,
+                compilationState.CompilationCheckOverflow,
                 Nothing,
                 ImmutableArray(Of LocalSymbol).Empty,
                 ImmutableArray.Create(Of BoundStatement)(

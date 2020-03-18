@@ -51,7 +51,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ERR_LibNotFound = 2017
         'ERR_MaximumErrors = 2020       unused in Roslyn.
         ERR_IconFileAndWin32ResFile = 2023
-        'WRN_ReservedReference = 2024       ' unused by native compiler due to bug. 
+        'WRN_ReservedReference = 2024       ' unused by native compiler due to bug.
         WRN_NoConfigInResponseFile = 2025
         ' WRN_InvalidWarningId = 2026       ' unused in Roslyn.
         'ERR_WatsonSendNotOptedIn = 2027
@@ -600,7 +600,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ERR_BadAttributeNonPublicConstructor = 30758
         'ERR_ArrayElementIsNothing1 = 30759
         'ERR_ObjectReferenceIsNothing = 30760
-        ' ERR_StarliteDisallowsLateBinding = 30762   
+        ' ERR_StarliteDisallowsLateBinding = 30762
         ' ERR_StarliteBadDeclareFlags = 30763
         ' ERR_NoStarliteOverloadResolution = 30764
         'ERR_NoSupportFileIOKeywords1 = 30766
@@ -924,10 +924,16 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ERR_ExpectedWarningKeyword = 31218
         ERR_InvalidHashAlgorithmName = 31219
 
+#If SupportCheckedStatement Then
+        ERR_InvalidCheckedOption = 31220  ' <Prototype>
+        ERR_EndCheckedExpected = 31221    ' <Prototype>
+        ERR_ExpectedCheckedOptionStmt = 31222  ' <Prototype>
+#End If
+
         '// NOTE: If you add any new errors that may be attached to a symbol during meta-import when it is marked as bad,
         '//       particularly if it applies to method symbols, please appropriately modify Bindable::ResolveOverloadingShouldSkipBadMember.
         '//       Failure to do so may break customer code.
-        '// AVAILABLE                             31220-31390
+        '// AVAILABLE                             31223-31390
 
         ERR_InvalidSubsystemVersion = 31391
         ERR_LibAnycpu32bitPreferredConflict = 31392
@@ -941,7 +947,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ERR_DuplicateLocalStatic1 = 31401
         ERR_ImportAliasConflictsWithType2 = 31403
         ERR_CantShadowAMustOverride1 = 31404
-        'ERR_OptionalsCantBeStructs = 31405 
+        'ERR_OptionalsCantBeStructs = 31405
         ERR_MultipleEventImplMismatch3 = 31407
         ERR_BadSpecifierCombo2 = 31408
         ERR_MustBeOverloads2 = 31409
@@ -1512,7 +1518,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ERR_VarianceOutByRefDisallowed1 = 36749
         ERR_VarianceInByRefDisallowed1 = 36750
         ERR_LambdaNoType = 36751
-        ' //ERR_NoReturnStatementsForMultilineLambda  = 36752 
+        ' //ERR_NoReturnStatementsForMultilineLambda  = 36752
         ' // replaced by LambdaNoType and LambdaNoTypeObjectDisallowed
         'ERR_CollectionInitializerArity2 = 36753
         ERR_VarianceConversionFailedOut6 = 36754
@@ -1985,7 +1991,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         HDN_UnusedImportStatement = 50001
         INF_UnableToLoadSomeTypesInAnalyzer = 50002
 
-        ' // AVAILABLE                             50003 - 54999   
+        ' // AVAILABLE                             50003 - 54999
 
         ' Adding diagnostic arguments from resx file
         IDS_ProjectSettingsLocationName = 56000
@@ -2035,5 +2041,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         FEATURE_InterpolatedStrings
         FEATURE_UnconstrainedTypeParameterInConditional
         FEATURE_CommentsAfterLineContinuation
+        FEATURE_UncheckedExpressions
+        FEATURE_IntegerOverflowHandling
     End Enum
 End Namespace

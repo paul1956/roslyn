@@ -673,12 +673,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
     Friend NotInheritable Partial Class BoundParenthesized
         Inherits BoundExpression
 
-        Public Sub New(syntax As SyntaxNode, expression As BoundExpression, type As TypeSymbol, Optional hasErrors As Boolean = False)
+        Public Sub New(syntax As SyntaxNode, expression As BoundExpression, checkIntegerOverflow As Boolean, type As TypeSymbol, Optional hasErrors As Boolean = False)
             MyBase.New(BoundKind.Parenthesized, syntax, type, hasErrors OrElse expression.NonNullAndHasErrors())
 
             Debug.Assert(expression IsNot Nothing, "Field 'expression' cannot be null (use Null=""allow"" in BoundNodes.xml to remove this check)")
 
             Me._Expression = expression
+            Me._CheckIntegerOverflow = checkIntegerOverflow
 
             Validate()
         End Sub
@@ -694,14 +695,21 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End Get
         End Property
 
+        Private ReadOnly _CheckIntegerOverflow As Boolean
+        Public ReadOnly Property CheckIntegerOverflow As Boolean
+            Get
+                Return _CheckIntegerOverflow
+            End Get
+        End Property
+
         <DebuggerStepThrough>
         Public Overrides Function Accept(visitor as BoundTreeVisitor) As BoundNode
             Return visitor.VisitParenthesized(Me)
         End Function
 
-        Public Function Update(expression As BoundExpression, type As TypeSymbol) As BoundParenthesized
-            If expression IsNot Me.Expression OrElse type IsNot Me.Type Then
-                Dim result = New BoundParenthesized(Me.Syntax, expression, type, Me.HasErrors)
+        Public Function Update(expression As BoundExpression, checkIntegerOverflow As Boolean, type As TypeSymbol) As BoundParenthesized
+            If expression IsNot Me.Expression OrElse checkIntegerOverflow <> Me.CheckIntegerOverflow OrElse type IsNot Me.Type Then
+                Dim result = New BoundParenthesized(Me.Syntax, expression, checkIntegerOverflow, type, Me.HasErrors)
                 result.CopyAttributes(Me)
                 Return result
             End If
@@ -1355,7 +1363,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
     Friend NotInheritable Partial Class BoundUnaryOperator
         Inherits BoundExpression
 
-        Public Sub New(syntax As SyntaxNode, operatorKind As UnaryOperatorKind, operand As BoundExpression, checked As Boolean, constantValueOpt As ConstantValue, type As TypeSymbol, Optional hasErrors As Boolean = False)
+        Public Sub New(syntax As SyntaxNode, operatorKind As UnaryOperatorKind, operand As BoundExpression, checkIntegerOverflow As Boolean, constantValueOpt As ConstantValue, type As TypeSymbol, Optional hasErrors As Boolean = False)
             MyBase.New(BoundKind.UnaryOperator, syntax, type, hasErrors OrElse operand.NonNullAndHasErrors())
 
             Debug.Assert(operand IsNot Nothing, "Field 'operand' cannot be null (use Null=""allow"" in BoundNodes.xml to remove this check)")
@@ -1363,7 +1371,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             Me._OperatorKind = operatorKind
             Me._Operand = operand
-            Me._Checked = checked
+            Me._CheckIntegerOverflow = checkIntegerOverflow
             Me._ConstantValueOpt = constantValueOpt
 
             Validate()
@@ -1387,10 +1395,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End Get
         End Property
 
-        Private ReadOnly _Checked As Boolean
-        Public ReadOnly Property Checked As Boolean
+        Private ReadOnly _CheckIntegerOverflow As Boolean
+        Public ReadOnly Property CheckIntegerOverflow As Boolean
             Get
-                Return _Checked
+                Return _CheckIntegerOverflow
             End Get
         End Property
 
@@ -1406,9 +1414,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return visitor.VisitUnaryOperator(Me)
         End Function
 
-        Public Function Update(operatorKind As UnaryOperatorKind, operand As BoundExpression, checked As Boolean, constantValueOpt As ConstantValue, type As TypeSymbol) As BoundUnaryOperator
-            If operatorKind <> Me.OperatorKind OrElse operand IsNot Me.Operand OrElse checked <> Me.Checked OrElse constantValueOpt IsNot Me.ConstantValueOpt OrElse type IsNot Me.Type Then
-                Dim result = New BoundUnaryOperator(Me.Syntax, operatorKind, operand, checked, constantValueOpt, type, Me.HasErrors)
+        Public Function Update(operatorKind As UnaryOperatorKind, operand As BoundExpression, checkIntegerOverflow As Boolean, constantValueOpt As ConstantValue, type As TypeSymbol) As BoundUnaryOperator
+            If operatorKind <> Me.OperatorKind OrElse operand IsNot Me.Operand OrElse checkIntegerOverflow <> Me.CheckIntegerOverflow OrElse constantValueOpt IsNot Me.ConstantValueOpt OrElse type IsNot Me.Type Then
+                Dim result = New BoundUnaryOperator(Me.Syntax, operatorKind, operand, checkIntegerOverflow, constantValueOpt, type, Me.HasErrors)
                 result.CopyAttributes(Me)
                 Return result
             End If
@@ -1507,7 +1515,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
     Friend NotInheritable Partial Class BoundBinaryOperator
         Inherits BoundExpression
 
-        Public Sub New(syntax As SyntaxNode, operatorKind As BinaryOperatorKind, left As BoundExpression, right As BoundExpression, checked As Boolean, constantValueOpt As ConstantValue, type As TypeSymbol, Optional hasErrors As Boolean = False)
+        Public Sub New(syntax As SyntaxNode, operatorKind As BinaryOperatorKind, left As BoundExpression, right As BoundExpression, checkIntegerOverflow As Boolean, constantValueOpt As ConstantValue, type As TypeSymbol, Optional hasErrors As Boolean = False)
             MyBase.New(BoundKind.BinaryOperator, syntax, type, hasErrors OrElse left.NonNullAndHasErrors() OrElse right.NonNullAndHasErrors())
 
             Debug.Assert(left IsNot Nothing, "Field 'left' cannot be null (use Null=""allow"" in BoundNodes.xml to remove this check)")
@@ -1517,7 +1525,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Me._OperatorKind = operatorKind
             Me._Left = left
             Me._Right = right
-            Me._Checked = checked
+            Me._CheckIntegerOverflow = checkIntegerOverflow
             Me._ConstantValueOpt = constantValueOpt
 
             Validate()
@@ -1548,10 +1556,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End Get
         End Property
 
-        Private ReadOnly _Checked As Boolean
-        Public ReadOnly Property Checked As Boolean
+        Private ReadOnly _CheckIntegerOverflow As Boolean
+        Public ReadOnly Property CheckIntegerOverflow As Boolean
             Get
-                Return _Checked
+                Return _CheckIntegerOverflow
             End Get
         End Property
 
@@ -1567,9 +1575,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return visitor.VisitBinaryOperator(Me)
         End Function
 
-        Public Function Update(operatorKind As BinaryOperatorKind, left As BoundExpression, right As BoundExpression, checked As Boolean, constantValueOpt As ConstantValue, type As TypeSymbol) As BoundBinaryOperator
-            If operatorKind <> Me.OperatorKind OrElse left IsNot Me.Left OrElse right IsNot Me.Right OrElse checked <> Me.Checked OrElse constantValueOpt IsNot Me.ConstantValueOpt OrElse type IsNot Me.Type Then
-                Dim result = New BoundBinaryOperator(Me.Syntax, operatorKind, left, right, checked, constantValueOpt, type, Me.HasErrors)
+        Public Function Update(operatorKind As BinaryOperatorKind, left As BoundExpression, right As BoundExpression, checkIntegerOverflow As Boolean, constantValueOpt As ConstantValue, type As TypeSymbol) As BoundBinaryOperator
+            If operatorKind <> Me.OperatorKind OrElse left IsNot Me.Left OrElse right IsNot Me.Right OrElse checkIntegerOverflow <> Me.CheckIntegerOverflow OrElse constantValueOpt IsNot Me.ConstantValueOpt OrElse type IsNot Me.Type Then
+                Dim result = New BoundBinaryOperator(Me.Syntax, operatorKind, left, right, checkIntegerOverflow, constantValueOpt, type, Me.HasErrors)
                 result.CopyAttributes(Me)
                 Return result
             End If
@@ -1580,7 +1588,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
     Friend NotInheritable Partial Class BoundUserDefinedBinaryOperator
         Inherits BoundExpression
 
-        Public Sub New(syntax As SyntaxNode, operatorKind As BinaryOperatorKind, underlyingExpression As BoundExpression, checked As Boolean, type As TypeSymbol, Optional hasErrors As Boolean = False)
+        Public Sub New(syntax As SyntaxNode, operatorKind As BinaryOperatorKind, underlyingExpression As BoundExpression, checkIntegerOverflow As Boolean, type As TypeSymbol, Optional hasErrors As Boolean = False)
             MyBase.New(BoundKind.UserDefinedBinaryOperator, syntax, type, hasErrors OrElse underlyingExpression.NonNullAndHasErrors())
 
             Debug.Assert(underlyingExpression IsNot Nothing, "Field 'underlyingExpression' cannot be null (use Null=""allow"" in BoundNodes.xml to remove this check)")
@@ -1588,7 +1596,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             Me._OperatorKind = operatorKind
             Me._UnderlyingExpression = underlyingExpression
-            Me._Checked = checked
+            Me._CheckIntegerOverflow = checkIntegerOverflow
 
             Validate()
         End Sub
@@ -1611,10 +1619,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End Get
         End Property
 
-        Private ReadOnly _Checked As Boolean
-        Public ReadOnly Property Checked As Boolean
+        Private ReadOnly _CheckIntegerOverflow As Boolean
+        Public ReadOnly Property CheckIntegerOverflow As Boolean
             Get
-                Return _Checked
+                Return _CheckIntegerOverflow
             End Get
         End Property
 
@@ -1623,9 +1631,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return visitor.VisitUserDefinedBinaryOperator(Me)
         End Function
 
-        Public Function Update(operatorKind As BinaryOperatorKind, underlyingExpression As BoundExpression, checked As Boolean, type As TypeSymbol) As BoundUserDefinedBinaryOperator
-            If operatorKind <> Me.OperatorKind OrElse underlyingExpression IsNot Me.UnderlyingExpression OrElse checked <> Me.Checked OrElse type IsNot Me.Type Then
-                Dim result = New BoundUserDefinedBinaryOperator(Me.Syntax, operatorKind, underlyingExpression, checked, type, Me.HasErrors)
+        Public Function Update(operatorKind As BinaryOperatorKind, underlyingExpression As BoundExpression, checkIntegerOverflow As Boolean, type As TypeSymbol) As BoundUserDefinedBinaryOperator
+            If operatorKind <> Me.OperatorKind OrElse underlyingExpression IsNot Me.UnderlyingExpression OrElse checkIntegerOverflow <> Me.CheckIntegerOverflow OrElse type IsNot Me.Type Then
+                Dim result = New BoundUserDefinedBinaryOperator(Me.Syntax, operatorKind, underlyingExpression, checkIntegerOverflow, type, Me.HasErrors)
                 result.CopyAttributes(Me)
                 Return result
             End If
@@ -2055,7 +2063,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
     Friend NotInheritable Partial Class BoundConversion
         Inherits BoundConversionOrCast
 
-        Public Sub New(syntax As SyntaxNode, operand As BoundExpression, conversionKind As ConversionKind, checked As Boolean, explicitCastInCode As Boolean, constantValueOpt As ConstantValue, extendedInfoOpt As BoundExtendedConversionInfo, type As TypeSymbol, Optional hasErrors As Boolean = False)
+        Public Sub New(syntax As SyntaxNode, operand As BoundExpression, conversionKind As ConversionKind, checkIntegerOverflow As Boolean, explicitCastInCode As Boolean, constantValueOpt As ConstantValue, extendedInfoOpt As BoundExtendedConversionInfo, type As TypeSymbol, Optional hasErrors As Boolean = False)
             MyBase.New(BoundKind.Conversion, syntax, type, hasErrors OrElse operand.NonNullAndHasErrors() OrElse extendedInfoOpt.NonNullAndHasErrors())
 
             Debug.Assert(operand IsNot Nothing, "Field 'operand' cannot be null (use Null=""allow"" in BoundNodes.xml to remove this check)")
@@ -2063,7 +2071,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             Me._Operand = operand
             Me._ConversionKind = conversionKind
-            Me._Checked = checked
+            Me._CheckIntegerOverflow = checkIntegerOverflow
             Me._ExplicitCastInCode = explicitCastInCode
             Me._ConstantValueOpt = constantValueOpt
             Me._ExtendedInfoOpt = extendedInfoOpt
@@ -2089,10 +2097,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End Get
         End Property
 
-        Private ReadOnly _Checked As Boolean
-        Public ReadOnly Property Checked As Boolean
+        Private ReadOnly _CheckIntegerOverflow As Boolean
+        Public ReadOnly Property CheckIntegerOverflow As Boolean
             Get
-                Return _Checked
+                Return _CheckIntegerOverflow
             End Get
         End Property
 
@@ -2122,9 +2130,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return visitor.VisitConversion(Me)
         End Function
 
-        Public Function Update(operand As BoundExpression, conversionKind As ConversionKind, checked As Boolean, explicitCastInCode As Boolean, constantValueOpt As ConstantValue, extendedInfoOpt As BoundExtendedConversionInfo, type As TypeSymbol) As BoundConversion
-            If operand IsNot Me.Operand OrElse conversionKind <> Me.ConversionKind OrElse checked <> Me.Checked OrElse explicitCastInCode <> Me.ExplicitCastInCode OrElse constantValueOpt IsNot Me.ConstantValueOpt OrElse extendedInfoOpt IsNot Me.ExtendedInfoOpt OrElse type IsNot Me.Type Then
-                Dim result = New BoundConversion(Me.Syntax, operand, conversionKind, checked, explicitCastInCode, constantValueOpt, extendedInfoOpt, type, Me.HasErrors)
+        Public Function Update(operand As BoundExpression, conversionKind As ConversionKind, checkIntegerOverflow As Boolean, explicitCastInCode As Boolean, constantValueOpt As ConstantValue, extendedInfoOpt As BoundExtendedConversionInfo, type As TypeSymbol) As BoundConversion
+            If operand IsNot Me.Operand OrElse conversionKind <> Me.ConversionKind OrElse checkIntegerOverflow <> Me.CheckIntegerOverflow OrElse explicitCastInCode <> Me.ExplicitCastInCode OrElse constantValueOpt IsNot Me.ConstantValueOpt OrElse extendedInfoOpt IsNot Me.ExtendedInfoOpt OrElse type IsNot Me.Type Then
+                Dim result = New BoundConversion(Me.Syntax, operand, conversionKind, checkIntegerOverflow, explicitCastInCode, constantValueOpt, extendedInfoOpt, type, Me.HasErrors)
                 result.CopyAttributes(Me)
                 Return result
             End If
@@ -4322,17 +4330,25 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
     Friend NotInheritable Partial Class BoundBlock
         Inherits BoundStatement
 
-        Public Sub New(syntax As SyntaxNode, statementListSyntax As SyntaxList(Of StatementSyntax), locals As ImmutableArray(Of LocalSymbol), statements As ImmutableArray(Of BoundStatement), Optional hasErrors As Boolean = False)
+        Public Sub New(syntax As SyntaxNode, checkIntegerOverflow As Boolean, statementListSyntax As SyntaxList(Of StatementSyntax), locals As ImmutableArray(Of LocalSymbol), statements As ImmutableArray(Of BoundStatement), Optional hasErrors As Boolean = False)
             MyBase.New(BoundKind.Block, syntax, hasErrors OrElse statements.NonNullAndHasErrors())
 
             Debug.Assert(Not (locals.IsDefault), "Field 'locals' cannot be null (use Null=""allow"" in BoundNodes.xml to remove this check)")
             Debug.Assert(Not (statements.IsDefault), "Field 'statements' cannot be null (use Null=""allow"" in BoundNodes.xml to remove this check)")
 
+            Me._CheckIntegerOverflow = checkIntegerOverflow
             Me._StatementListSyntax = statementListSyntax
             Me._Locals = locals
             Me._Statements = statements
         End Sub
 
+
+        Private ReadOnly _CheckIntegerOverflow As Boolean
+        Public ReadOnly Property CheckIntegerOverflow As Boolean
+            Get
+                Return _CheckIntegerOverflow
+            End Get
+        End Property
 
         Private ReadOnly _StatementListSyntax As SyntaxList(Of StatementSyntax)
         Public ReadOnly Property StatementListSyntax As SyntaxList(Of StatementSyntax)
@@ -4360,9 +4376,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return visitor.VisitBlock(Me)
         End Function
 
-        Public Function Update(statementListSyntax As SyntaxList(Of StatementSyntax), locals As ImmutableArray(Of LocalSymbol), statements As ImmutableArray(Of BoundStatement)) As BoundBlock
-            If statementListSyntax <> Me.StatementListSyntax OrElse locals <> Me.Locals OrElse statements <> Me.Statements Then
-                Dim result = New BoundBlock(Me.Syntax, statementListSyntax, locals, statements, Me.HasErrors)
+        Public Function Update(checkIntegerOverflow As Boolean, statementListSyntax As SyntaxList(Of StatementSyntax), locals As ImmutableArray(Of LocalSymbol), statements As ImmutableArray(Of BoundStatement)) As BoundBlock
+            If checkIntegerOverflow <> Me.CheckIntegerOverflow OrElse statementListSyntax <> Me.StatementListSyntax OrElse locals <> Me.Locals OrElse statements <> Me.Statements Then
+                Dim result = New BoundBlock(Me.Syntax, checkIntegerOverflow, statementListSyntax, locals, statements, Me.HasErrors)
                 result.CopyAttributes(Me)
                 Return result
             End If
@@ -5518,7 +5534,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
     Friend NotInheritable Partial Class BoundForToStatement
         Inherits BoundForStatement
 
-        Public Sub New(syntax As SyntaxNode, initialValue As BoundExpression, limitValue As BoundExpression, stepValue As BoundExpression, checked As Boolean, operatorsOpt As BoundForToUserDefinedOperators, declaredOrInferredLocalOpt As LocalSymbol, controlVariable As BoundExpression, body As BoundStatement, nextVariablesOpt As ImmutableArray(Of BoundExpression), continueLabel As LabelSymbol, exitLabel As LabelSymbol, Optional hasErrors As Boolean = False)
+        Public Sub New(syntax As SyntaxNode, initialValue As BoundExpression, limitValue As BoundExpression, stepValue As BoundExpression, checkIntegerOverflow As Boolean, operatorsOpt As BoundForToUserDefinedOperators, declaredOrInferredLocalOpt As LocalSymbol, controlVariable As BoundExpression, body As BoundStatement, nextVariablesOpt As ImmutableArray(Of BoundExpression), continueLabel As LabelSymbol, exitLabel As LabelSymbol, Optional hasErrors As Boolean = False)
             MyBase.New(BoundKind.ForToStatement, syntax, declaredOrInferredLocalOpt, controlVariable, body, nextVariablesOpt, continueLabel, exitLabel, hasErrors OrElse initialValue.NonNullAndHasErrors() OrElse limitValue.NonNullAndHasErrors() OrElse stepValue.NonNullAndHasErrors() OrElse operatorsOpt.NonNullAndHasErrors() OrElse controlVariable.NonNullAndHasErrors() OrElse body.NonNullAndHasErrors() OrElse nextVariablesOpt.NonNullAndHasErrors())
 
             Debug.Assert(initialValue IsNot Nothing, "Field 'initialValue' cannot be null (use Null=""allow"" in BoundNodes.xml to remove this check)")
@@ -5532,7 +5548,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Me._InitialValue = initialValue
             Me._LimitValue = limitValue
             Me._StepValue = stepValue
-            Me._Checked = checked
+            Me._CheckIntegerOverflow = checkIntegerOverflow
             Me._OperatorsOpt = operatorsOpt
         End Sub
 
@@ -5558,10 +5574,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End Get
         End Property
 
-        Private ReadOnly _Checked As Boolean
-        Public ReadOnly Property Checked As Boolean
+        Private ReadOnly _CheckIntegerOverflow As Boolean
+        Public ReadOnly Property CheckIntegerOverflow As Boolean
             Get
-                Return _Checked
+                Return _CheckIntegerOverflow
             End Get
         End Property
 
@@ -5577,9 +5593,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return visitor.VisitForToStatement(Me)
         End Function
 
-        Public Function Update(initialValue As BoundExpression, limitValue As BoundExpression, stepValue As BoundExpression, checked As Boolean, operatorsOpt As BoundForToUserDefinedOperators, declaredOrInferredLocalOpt As LocalSymbol, controlVariable As BoundExpression, body As BoundStatement, nextVariablesOpt As ImmutableArray(Of BoundExpression), continueLabel As LabelSymbol, exitLabel As LabelSymbol) As BoundForToStatement
-            If initialValue IsNot Me.InitialValue OrElse limitValue IsNot Me.LimitValue OrElse stepValue IsNot Me.StepValue OrElse checked <> Me.Checked OrElse operatorsOpt IsNot Me.OperatorsOpt OrElse declaredOrInferredLocalOpt IsNot Me.DeclaredOrInferredLocalOpt OrElse controlVariable IsNot Me.ControlVariable OrElse body IsNot Me.Body OrElse nextVariablesOpt <> Me.NextVariablesOpt OrElse continueLabel IsNot Me.ContinueLabel OrElse exitLabel IsNot Me.ExitLabel Then
-                Dim result = New BoundForToStatement(Me.Syntax, initialValue, limitValue, stepValue, checked, operatorsOpt, declaredOrInferredLocalOpt, controlVariable, body, nextVariablesOpt, continueLabel, exitLabel, Me.HasErrors)
+        Public Function Update(initialValue As BoundExpression, limitValue As BoundExpression, stepValue As BoundExpression, checkIntegerOverflow As Boolean, operatorsOpt As BoundForToUserDefinedOperators, declaredOrInferredLocalOpt As LocalSymbol, controlVariable As BoundExpression, body As BoundStatement, nextVariablesOpt As ImmutableArray(Of BoundExpression), continueLabel As LabelSymbol, exitLabel As LabelSymbol) As BoundForToStatement
+            If initialValue IsNot Me.InitialValue OrElse limitValue IsNot Me.LimitValue OrElse stepValue IsNot Me.StepValue OrElse checkIntegerOverflow <> Me.CheckIntegerOverflow OrElse operatorsOpt IsNot Me.OperatorsOpt OrElse declaredOrInferredLocalOpt IsNot Me.DeclaredOrInferredLocalOpt OrElse controlVariable IsNot Me.ControlVariable OrElse body IsNot Me.Body OrElse nextVariablesOpt <> Me.NextVariablesOpt OrElse continueLabel IsNot Me.ContinueLabel OrElse exitLabel IsNot Me.ExitLabel Then
+                Dim result = New BoundForToStatement(Me.Syntax, initialValue, limitValue, stepValue, checkIntegerOverflow, operatorsOpt, declaredOrInferredLocalOpt, controlVariable, body, nextVariablesOpt, continueLabel, exitLabel, Me.HasErrors)
                 result.CopyAttributes(Me)
                 Return result
             End If
@@ -12050,7 +12066,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Public Overrides Function VisitParenthesized(node As BoundParenthesized) As BoundNode
             Dim expression As BoundExpression = DirectCast(Me.Visit(node.Expression), BoundExpression)
             Dim type as TypeSymbol = Me.VisitType(node.Type)
-            Return node.Update(expression, type)
+            Return node.Update(expression, node.CheckIntegerOverflow, type)
         End Function
 
         Public Overrides Function VisitBadVariable(node As BoundBadVariable) As BoundNode
@@ -12138,7 +12154,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Public Overrides Function VisitUnaryOperator(node As BoundUnaryOperator) As BoundNode
             Dim operand As BoundExpression = DirectCast(Me.Visit(node.Operand), BoundExpression)
             Dim type as TypeSymbol = Me.VisitType(node.Type)
-            Return node.Update(node.OperatorKind, operand, node.Checked, node.ConstantValueOpt, type)
+            Return node.Update(node.OperatorKind, operand, node.CheckIntegerOverflow, node.ConstantValueOpt, type)
         End Function
 
         Public Overrides Function VisitUserDefinedUnaryOperator(node As BoundUserDefinedUnaryOperator) As BoundNode
@@ -12157,13 +12173,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim left As BoundExpression = DirectCast(Me.Visit(node.Left), BoundExpression)
             Dim right As BoundExpression = DirectCast(Me.Visit(node.Right), BoundExpression)
             Dim type as TypeSymbol = Me.VisitType(node.Type)
-            Return node.Update(node.OperatorKind, left, right, node.Checked, node.ConstantValueOpt, type)
+            Return node.Update(node.OperatorKind, left, right, node.CheckIntegerOverflow, node.ConstantValueOpt, type)
         End Function
 
         Public Overrides Function VisitUserDefinedBinaryOperator(node As BoundUserDefinedBinaryOperator) As BoundNode
             Dim underlyingExpression As BoundExpression = DirectCast(Me.Visit(node.UnderlyingExpression), BoundExpression)
             Dim type as TypeSymbol = Me.VisitType(node.Type)
-            Return node.Update(node.OperatorKind, underlyingExpression, node.Checked, type)
+            Return node.Update(node.OperatorKind, underlyingExpression, node.CheckIntegerOverflow, type)
         End Function
 
         Public Overrides Function VisitUserDefinedShortCircuitingOperator(node As BoundUserDefinedShortCircuitingOperator) As BoundNode
@@ -12222,7 +12238,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim operand As BoundExpression = DirectCast(Me.Visit(node.Operand), BoundExpression)
             Dim extendedInfoOpt As BoundExtendedConversionInfo = DirectCast(Me.Visit(node.ExtendedInfoOpt), BoundExtendedConversionInfo)
             Dim type as TypeSymbol = Me.VisitType(node.Type)
-            Return node.Update(operand, node.ConversionKind, node.Checked, node.ExplicitCastInCode, node.ConstantValueOpt, extendedInfoOpt, type)
+            Return node.Update(operand, node.ConversionKind, node.CheckIntegerOverflow, node.ExplicitCastInCode, node.ConstantValueOpt, extendedInfoOpt, type)
         End Function
 
         Public Overrides Function VisitRelaxationLambda(node As BoundRelaxationLambda) As BoundNode
@@ -12482,7 +12498,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
         Public Overrides Function VisitBlock(node As BoundBlock) As BoundNode
             Dim statements As ImmutableArray(Of BoundStatement) = Me.VisitList(node.Statements)
-            Return node.Update(node.StatementListSyntax, node.Locals, statements)
+            Return node.Update(node.CheckIntegerOverflow, node.StatementListSyntax, node.Locals, statements)
         End Function
 
         Public Overrides Function VisitStateMachineScope(node As BoundStateMachineScope) As BoundNode
@@ -12623,7 +12639,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim controlVariable As BoundExpression = DirectCast(Me.Visit(node.ControlVariable), BoundExpression)
             Dim body As BoundStatement = DirectCast(Me.Visit(node.Body), BoundStatement)
             Dim nextVariablesOpt As ImmutableArray(Of BoundExpression) = Me.VisitList(node.NextVariablesOpt)
-            Return node.Update(initialValue, limitValue, stepValue, node.Checked, operatorsOpt, node.DeclaredOrInferredLocalOpt, controlVariable, body, nextVariablesOpt, node.ContinueLabel, node.ExitLabel)
+            Return node.Update(initialValue, limitValue, stepValue, node.CheckIntegerOverflow, operatorsOpt, node.DeclaredOrInferredLocalOpt, controlVariable, body, nextVariablesOpt, node.ContinueLabel, node.ExitLabel)
         End Function
 
         Public Overrides Function VisitForEachStatement(node As BoundForEachStatement) As BoundNode
@@ -13160,6 +13176,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Public Overrides Function VisitParenthesized(node As BoundParenthesized, arg As Object) As TreeDumperNode
             Return New TreeDumperNode("parenthesized", Nothing, New TreeDumperNode() {
                 New TreeDumperNode("expression", Nothing, new TreeDumperNode() { Visit(node.Expression, Nothing) }),
+                New TreeDumperNode("checkIntegerOverflow", node.CheckIntegerOverflow, Nothing),
                 New TreeDumperNode("type", node.Type, Nothing)
             })
         End Function
@@ -13278,7 +13295,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return New TreeDumperNode("unaryOperator", Nothing, New TreeDumperNode() {
                 New TreeDumperNode("operatorKind", node.OperatorKind, Nothing),
                 New TreeDumperNode("operand", Nothing, new TreeDumperNode() { Visit(node.Operand, Nothing) }),
-                New TreeDumperNode("checked", node.Checked, Nothing),
+                New TreeDumperNode("checkIntegerOverflow", node.CheckIntegerOverflow, Nothing),
                 New TreeDumperNode("constantValueOpt", node.ConstantValueOpt, Nothing),
                 New TreeDumperNode("type", node.Type, Nothing)
             })
@@ -13304,7 +13321,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 New TreeDumperNode("operatorKind", node.OperatorKind, Nothing),
                 New TreeDumperNode("left", Nothing, new TreeDumperNode() { Visit(node.Left, Nothing) }),
                 New TreeDumperNode("right", Nothing, new TreeDumperNode() { Visit(node.Right, Nothing) }),
-                New TreeDumperNode("checked", node.Checked, Nothing),
+                New TreeDumperNode("checkIntegerOverflow", node.CheckIntegerOverflow, Nothing),
                 New TreeDumperNode("constantValueOpt", node.ConstantValueOpt, Nothing),
                 New TreeDumperNode("type", node.Type, Nothing)
             })
@@ -13314,7 +13331,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return New TreeDumperNode("userDefinedBinaryOperator", Nothing, New TreeDumperNode() {
                 New TreeDumperNode("operatorKind", node.OperatorKind, Nothing),
                 New TreeDumperNode("underlyingExpression", Nothing, new TreeDumperNode() { Visit(node.UnderlyingExpression, Nothing) }),
-                New TreeDumperNode("checked", node.Checked, Nothing),
+                New TreeDumperNode("checkIntegerOverflow", node.CheckIntegerOverflow, Nothing),
                 New TreeDumperNode("type", node.Type, Nothing)
             })
         End Function
@@ -13387,7 +13404,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return New TreeDumperNode("conversion", Nothing, New TreeDumperNode() {
                 New TreeDumperNode("operand", Nothing, new TreeDumperNode() { Visit(node.Operand, Nothing) }),
                 New TreeDumperNode("conversionKind", node.ConversionKind, Nothing),
-                New TreeDumperNode("checked", node.Checked, Nothing),
+                New TreeDumperNode("checkIntegerOverflow", node.CheckIntegerOverflow, Nothing),
                 New TreeDumperNode("explicitCastInCode", node.ExplicitCastInCode, Nothing),
                 New TreeDumperNode("constantValueOpt", node.ConstantValueOpt, Nothing),
                 New TreeDumperNode("extendedInfoOpt", Nothing, new TreeDumperNode() { Visit(node.ExtendedInfoOpt, Nothing) }),
@@ -13753,6 +13770,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
         Public Overrides Function VisitBlock(node As BoundBlock, arg As Object) As TreeDumperNode
             Return New TreeDumperNode("block", Nothing, New TreeDumperNode() {
+                New TreeDumperNode("checkIntegerOverflow", node.CheckIntegerOverflow, Nothing),
                 New TreeDumperNode("statementListSyntax", node.StatementListSyntax, Nothing),
                 New TreeDumperNode("locals", node.Locals, Nothing),
                 New TreeDumperNode("statements", Nothing, From x In node.Statements Select Visit(x, Nothing))
@@ -13930,7 +13948,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 New TreeDumperNode("initialValue", Nothing, new TreeDumperNode() { Visit(node.InitialValue, Nothing) }),
                 New TreeDumperNode("limitValue", Nothing, new TreeDumperNode() { Visit(node.LimitValue, Nothing) }),
                 New TreeDumperNode("stepValue", Nothing, new TreeDumperNode() { Visit(node.StepValue, Nothing) }),
-                New TreeDumperNode("checked", node.Checked, Nothing),
+                New TreeDumperNode("checkIntegerOverflow", node.CheckIntegerOverflow, Nothing),
                 New TreeDumperNode("operatorsOpt", Nothing, new TreeDumperNode() { Visit(node.OperatorsOpt, Nothing) }),
                 New TreeDumperNode("declaredOrInferredLocalOpt", node.DeclaredOrInferredLocalOpt, Nothing),
                 New TreeDumperNode("controlVariable", Nothing, new TreeDumperNode() { Visit(node.ControlVariable, Nothing) }),

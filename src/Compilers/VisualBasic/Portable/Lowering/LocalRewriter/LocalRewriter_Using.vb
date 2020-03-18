@@ -148,6 +148,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             currentBody = New BoundBlock(node.Syntax,
+                                         node.Syntax.RequireOverflowCheck,
                                          currentBody.StatementListSyntax,
                                          locals,
                                          statements)
@@ -245,14 +246,17 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             ' create finally block from the dispose call
             Dim finallyBlock = New BoundBlock(syntaxNode,
-                                              Nothing, ImmutableArray(Of LocalSymbol).Empty,
+                                              syntaxNode.RequireOverflowCheck,
+                                              statementListSyntax:=Nothing,
+                                              ImmutableArray(Of LocalSymbol).Empty,
                                               finallyStatements)
 
             ' rewrite try/finally block
             Dim tryFinally = RewriteTryStatement(syntaxNode, newBody, ImmutableArray(Of BoundCatchBlock).Empty, finallyBlock, Nothing)
 
             newBody = New BoundBlock(syntaxNode,
-                                     Nothing,
+                                     syntaxNode.RequireOverflowCheck,
+                                     statementListSyntax:=Nothing,
                                      ImmutableArray(Of LocalSymbol).Empty,
                                      ImmutableArray.Create(Of BoundStatement)(boundResourceInitializationAssignment,
                                                                                  tryFinally))

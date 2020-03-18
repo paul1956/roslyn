@@ -118,7 +118,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                             syntax,
                                             New BoundLiteral(syntax, ConstantValue.Nothing, Nothing).MakeCompilerGenerated(),
                                             ConversionKind.WideningNothingLiteral,
-                                            checked:=False,
+                                            checkIntegerOverflow:=False,
                                             explicitCastInCode:=False,
                                             type:=localType).MakeCompilerGenerated(),
                                         suppressObjectClone:=True,
@@ -132,7 +132,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             ' Create a new block
-            Dim newBlock As New BoundBlock(syntax, Nothing, locals, initStatements.ToImmutableAndFree())
+            Dim newBlock As New BoundBlock(syntax, node.Binder.CheckOverflow, statementListSyntax:=Nothing, locals, initStatements.ToImmutableAndFree())
 
             Return newBlock
         End Function

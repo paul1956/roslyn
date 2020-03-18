@@ -671,6 +671,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Public Overridable Function VisitAwaitExpression(ByVal node As AwaitExpressionSyntax) As TResult
             Return Me.DefaultVisit(node)
         End Function
+        Public Overridable Function VisitOverflowHandlerExpression(ByVal node As OverflowHandlerExpressionSyntax) As TResult
+            Return Me.DefaultVisit(node)
+        End Function
         Public Overridable Function VisitSkippedTokensTrivia(ByVal node As SkippedTokensTriviaSyntax) As TResult
             Return Me.DefaultVisit(node)
         End Function
@@ -1404,6 +1407,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Me.DefaultVisit(node): Return
         End Sub
         Public Overridable Sub VisitAwaitExpression(ByVal node As AwaitExpressionSyntax)
+            Me.DefaultVisit(node): Return
+        End Sub
+        Public Overridable Sub VisitOverflowHandlerExpression(ByVal node As OverflowHandlerExpressionSyntax)
             Me.DefaultVisit(node): Return
         End Sub
         Public Overridable Sub VisitSkippedTokensTrivia(ByVal node As SkippedTokensTriviaSyntax)
@@ -5241,6 +5247,25 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
         End Function
 
+        Public Overrides Function VisitOverflowHandlerExpression(ByVal node As OverflowHandlerExpressionSyntax) As SyntaxNode
+            Dim anyChanges As Boolean = False
+
+            Dim newOperatorToken = DirectCast(VisitToken(node.OperatorToken).Node, InternalSyntax.KeywordSyntax)
+            If node.OperatorToken.Node IsNot newOperatorToken Then anyChanges = True
+            Dim newOpenParenToken = DirectCast(VisitToken(node.OpenParenToken).Node, InternalSyntax.PunctuationSyntax)
+            If node.OpenParenToken.Node IsNot newOpenParenToken Then anyChanges = True
+            Dim newExpression = DirectCast(Visit(node.Expression), ExpressionSyntax)
+            If node.Expression IsNot newExpression Then anyChanges = True
+            Dim newCloseParenToken = DirectCast(VisitToken(node.CloseParenToken).Node, InternalSyntax.PunctuationSyntax)
+            If node.CloseParenToken.Node IsNot newCloseParenToken Then anyChanges = True
+
+            If anyChanges Then
+                Return New OverflowHandlerExpressionSyntax(node.Kind, node.Green.GetDiagnostics, node.Green.GetAnnotations, newOperatorToken, newOpenParenToken, newExpression, newCloseParenToken)
+            Else
+                Return node
+            End If
+        End Function
+
         Public Overrides Function VisitSkippedTokensTrivia(ByVal node As SkippedTokensTriviaSyntax) As SyntaxNode
             Dim anyChanges As Boolean = False
 
@@ -5718,7 +5743,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndIfStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -5775,7 +5801,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndUsingStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -5810,7 +5837,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndWithStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -5845,7 +5873,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndSelectStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -5880,7 +5909,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndStructureStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -5915,7 +5945,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndEnumStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -5950,7 +5981,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndInterfaceStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -5985,7 +6017,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndClassStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -6020,7 +6053,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndModuleStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -6055,7 +6089,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndNamespaceStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -6090,7 +6125,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndSubStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -6125,7 +6161,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndFunctionStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -6160,7 +6197,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndGetStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -6195,7 +6233,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndSetStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -6230,7 +6269,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndPropertyStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -6265,7 +6305,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndOperatorStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -6300,7 +6341,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndEventStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -6335,7 +6377,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndAddHandlerStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -6370,7 +6413,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndRemoveHandlerStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -6405,7 +6449,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndRaiseEventStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -6440,7 +6485,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndWhileStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -6475,7 +6521,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndTryStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -6510,7 +6557,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndSyncLockStatement(endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Select Case endKeyword.Kind()
@@ -6555,7 +6603,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndBlockStatement(ByVal kind As SyntaxKind, endKeyword As SyntaxToken, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             If Not SyntaxFacts.IsEndBlockStatement(kind) Then
@@ -6642,7 +6691,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Public Shared Function EndBlockStatement(ByVal kind As SyntaxKind, blockKeyword As SyntaxToken) As EndBlockStatementSyntax
             Return SyntaxFactory.EndBlockStatement(kind, SyntaxFactory.Token(SyntaxKind.EndKeyword), blockKeyword)
@@ -12040,6 +12090,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -12187,6 +12239,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -12623,6 +12677,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -12754,6 +12810,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -14059,6 +14117,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -14346,6 +14406,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -14525,6 +14587,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -14908,6 +14972,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -15115,6 +15181,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -15825,6 +15893,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -16262,6 +16332,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -16391,6 +16463,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -16508,6 +16582,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -16662,6 +16738,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -16808,6 +16886,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -16954,6 +17034,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -17100,6 +17182,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -17246,6 +17330,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -17392,6 +17478,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -17545,6 +17633,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -17716,6 +17806,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -18570,6 +18662,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -18716,6 +18810,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -18867,6 +18963,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -19009,6 +19107,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -19259,6 +19359,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -19377,6 +19479,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -19494,6 +19598,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -19678,6 +19784,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -19843,6 +19951,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -19961,6 +20071,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -20254,6 +20366,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -20380,6 +20494,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -20526,6 +20642,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -20643,6 +20761,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -20789,6 +20909,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -20906,6 +21028,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -21052,6 +21176,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -21169,6 +21295,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -21315,6 +21443,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -21432,6 +21562,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -21578,6 +21710,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -21695,6 +21829,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -21841,6 +21977,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -21958,6 +22096,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -22104,6 +22244,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -22221,6 +22363,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -22367,6 +22511,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -22484,6 +22630,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -22630,6 +22778,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -22747,6 +22897,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -22893,6 +23045,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -23010,6 +23164,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -23168,6 +23324,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -23283,6 +23441,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -23532,6 +23692,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -23649,6 +23811,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -23802,6 +23966,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -23919,6 +24085,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -24078,6 +24246,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -24195,6 +24365,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -24416,6 +24588,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -24705,6 +24879,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -25185,6 +25361,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -25645,6 +25823,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -25819,6 +25999,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -25999,6 +26181,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -27035,6 +27219,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -27218,6 +27404,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -27401,6 +27589,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -27597,6 +27787,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -27745,6 +27937,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -27885,6 +28079,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -28029,6 +28225,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -28146,6 +28344,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -28290,6 +28490,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -28407,6 +28609,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -28551,6 +28755,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -28668,6 +28874,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -28812,6 +29020,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -28929,6 +29139,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -29073,6 +29285,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -29190,6 +29404,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -29334,6 +29550,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -29451,6 +29669,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -29595,6 +29815,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -29712,6 +29934,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -29856,6 +30080,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -29973,6 +30199,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -30117,6 +30345,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -30234,6 +30464,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -30378,6 +30610,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -30495,6 +30729,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -30639,6 +30875,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -30756,6 +30994,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -30900,6 +31140,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -31017,6 +31259,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -31161,6 +31405,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -31278,6 +31524,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -31422,6 +31670,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -31539,6 +31789,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -31683,6 +31935,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -31800,6 +32054,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -31944,6 +32200,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -32061,6 +32319,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -32205,6 +32465,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -32322,6 +32584,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -32466,6 +32730,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -32583,6 +32849,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -32727,6 +32995,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -32844,6 +33114,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -32988,6 +33260,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -33105,6 +33379,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -33249,6 +33525,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -33366,6 +33644,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -33510,6 +33790,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -33627,6 +33909,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -33771,6 +34055,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -33888,6 +34174,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -34046,6 +34334,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -34161,6 +34451,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -34349,6 +34641,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -34491,6 +34785,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -34633,6 +34929,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -34775,6 +35073,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -34923,6 +35223,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -35086,6 +35388,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -35203,6 +35507,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -35378,6 +35684,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -35495,6 +35803,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -35612,6 +35922,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -35772,6 +36084,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -36066,6 +36380,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -36368,6 +36684,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -37105,6 +37423,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -37285,6 +37605,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -37402,6 +37724,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -37591,6 +37915,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -37752,6 +38078,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -38261,6 +38589,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -38413,6 +38743,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -38565,6 +38897,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -38722,6 +39056,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -38883,6 +39219,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -39025,6 +39363,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -39172,6 +39512,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -39382,6 +39724,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -39499,6 +39843,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -39849,6 +40195,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -39989,6 +40337,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -40136,6 +40486,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -40887,6 +41239,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -41530,6 +41884,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -41672,6 +42028,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -41692,6 +42050,513 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' </param>
         Public Shared Function AwaitExpression(expression As ExpressionSyntax) As AwaitExpressionSyntax
             Return SyntaxFactory.AwaitExpression(SyntaxFactory.Token(SyntaxKind.AwaitKeyword), expression)
+        End Function
+
+
+        ''' <summary>
+        ''' Represents an expression what can deal with Integer Overflow.
+        ''' </summary>
+        ''' <param name="operatorToken">
+        ''' The keyword that identifies the handling of Integer Overflow. Must be one of:
+        ''' "Checked", "Unchecked"
+        ''' </param>
+        ''' <param name="openParenToken">
+        ''' The "(" token
+        ''' </param>
+        ''' <param name="expression">
+        ''' The expression inside the parentheses.
+        ''' </param>
+        ''' <param name="closeParenToken">
+        ''' The ")" token
+        ''' </param>
+        Public Shared Function CheckedExpression(operatorToken As SyntaxToken, openParenToken As SyntaxToken, expression As ExpressionSyntax, closeParenToken As SyntaxToken) As OverflowHandlerExpressionSyntax
+            Select Case operatorToken.Kind()
+                Case SyntaxKind.CheckedKeyword:
+                Case SyntaxKind.UncheckedKeyword
+                Case Else
+                    Throw new ArgumentException("operatorToken")
+             End Select
+            Select Case openParenToken.Kind()
+                Case SyntaxKind.OpenParenToken
+                Case Else
+                    Throw new ArgumentException("openParenToken")
+             End Select
+            if expression Is Nothing Then
+                Throw New ArgumentNullException(NameOf(expression))
+            End If
+            Select Case expression.Kind()
+                Case SyntaxKind.KeywordEventContainer,
+                     SyntaxKind.WithEventsEventContainer,
+                     SyntaxKind.WithEventsPropertyEventContainer,
+                     SyntaxKind.IdentifierLabel,
+                     SyntaxKind.NumericLabel,
+                     SyntaxKind.NextLabel,
+                     SyntaxKind.MidExpression,
+                     SyntaxKind.CharacterLiteralExpression,
+                     SyntaxKind.TrueLiteralExpression,
+                     SyntaxKind.FalseLiteralExpression,
+                     SyntaxKind.NumericLiteralExpression,
+                     SyntaxKind.DateLiteralExpression,
+                     SyntaxKind.StringLiteralExpression,
+                     SyntaxKind.NothingLiteralExpression,
+                     SyntaxKind.ParenthesizedExpression,
+                     SyntaxKind.TupleExpression,
+                     SyntaxKind.TupleType,
+                     SyntaxKind.MeExpression,
+                     SyntaxKind.MyBaseExpression,
+                     SyntaxKind.MyClassExpression,
+                     SyntaxKind.GetTypeExpression,
+                     SyntaxKind.TypeOfIsExpression,
+                     SyntaxKind.TypeOfIsNotExpression,
+                     SyntaxKind.GetXmlNamespaceExpression,
+                     SyntaxKind.SimpleMemberAccessExpression,
+                     SyntaxKind.DictionaryAccessExpression,
+                     SyntaxKind.XmlElementAccessExpression,
+                     SyntaxKind.XmlDescendantAccessExpression,
+                     SyntaxKind.XmlAttributeAccessExpression,
+                     SyntaxKind.InvocationExpression,
+                     SyntaxKind.ObjectCreationExpression,
+                     SyntaxKind.AnonymousObjectCreationExpression,
+                     SyntaxKind.ArrayCreationExpression,
+                     SyntaxKind.CollectionInitializer,
+                     SyntaxKind.CTypeExpression,
+                     SyntaxKind.DirectCastExpression,
+                     SyntaxKind.TryCastExpression,
+                     SyntaxKind.PredefinedCastExpression,
+                     SyntaxKind.AddExpression,
+                     SyntaxKind.SubtractExpression,
+                     SyntaxKind.MultiplyExpression,
+                     SyntaxKind.DivideExpression,
+                     SyntaxKind.IntegerDivideExpression,
+                     SyntaxKind.ExponentiateExpression,
+                     SyntaxKind.LeftShiftExpression,
+                     SyntaxKind.RightShiftExpression,
+                     SyntaxKind.ConcatenateExpression,
+                     SyntaxKind.ModuloExpression,
+                     SyntaxKind.EqualsExpression,
+                     SyntaxKind.NotEqualsExpression,
+                     SyntaxKind.LessThanExpression,
+                     SyntaxKind.LessThanOrEqualExpression,
+                     SyntaxKind.GreaterThanOrEqualExpression,
+                     SyntaxKind.GreaterThanExpression,
+                     SyntaxKind.IsExpression,
+                     SyntaxKind.IsNotExpression,
+                     SyntaxKind.LikeExpression,
+                     SyntaxKind.OrExpression,
+                     SyntaxKind.ExclusiveOrExpression,
+                     SyntaxKind.AndExpression,
+                     SyntaxKind.OrElseExpression,
+                     SyntaxKind.AndAlsoExpression,
+                     SyntaxKind.UnaryPlusExpression,
+                     SyntaxKind.UnaryMinusExpression,
+                     SyntaxKind.NotExpression,
+                     SyntaxKind.AddressOfExpression,
+                     SyntaxKind.BinaryConditionalExpression,
+                     SyntaxKind.TernaryConditionalExpression,
+                     SyntaxKind.SingleLineFunctionLambdaExpression,
+                     SyntaxKind.SingleLineSubLambdaExpression,
+                     SyntaxKind.MultiLineFunctionLambdaExpression,
+                     SyntaxKind.MultiLineSubLambdaExpression,
+                     SyntaxKind.QueryExpression,
+                     SyntaxKind.FunctionAggregation,
+                     SyntaxKind.GroupAggregation,
+                     SyntaxKind.XmlDocument,
+                     SyntaxKind.XmlElement,
+                     SyntaxKind.XmlText,
+                     SyntaxKind.XmlElementStartTag,
+                     SyntaxKind.XmlElementEndTag,
+                     SyntaxKind.XmlEmptyElement,
+                     SyntaxKind.XmlAttribute,
+                     SyntaxKind.XmlString,
+                     SyntaxKind.XmlPrefixName,
+                     SyntaxKind.XmlName,
+                     SyntaxKind.XmlBracketedName,
+                     SyntaxKind.XmlComment,
+                     SyntaxKind.XmlProcessingInstruction,
+                     SyntaxKind.XmlCDataSection,
+                     SyntaxKind.XmlEmbeddedExpression,
+                     SyntaxKind.ArrayType,
+                     SyntaxKind.NullableType,
+                     SyntaxKind.PredefinedType,
+                     SyntaxKind.IdentifierName,
+                     SyntaxKind.GenericName,
+                     SyntaxKind.QualifiedName,
+                     SyntaxKind.GlobalName,
+                     SyntaxKind.CrefOperatorReference,
+                     SyntaxKind.QualifiedCrefOperatorReference,
+                     SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
+                     SyntaxKind.XmlCrefAttribute,
+                     SyntaxKind.XmlNameAttribute,
+                     SyntaxKind.ConditionalAccessExpression,
+                     SyntaxKind.NameOfExpression,
+                     SyntaxKind.InterpolatedStringExpression
+                Case Else
+                    Throw new ArgumentException("expression")
+             End Select
+            Select Case closeParenToken.Kind()
+                Case SyntaxKind.CloseParenToken
+                Case Else
+                    Throw new ArgumentException("closeParenToken")
+             End Select
+            Return New OverflowHandlerExpressionSyntax(SyntaxKind.CheckedExpression, Nothing, Nothing, DirectCast(operatorToken.Node, InternalSyntax.KeywordSyntax), DirectCast(openParenToken.Node, InternalSyntax.PunctuationSyntax), expression, DirectCast(closeParenToken.Node, InternalSyntax.PunctuationSyntax))
+        End Function
+
+
+        ''' <summary>
+        ''' Represents an expression what can deal with Integer Overflow.
+        ''' </summary>
+        ''' <param name="expression">
+        ''' The expression inside the parentheses.
+        ''' </param>
+        Public Shared Function CheckedExpression(expression As ExpressionSyntax) As OverflowHandlerExpressionSyntax
+            Return SyntaxFactory.CheckedExpression(SyntaxFactory.Token(SyntaxKind.CheckedKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), expression, SyntaxFactory.Token(SyntaxKind.CloseParenToken))
+        End Function
+
+
+        ''' <summary>
+        ''' Represents an expression what can deal with Integer Overflow.
+        ''' </summary>
+        ''' <param name="operatorToken">
+        ''' The keyword that identifies the handling of Integer Overflow. Must be one of:
+        ''' "Checked", "Unchecked"
+        ''' </param>
+        ''' <param name="openParenToken">
+        ''' The "(" token
+        ''' </param>
+        ''' <param name="expression">
+        ''' The expression inside the parentheses.
+        ''' </param>
+        ''' <param name="closeParenToken">
+        ''' The ")" token
+        ''' </param>
+        Public Shared Function UncheckedExpression(operatorToken As SyntaxToken, openParenToken As SyntaxToken, expression As ExpressionSyntax, closeParenToken As SyntaxToken) As OverflowHandlerExpressionSyntax
+            Select Case operatorToken.Kind()
+                Case SyntaxKind.UncheckedKeyword
+                Case Else
+                    Throw new ArgumentException("operatorToken")
+             End Select
+            Select Case openParenToken.Kind()
+                Case SyntaxKind.OpenParenToken
+                Case Else
+                    Throw new ArgumentException("openParenToken")
+             End Select
+            if expression Is Nothing Then
+                Throw New ArgumentNullException(NameOf(expression))
+            End If
+            Select Case expression.Kind()
+                Case SyntaxKind.KeywordEventContainer,
+                     SyntaxKind.WithEventsEventContainer,
+                     SyntaxKind.WithEventsPropertyEventContainer,
+                     SyntaxKind.IdentifierLabel,
+                     SyntaxKind.NumericLabel,
+                     SyntaxKind.NextLabel,
+                     SyntaxKind.MidExpression,
+                     SyntaxKind.CharacterLiteralExpression,
+                     SyntaxKind.TrueLiteralExpression,
+                     SyntaxKind.FalseLiteralExpression,
+                     SyntaxKind.NumericLiteralExpression,
+                     SyntaxKind.DateLiteralExpression,
+                     SyntaxKind.StringLiteralExpression,
+                     SyntaxKind.NothingLiteralExpression,
+                     SyntaxKind.ParenthesizedExpression,
+                     SyntaxKind.TupleExpression,
+                     SyntaxKind.TupleType,
+                     SyntaxKind.MeExpression,
+                     SyntaxKind.MyBaseExpression,
+                     SyntaxKind.MyClassExpression,
+                     SyntaxKind.GetTypeExpression,
+                     SyntaxKind.TypeOfIsExpression,
+                     SyntaxKind.TypeOfIsNotExpression,
+                     SyntaxKind.GetXmlNamespaceExpression,
+                     SyntaxKind.SimpleMemberAccessExpression,
+                     SyntaxKind.DictionaryAccessExpression,
+                     SyntaxKind.XmlElementAccessExpression,
+                     SyntaxKind.XmlDescendantAccessExpression,
+                     SyntaxKind.XmlAttributeAccessExpression,
+                     SyntaxKind.InvocationExpression,
+                     SyntaxKind.ObjectCreationExpression,
+                     SyntaxKind.AnonymousObjectCreationExpression,
+                     SyntaxKind.ArrayCreationExpression,
+                     SyntaxKind.CollectionInitializer,
+                     SyntaxKind.CTypeExpression,
+                     SyntaxKind.DirectCastExpression,
+                     SyntaxKind.TryCastExpression,
+                     SyntaxKind.PredefinedCastExpression,
+                     SyntaxKind.AddExpression,
+                     SyntaxKind.SubtractExpression,
+                     SyntaxKind.MultiplyExpression,
+                     SyntaxKind.DivideExpression,
+                     SyntaxKind.IntegerDivideExpression,
+                     SyntaxKind.ExponentiateExpression,
+                     SyntaxKind.LeftShiftExpression,
+                     SyntaxKind.RightShiftExpression,
+                     SyntaxKind.ConcatenateExpression,
+                     SyntaxKind.ModuloExpression,
+                     SyntaxKind.EqualsExpression,
+                     SyntaxKind.NotEqualsExpression,
+                     SyntaxKind.LessThanExpression,
+                     SyntaxKind.LessThanOrEqualExpression,
+                     SyntaxKind.GreaterThanOrEqualExpression,
+                     SyntaxKind.GreaterThanExpression,
+                     SyntaxKind.IsExpression,
+                     SyntaxKind.IsNotExpression,
+                     SyntaxKind.LikeExpression,
+                     SyntaxKind.OrExpression,
+                     SyntaxKind.ExclusiveOrExpression,
+                     SyntaxKind.AndExpression,
+                     SyntaxKind.OrElseExpression,
+                     SyntaxKind.AndAlsoExpression,
+                     SyntaxKind.UnaryPlusExpression,
+                     SyntaxKind.UnaryMinusExpression,
+                     SyntaxKind.NotExpression,
+                     SyntaxKind.AddressOfExpression,
+                     SyntaxKind.BinaryConditionalExpression,
+                     SyntaxKind.TernaryConditionalExpression,
+                     SyntaxKind.SingleLineFunctionLambdaExpression,
+                     SyntaxKind.SingleLineSubLambdaExpression,
+                     SyntaxKind.MultiLineFunctionLambdaExpression,
+                     SyntaxKind.MultiLineSubLambdaExpression,
+                     SyntaxKind.QueryExpression,
+                     SyntaxKind.FunctionAggregation,
+                     SyntaxKind.GroupAggregation,
+                     SyntaxKind.XmlDocument,
+                     SyntaxKind.XmlElement,
+                     SyntaxKind.XmlText,
+                     SyntaxKind.XmlElementStartTag,
+                     SyntaxKind.XmlElementEndTag,
+                     SyntaxKind.XmlEmptyElement,
+                     SyntaxKind.XmlAttribute,
+                     SyntaxKind.XmlString,
+                     SyntaxKind.XmlPrefixName,
+                     SyntaxKind.XmlName,
+                     SyntaxKind.XmlBracketedName,
+                     SyntaxKind.XmlComment,
+                     SyntaxKind.XmlProcessingInstruction,
+                     SyntaxKind.XmlCDataSection,
+                     SyntaxKind.XmlEmbeddedExpression,
+                     SyntaxKind.ArrayType,
+                     SyntaxKind.NullableType,
+                     SyntaxKind.PredefinedType,
+                     SyntaxKind.IdentifierName,
+                     SyntaxKind.GenericName,
+                     SyntaxKind.QualifiedName,
+                     SyntaxKind.GlobalName,
+                     SyntaxKind.CrefOperatorReference,
+                     SyntaxKind.QualifiedCrefOperatorReference,
+                     SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
+                     SyntaxKind.XmlCrefAttribute,
+                     SyntaxKind.XmlNameAttribute,
+                     SyntaxKind.ConditionalAccessExpression,
+                     SyntaxKind.NameOfExpression,
+                     SyntaxKind.InterpolatedStringExpression
+                Case Else
+                    Throw new ArgumentException("expression")
+             End Select
+            Select Case closeParenToken.Kind()
+                Case SyntaxKind.CloseParenToken
+                Case Else
+                    Throw new ArgumentException("closeParenToken")
+             End Select
+            Return New OverflowHandlerExpressionSyntax(SyntaxKind.UncheckedExpression, Nothing, Nothing, DirectCast(operatorToken.Node, InternalSyntax.KeywordSyntax), DirectCast(openParenToken.Node, InternalSyntax.PunctuationSyntax), expression, DirectCast(closeParenToken.Node, InternalSyntax.PunctuationSyntax))
+        End Function
+
+
+        ''' <summary>
+        ''' Represents an expression what can deal with Integer Overflow.
+        ''' </summary>
+        ''' <param name="expression">
+        ''' The expression inside the parentheses.
+        ''' </param>
+        Public Shared Function UncheckedExpression(expression As ExpressionSyntax) As OverflowHandlerExpressionSyntax
+            Return SyntaxFactory.UncheckedExpression(SyntaxFactory.Token(SyntaxKind.UncheckedKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), expression, SyntaxFactory.Token(SyntaxKind.CloseParenToken))
+        End Function
+
+
+        ''' <summary>
+        ''' Represents an expression what can deal with Integer Overflow.
+        ''' </summary>
+        ''' <param name="kind">
+        ''' A <cref c="SyntaxKind"/> representing the specific kind of
+        ''' OverflowHandlerExpressionSyntax. One of CheckedExpression, UncheckedExpression.
+        ''' </param>
+        ''' <param name="operatorToken">
+        ''' The keyword that identifies the handling of Integer Overflow. Must be one of:
+        ''' "Checked", "Unchecked"
+        ''' </param>
+        ''' <param name="openParenToken">
+        ''' The "(" token
+        ''' </param>
+        ''' <param name="expression">
+        ''' The expression inside the parentheses.
+        ''' </param>
+        ''' <param name="closeParenToken">
+        ''' The ")" token
+        ''' </param>
+        Public Shared Function OverflowHandlerExpression(ByVal kind As SyntaxKind, operatorToken As SyntaxToken, openParenToken As SyntaxToken, expression As ExpressionSyntax, closeParenToken As SyntaxToken) As OverflowHandlerExpressionSyntax
+            If Not SyntaxFacts.IsOverflowHandlerExpression(kind) Then
+                Throw New ArgumentException("kind")
+            End If
+            If (Not operatorToken.IsKind(GetOverflowHandlerExpressionOperatorTokenKind(kind))) Then
+                Throw new ArgumentException("operatorToken")
+            End If
+            Select Case openParenToken.Kind()
+                Case SyntaxKind.OpenParenToken
+                Case Else
+                    Throw new ArgumentException("openParenToken")
+             End Select
+            if expression Is Nothing Then
+                Throw New ArgumentNullException(NameOf(expression))
+            End If
+            Select Case expression.Kind()
+                Case SyntaxKind.KeywordEventContainer,
+                     SyntaxKind.WithEventsEventContainer,
+                     SyntaxKind.WithEventsPropertyEventContainer,
+                     SyntaxKind.IdentifierLabel,
+                     SyntaxKind.NumericLabel,
+                     SyntaxKind.NextLabel,
+                     SyntaxKind.MidExpression,
+                     SyntaxKind.CharacterLiteralExpression,
+                     SyntaxKind.TrueLiteralExpression,
+                     SyntaxKind.FalseLiteralExpression,
+                     SyntaxKind.NumericLiteralExpression,
+                     SyntaxKind.DateLiteralExpression,
+                     SyntaxKind.StringLiteralExpression,
+                     SyntaxKind.NothingLiteralExpression,
+                     SyntaxKind.ParenthesizedExpression,
+                     SyntaxKind.TupleExpression,
+                     SyntaxKind.TupleType,
+                     SyntaxKind.MeExpression,
+                     SyntaxKind.MyBaseExpression,
+                     SyntaxKind.MyClassExpression,
+                     SyntaxKind.GetTypeExpression,
+                     SyntaxKind.TypeOfIsExpression,
+                     SyntaxKind.TypeOfIsNotExpression,
+                     SyntaxKind.GetXmlNamespaceExpression,
+                     SyntaxKind.SimpleMemberAccessExpression,
+                     SyntaxKind.DictionaryAccessExpression,
+                     SyntaxKind.XmlElementAccessExpression,
+                     SyntaxKind.XmlDescendantAccessExpression,
+                     SyntaxKind.XmlAttributeAccessExpression,
+                     SyntaxKind.InvocationExpression,
+                     SyntaxKind.ObjectCreationExpression,
+                     SyntaxKind.AnonymousObjectCreationExpression,
+                     SyntaxKind.ArrayCreationExpression,
+                     SyntaxKind.CollectionInitializer,
+                     SyntaxKind.CTypeExpression,
+                     SyntaxKind.DirectCastExpression,
+                     SyntaxKind.TryCastExpression,
+                     SyntaxKind.PredefinedCastExpression,
+                     SyntaxKind.AddExpression,
+                     SyntaxKind.SubtractExpression,
+                     SyntaxKind.MultiplyExpression,
+                     SyntaxKind.DivideExpression,
+                     SyntaxKind.IntegerDivideExpression,
+                     SyntaxKind.ExponentiateExpression,
+                     SyntaxKind.LeftShiftExpression,
+                     SyntaxKind.RightShiftExpression,
+                     SyntaxKind.ConcatenateExpression,
+                     SyntaxKind.ModuloExpression,
+                     SyntaxKind.EqualsExpression,
+                     SyntaxKind.NotEqualsExpression,
+                     SyntaxKind.LessThanExpression,
+                     SyntaxKind.LessThanOrEqualExpression,
+                     SyntaxKind.GreaterThanOrEqualExpression,
+                     SyntaxKind.GreaterThanExpression,
+                     SyntaxKind.IsExpression,
+                     SyntaxKind.IsNotExpression,
+                     SyntaxKind.LikeExpression,
+                     SyntaxKind.OrExpression,
+                     SyntaxKind.ExclusiveOrExpression,
+                     SyntaxKind.AndExpression,
+                     SyntaxKind.OrElseExpression,
+                     SyntaxKind.AndAlsoExpression,
+                     SyntaxKind.UnaryPlusExpression,
+                     SyntaxKind.UnaryMinusExpression,
+                     SyntaxKind.NotExpression,
+                     SyntaxKind.AddressOfExpression,
+                     SyntaxKind.BinaryConditionalExpression,
+                     SyntaxKind.TernaryConditionalExpression,
+                     SyntaxKind.SingleLineFunctionLambdaExpression,
+                     SyntaxKind.SingleLineSubLambdaExpression,
+                     SyntaxKind.MultiLineFunctionLambdaExpression,
+                     SyntaxKind.MultiLineSubLambdaExpression,
+                     SyntaxKind.QueryExpression,
+                     SyntaxKind.FunctionAggregation,
+                     SyntaxKind.GroupAggregation,
+                     SyntaxKind.XmlDocument,
+                     SyntaxKind.XmlElement,
+                     SyntaxKind.XmlText,
+                     SyntaxKind.XmlElementStartTag,
+                     SyntaxKind.XmlElementEndTag,
+                     SyntaxKind.XmlEmptyElement,
+                     SyntaxKind.XmlAttribute,
+                     SyntaxKind.XmlString,
+                     SyntaxKind.XmlPrefixName,
+                     SyntaxKind.XmlName,
+                     SyntaxKind.XmlBracketedName,
+                     SyntaxKind.XmlComment,
+                     SyntaxKind.XmlProcessingInstruction,
+                     SyntaxKind.XmlCDataSection,
+                     SyntaxKind.XmlEmbeddedExpression,
+                     SyntaxKind.ArrayType,
+                     SyntaxKind.NullableType,
+                     SyntaxKind.PredefinedType,
+                     SyntaxKind.IdentifierName,
+                     SyntaxKind.GenericName,
+                     SyntaxKind.QualifiedName,
+                     SyntaxKind.GlobalName,
+                     SyntaxKind.CrefOperatorReference,
+                     SyntaxKind.QualifiedCrefOperatorReference,
+                     SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
+                     SyntaxKind.XmlCrefAttribute,
+                     SyntaxKind.XmlNameAttribute,
+                     SyntaxKind.ConditionalAccessExpression,
+                     SyntaxKind.NameOfExpression,
+                     SyntaxKind.InterpolatedStringExpression
+                Case Else
+                    Throw new ArgumentException("expression")
+             End Select
+            Select Case closeParenToken.Kind()
+                Case SyntaxKind.CloseParenToken
+                Case Else
+                    Throw new ArgumentException("closeParenToken")
+             End Select
+            Return New OverflowHandlerExpressionSyntax(kind, Nothing, Nothing, DirectCast(operatorToken.Node, InternalSyntax.KeywordSyntax), DirectCast(openParenToken.Node, InternalSyntax.PunctuationSyntax), expression, DirectCast(closeParenToken.Node, InternalSyntax.PunctuationSyntax))
+        End Function
+
+        Private Shared Function GetOverflowHandlerExpressionOperatorTokenKind(kind As SyntaxKind) As SyntaxKind
+            Select Case kind
+                Case SyntaxKind.CheckedExpression
+                    Return SyntaxKind.CheckedKeyword
+                Case SyntaxKind.UncheckedExpression
+                    Return SyntaxKind.UncheckedKeyword
+                Case Else
+                    Throw New ArgumentException("OperatorToken")
+            End Select
+        End Function
+
+        ''' <summary>
+        ''' Represents an expression what can deal with Integer Overflow.
+        ''' </summary>
+        ''' <param name="kind">
+        ''' A <cref c="SyntaxKind"/> representing the specific kind of
+        ''' OverflowHandlerExpressionSyntax. One of CheckedExpression, UncheckedExpression.
+        ''' </param>
+        ''' <param name="operatorToken">
+        ''' The keyword that identifies the handling of Integer Overflow. Must be one of:
+        ''' "Checked", "Unchecked"
+        ''' </param>
+        ''' <param name="expression">
+        ''' The expression inside the parentheses.
+        ''' </param>
+        Public Shared Function OverflowHandlerExpression(ByVal kind As SyntaxKind, operatorToken As SyntaxToken, expression As ExpressionSyntax) As OverflowHandlerExpressionSyntax
+            Return SyntaxFactory.OverflowHandlerExpression(kind, operatorToken, SyntaxFactory.Token(SyntaxKind.OpenParenToken), expression, SyntaxFactory.Token(SyntaxKind.CloseParenToken))
         End Function
 
 
@@ -42313,6 +43178,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -42544,6 +43411,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -42710,6 +43579,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -43065,6 +43936,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -43230,6 +44103,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -43374,6 +44249,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -43525,6 +44402,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.CrefOperatorReference,
                      SyntaxKind.QualifiedCrefOperatorReference,
                      SyntaxKind.AwaitExpression,
+                     SyntaxKind.CheckedExpression,
+                     SyntaxKind.UncheckedExpression,
                      SyntaxKind.XmlCrefAttribute,
                      SyntaxKind.XmlNameAttribute,
                      SyntaxKind.ConditionalAccessExpression,
@@ -44983,6 +45862,26 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return False
         End Function
 
+        Public Shared Function IsOverflowHandlerExpression(kind As SyntaxKind) As Boolean
+            Select Case kind
+                Case _
+                SyntaxKind.CheckedExpression,
+                SyntaxKind.UncheckedExpression
+                    Return True
+            End Select
+            Return False
+        End Function
+
+        Public Shared Function IsOverflowHandlerExpressionOperatorToken(kind As SyntaxKind) As Boolean
+            Select Case kind
+                Case _
+                SyntaxKind.CheckedKeyword,
+                SyntaxKind.UncheckedKeyword
+                    Return True
+            End Select
+            Return False
+        End Function
+
         Public Shared Function IsKeywordKind(kind As SyntaxKind) As Boolean
             Select Case kind
                 Case _
@@ -45185,7 +46084,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 SyntaxKind.AsyncKeyword,
                 SyntaxKind.AwaitKeyword,
                 SyntaxKind.IteratorKeyword,
-                SyntaxKind.YieldKeyword
+                SyntaxKind.YieldKeyword,
+                SyntaxKind.CheckedKeyword,
+                SyntaxKind.UncheckedKeyword
                     Return True
             End Select
             Return False
@@ -45746,6 +46647,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return "Iterator"
         Case SyntaxKind.YieldKeyword
             Return "Yield"
+        Case SyntaxKind.CheckedKeyword
+            Return "Checked"
+        Case SyntaxKind.UncheckedKeyword
+            Return "Unchecked"
         Case SyntaxKind.ExclamationToken
             Return "!"
         Case SyntaxKind.AtToken

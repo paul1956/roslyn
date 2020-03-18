@@ -553,7 +553,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Function
 
         Public Shared Function IsAnyToken(kind As SyntaxKind) As Boolean
-            Return kind >= SyntaxKind.AddHandlerKeyword AndAlso kind <= SyntaxKind.CharacterLiteralToken
+            Return (kind >= SyntaxKind.AddHandlerKeyword AndAlso kind <= SyntaxKind.CharacterLiteralToken) OrElse
+                    kind = SyntaxKind.CheckedKeyword OrElse
+                    kind = SyntaxKind.UncheckedKeyword
         End Function
 
         Public Shared Function GetUnaryExpression(token As SyntaxKind) As SyntaxKind
@@ -602,6 +604,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Select Case kind
                 Case SyntaxKind.AddHandlerKeyword To SyntaxKind.EndOfXmlToken,
                      SyntaxKind.NameOfKeyword,
+                     SyntaxKind.CheckedKeyword,
+                     SyntaxKind.UncheckedKeyword,
                      SyntaxKind.DollarSignDoubleQuoteToken,
                      SyntaxKind.EndOfInterpolatedStringToken
                     Return True

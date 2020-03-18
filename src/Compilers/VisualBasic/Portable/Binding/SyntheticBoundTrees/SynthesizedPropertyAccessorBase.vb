@@ -82,9 +82,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 Debug.Assert(accessor.MethodKind = MethodKind.PropertySet)
 
                 ' NOTE: at this point number of parameters in a VALID property must be 1.
-                '       In the case when an auto-property has some parameters we assume that 
+                '       In the case when an auto-property has some parameters we assume that
                 '       ERR_AutoPropertyCantHaveParams(36759) is already generated,
-                '       in this case we just ignore all the parameters and assume that the 
+                '       in this case we just ignore all the parameters and assume that the
                 '       last parameter is what we need to use below
                 Debug.Assert(accessor.ParameterCount >= 1)
                 Dim parameter = accessor.Parameters(accessor.ParameterCount - 1)
@@ -104,13 +104,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 '
                 ' Dim tempHandlerLocal = AddressOf handlerMethod   ' addressOf is already bound and may contain conversion
                 ' . . .
-                ' Dim tempHandlerLocalN = AddressOf handlerMethodN   
+                ' Dim tempHandlerLocalN = AddressOf handlerMethodN
                 '
-                ' Dim valueTemp = [ _backingField | BaseGet ] 
+                ' Dim valueTemp = [ _backingField | BaseGet ]
                 ' If valueTemp isnot nothing
                 '
-                '       // unhook handlers from the old value. 
-                '       // Note that we can use the handler temps we have just created. 
+                '       // unhook handlers from the old value.
+                '       // Note that we can use the handler temps we have just created.
                 '       // Delegate identity is {target, method} so that will work
                 '
                 '       valueTemp.E1.Remove(tempLocalHandler1)
@@ -121,13 +121,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 ' //Now store the new value
                 '
                 ' [ _backingField = value | BaseSet(value) ]
-                ' 
+                '
                 ' // re-read the value (we use same assignment here as before)
-                ' valueTemp = [ _backingField | BaseGet ] 
+                ' valueTemp = [ _backingField | BaseGet ]
                 '
                 ' If valueTemp isnot nothing
                 '
-                '       // re-hook handlers to the new value. 
+                '       // re-hook handlers to the new value.
                 '
                 '       valueTemp.E1.Add(tempLocalHandler1)
                 '       valueTemp.E2.Add(tempLocalHandler2)
@@ -357,7 +357,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             statements.Add((New BoundLabelStatement(syntax, exitLabel)).MakeCompilerGenerated())
             statements.Add((New BoundReturnStatement(syntax, returnLocal, Nothing, Nothing)).MakeCompilerGenerated())
 
-            Return (New BoundBlock(syntax, Nothing, locals, statements.ToImmutableAndFree())).MakeCompilerGenerated()
+            Return New BoundBlock(syntax, If(methodBodyBinder Is Nothing, True, methodBodyBinder.CheckOverflow), statementListSyntax:=Nothing, locals, statements.ToImmutableAndFree()).MakeCompilerGenerated()
         End Function
 
     End Module

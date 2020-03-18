@@ -301,7 +301,8 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
                 return;
             }
 
-            if (!operation.IsImplicit)
+            if (!(operation.IsImplicit /* <Prototype> */ ||
+                ((operation.Kind == OperationKind.Conversion || operation.Kind == OperationKind.Parenthesized)) && (operation.Syntax.Parent.IsKind(VisualBasic.SyntaxKind.CheckedExpression) || operation.Syntax.Parent.IsKind(VisualBasic.SyntaxKind.UncheckedExpression))))
             {
                 try
                 {

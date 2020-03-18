@@ -94,13 +94,14 @@ start:
             textI = F.Convert(hashCode.Type, textI, ConversionKind.WideningNumeric)
 
             Dim body As BoundBlock = F.Block(
+                    compilationState.CompilationCheckOverflow,
                     ImmutableArray.Create(Of LocalSymbol)(hashCode, i),
                     F.Assignment(F.Local(hashCode, True), New BoundLiteral(Me.Syntax, ConstantValue.Create(CUInt(2166136261)), hashCode.Type)),
                     F.If(
                         F.Binary(BinaryOperatorKind.IsNot, Me.ContainingAssembly.GetSpecialType(SpecialType.System_Boolean),
                             F.Parameter(text).MakeRValue(),
                             F.Null(text.Type)),
-                        F.Block(
+                        F.Block(F.Block.CheckIntegerOverflow,
                             F.Assignment(F.Local(i, True), New BoundLiteral(Me.Syntax, ConstantValue.Create(0), i.Type)),
                             F.Goto(start),
                             F.Label(again),

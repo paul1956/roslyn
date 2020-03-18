@@ -492,6 +492,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                 Case SyntaxKind.SyncLockStatement
                     Return New StatementBlockContext(SyntaxKind.SyncLockBlock, DirectCast(node, StatementSyntax), Me)
 
+#If SupportCheckedStatement Then
+                Case SyntaxKind.CheckedStatement
+                    Return New StatementBlockContext(SyntaxKind.CheckedBlock, DirectCast(node, StatementSyntax), Me)
+#End If
+
                 Case SyntaxKind.UsingStatement
                     Return New StatementBlockContext(SyntaxKind.UsingBlock, DirectCast(node, StatementSyntax), Me)
 
@@ -527,6 +532,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                     ' Handle any block that can be created by this context
                     Add(node)
 
+#If SupportCheckedStatement Then
+                Case SyntaxKind.CheckedBlock
+                    Add(node)
+#End If
+
                 Case Else
                     If Not TypeOf node Is ExecutableStatementSyntax Then
                         Return Nothing
@@ -551,6 +561,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
 
                 Case SyntaxKind.SyncLockBlock
                     Return UseSyntax(node, newContext, DirectCast(node, SyncLockBlockSyntax).EndSyncLockStatement.IsMissing)
+
+#If SupportCheckedStatement Then
+                Case SyntaxKind.CheckedBlock
+                    Return UseSyntax(node, newContext, DirectCast(node, CheckedBlockSyntax).EndCheckedStatement.IsMissing)
+#End If
 
                 Case SyntaxKind.UsingBlock
                     Return UseSyntax(node, newContext, DirectCast(node, UsingBlockSyntax).EndUsingStatement.IsMissing)
@@ -703,6 +718,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                     endStmt = SyntaxFactory.EndSyncLockStatement(missingEndKeyword, InternalSyntaxFactory.MissingKeyword(SyntaxKind.SyncLockKeyword))
                     errorId = ERRID.ERR_ExpectedEndSyncLock
 
+#If SupportCheckedStatement Then
+                Case SyntaxKind.CheckedBlock
+                    endStmt = SyntaxFactory.EndCheckedStatement(missingEndKeyword, InternalSyntaxFactory.MissingKeyword(SyntaxKind.CheckedKeyword))
+                    errorId = ERRID.ERR_EndCheckedExpected
+#End If
                 Case SyntaxKind.SelectBlock
                     endStmt = SyntaxFactory.EndSelectStatement(missingEndKeyword, InternalSyntaxFactory.MissingKeyword(SyntaxKind.SelectKeyword))
                     errorId = ERRID.ERR_ExpectedEndSelect
@@ -801,6 +821,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
 
                 Case SyntaxKind.SyncLockBlock
                     Return SyntaxKind.EndSyncLockStatement
+
+#If SupportCheckedStatement Then
+                Case SyntaxKind.CheckedBlock
+                    Return SyntaxKind.EndCheckedStatement
+#End If
 
                 Case SyntaxKind.SelectBlock, SyntaxKind.CaseBlock, SyntaxKind.CaseElseBlock
                     Return SyntaxKind.EndSelectStatement

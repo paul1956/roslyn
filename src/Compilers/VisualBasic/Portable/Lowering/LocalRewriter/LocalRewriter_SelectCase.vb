@@ -149,7 +149,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 statementBuilder.Add(epilogue)
             End If
 
-            Return New BoundBlock(syntaxNode, Nothing, tempLocals, statementBuilder.ToImmutableAndFree()).MakeCompilerGenerated()
+            Return New BoundBlock(syntaxNode, syntaxNode.RequireOverflowCheck, statementListSyntax:=Nothing, tempLocals, statementBuilder.ToImmutableAndFree()).MakeCompilerGenerated()
         End Function
 
         Private Sub EnsureStringHashFunction(node As BoundSelectStatement)

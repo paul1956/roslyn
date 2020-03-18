@@ -136,6 +136,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             Dim syntax As SyntaxNode = Me.Syntax
             Return New BoundBlock(
                 syntax,
+                compilationState.CompilationCheckOverflow,
                 Nothing,
                 ImmutableArray.Create(FunctionLocal),
                 ImmutableArray.Create(Of BoundStatement)(New BoundLabelStatement(syntax, ExitLabel)))

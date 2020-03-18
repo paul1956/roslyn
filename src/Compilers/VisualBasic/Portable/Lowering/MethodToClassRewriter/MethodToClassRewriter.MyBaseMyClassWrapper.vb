@@ -118,7 +118,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             Dim boundMethodBody As BoundStatement = If(Not wrappedMethod.ReturnType.IsVoidType(),
                                                        DirectCast(New BoundReturnStatement(syntax, boundCall, Nothing, Nothing), BoundStatement),
-                                                       New BoundBlock(syntax, Nothing, ImmutableArray(Of LocalSymbol).Empty,
+                                                       New BoundBlock(syntax, CompilationState.CompilationCheckOverflow, statementListSyntax:=Nothing, ImmutableArray(Of LocalSymbol).Empty,
                                                                       ImmutableArray.Create(Of BoundStatement)(
                                                                           New BoundExpressionStatement(syntax, boundCall),
                                                                           New BoundReturnStatement(syntax, Nothing, Nothing, Nothing))))

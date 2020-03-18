@@ -141,8 +141,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                 Dim boundConversion = DirectCast(boundFirstArgument, BoundConversion)
                                 boundFirstArgument = boundConversion.Update(boundConversion.Operand,
                                                                             boundConversion.ConversionKind,
-                                                                            boundConversion.Checked,
-                                                                            True, ' ExplicitCastInCode
+                                                                            boundConversion.CheckIntegerOverflow,
+                                                                            explicitCastInCode:=True,
                                                                             boundConversion.ConstantValueOpt,
                                                                             boundConversion.ExtendedInfoOpt,
                                                                             boundConversion.Type)
@@ -1288,7 +1288,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             Dim lambdaBody = New BoundBlock(syntaxNode,
-                                            Nothing,
+                                            syntaxNode.RequireOverflowCheck(Me.CheckOverflow),
+                                            statementListSyntax:=Nothing,
                                             ImmutableArray(Of LocalSymbol).Empty,
                                             statementList)
             lambdaBody.SetWasCompilerGenerated()

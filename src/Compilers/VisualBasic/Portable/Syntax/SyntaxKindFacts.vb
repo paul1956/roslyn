@@ -13,7 +13,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' </summary>
         Public Shared Function IsReservedKeyword(kind As SyntaxKind) As Boolean
             Return kind - SyntaxKind.AddHandlerKeyword <=
-                    SyntaxKind.WendKeyword - SyntaxKind.AddHandlerKeyword OrElse kind = SyntaxKind.NameOfKeyword
+                    SyntaxKind.WendKeyword - SyntaxKind.AddHandlerKeyword OrElse
+                    kind = SyntaxKind.NameOfKeyword OrElse
+                    kind = SyntaxKind.CheckedKeyword OrElse
+                    kind = SyntaxKind.UncheckedKeyword
         End Function
 
         ''' <summary>
@@ -232,7 +235,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             SyntaxKind.EndIfKeyword,
             SyntaxKind.GosubKeyword,
             SyntaxKind.VariantKeyword,
-            SyntaxKind.WendKeyword
+            SyntaxKind.WendKeyword,
+            SyntaxKind.CheckedKeyword,
+            SyntaxKind.UncheckedKeyword
             }
         ''' <summary>
         ''' Get all reserved keywords
@@ -604,6 +609,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.EndRaiseEventStatement
                     Return True
 
+#If SupportCheckedStatement Then
+                    Case SyntaxKind.EndCheckedStatement
+                    Return True
+#End If
                 Case Else
                     Return False
             End Select

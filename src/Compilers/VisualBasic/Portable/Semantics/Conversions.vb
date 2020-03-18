@@ -1642,7 +1642,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                             If targetDestinationType Is destination Then
                                 conv = (conv And (Not ConversionKind.Narrowing)) Or ConversionKind.Widening
                             End If
-                        ElseIf binder.CheckOverflow Then
+                        ElseIf binder.Flags.Includes(BinderFlags.CheckedRegion) AndAlso (constantExpression.Kind <> BoundKind.Parenthesized OrElse CType(constantExpression, BoundParenthesized).CheckIntegerOverflow) Then
                             '      Compiler generated code (for example, implementation of GetHashCode for Anonymous Types)
                             '      not always uses project level setting for the option.
                             Debug.Assert(sourceType.AllowsCompileTimeConversions() AndAlso targetDestinationType.AllowsCompileTimeConversions())

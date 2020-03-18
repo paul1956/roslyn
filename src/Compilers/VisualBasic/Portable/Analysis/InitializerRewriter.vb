@@ -76,7 +76,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                         syntax,
                                         New BoundLiteral(syntax, ConstantValue.Null, Nothing),
                                         ConversionKind.WideningNothingLiteral,
-                                        checked:=False,
+                                        checkIntegerOverflow:=False,
                                         explicitCastInCode:=False,
                                         type:=containingType),
                                     suppressObjectClone:=True,
@@ -168,7 +168,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 boundStatements.Add(blockStatements(statementIndex))
             Next
 
-            Return New BoundBlock(block.Syntax, block.StatementListSyntax, block.Locals, boundStatements.ToImmutableAndFree(), block.HasErrors)
+            Return New BoundBlock(block.Syntax, compilationState.CompilationCheckOverflow, block.StatementListSyntax, block.Locals, boundStatements.ToImmutableAndFree(), block.HasErrors)
         End Function
 
         Friend Function BuildScriptInitializerBody(
@@ -182,7 +182,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim boundStatements = ArrayBuilder(Of BoundStatement).GetInstance()
             boundStatements.AddRange(initializerStatements)
             boundStatements.AddRange(block.Statements)
-            Return New BoundBlock(block.Syntax, block.StatementListSyntax, block.Locals, boundStatements.ToImmutableAndFree(), block.HasErrors)
+            Return New BoundBlock(block.Syntax, block.CheckIntegerOverflow, block.StatementListSyntax, block.Locals, boundStatements.ToImmutableAndFree(), block.HasErrors)
         End Function
 
         ''' <summary>

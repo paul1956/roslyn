@@ -23,7 +23,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             Debug.Assert(node.ExtendedInfoOpt Is Nothing)
-            Return ConvertExpression(node.Operand, node.ConversionKind, node.Operand.Type, node.Type, node.Checked, node.ExplicitCastInCode, ConversionSemantics.[Default])
+            Return ConvertExpression(node.Operand, node.ConversionKind, node.Operand.Type, node.Type, node.CheckIntegerOverflow, node.ExplicitCastInCode, ConversionSemantics.[Default])
         End Function
 
         Private Function VisitDirectCast(node As BoundDirectCast) As BoundExpression
@@ -392,7 +392,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             If outerConversion IsNot Nothing Then
                 Debug.Assert(outerConversion.Type.IsSameTypeIgnoringAll(resultType))
                 Return CreateBuiltInConversion(methodCallType, resultType, userDefinedConversion,
-                                               outerConversion.Checked, outerConversion.ExplicitCastInCode, ConversionSemantics.[Default])
+                                               outerConversion.CheckIntegerOverflow, outerConversion.ExplicitCastInCode, ConversionSemantics.[Default])
             Else
                 Return userDefinedConversion
             End If

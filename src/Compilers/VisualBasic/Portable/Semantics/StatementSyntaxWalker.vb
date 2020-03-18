@@ -127,6 +127,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Visit(node.EndSyncLockStatement)
         End Sub
 
+#If SupportCheckedStatement Then
+        Public Overrides Sub VisitCheckedBlock(node As CheckedBlockSyntax)
+            Visit(node.CheckedStatement)
+            VisitList(node.Statements)
+            Visit(node.EndCheckedStatement)
+        End Sub
+#End If
+
         Public Overrides Sub VisitWithBlock(ByVal node As WithBlockSyntax)
             Visit(node.WithStatement)
             VisitList(node.Statements)

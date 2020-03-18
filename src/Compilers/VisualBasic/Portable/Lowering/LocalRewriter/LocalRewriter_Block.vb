@@ -42,7 +42,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
                     Debug.Assert(builder.Count < node.Locals.Length)
 
-                    node = node.Update(node.StatementListSyntax, builder.ToImmutableAndFree(), node.Statements)
+                    node = node.Update(node.CheckIntegerOverflow, node.StatementListSyntax, builder.ToImmutableAndFree(), node.Statements)
                 End If
             End If
 
@@ -62,7 +62,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     builder.Insert(0, prologue)
                 End If
 
-                Return New BoundBlock(node.Syntax, node.StatementListSyntax, If(synthesizedLocal Is Nothing, node.Locals, node.Locals.Add(synthesizedLocal)), builder.ToImmutableAndFree())
+                Return New BoundBlock(node.Syntax, node.CheckIntegerOverflow, node.StatementListSyntax, If(synthesizedLocal Is Nothing, node.Locals, node.Locals.Add(synthesizedLocal)), builder.ToImmutableAndFree())
             End If
 
             Return MyBase.VisitBlock(node)

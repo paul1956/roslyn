@@ -416,7 +416,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     Me._spillFieldAllocator.FreeField(field)
                 Next
 
-                Return Me.F.Block(spill.Locals, newStatements.ToImmutableAndFree())
+                Return Me.F.Block(F.Block.CheckIntegerOverflow,
+                                  spill.Locals, newStatements.ToImmutableAndFree())
             End Function
 
             Private Function TypeNeedsClearing(type As TypeSymbol) As Boolean

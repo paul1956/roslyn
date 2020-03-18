@@ -99,7 +99,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
             body.Add(factory.Return())
 
-            Return factory.Block(body.ToImmutableAndFree())
+            Return factory.Block(compilationState.CompilationCheckOverflow, body.ToImmutableAndFree())
         End Function
 
         Public Overrides ReadOnly Property ContainingModule As ModuleSymbol

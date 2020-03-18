@@ -799,9 +799,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         Dim body As BoundBlock
 
                         If method.IsSub Then
-                            body = f.Block(f.ExpressionStatement(invocation), f.Return())
+                            body = f.Block(compilationState.CompilationCheckOverflow, f.ExpressionStatement(invocation), f.Return())
                         Else
-                            body = f.Block(f.Return(invocation))
+                            body = f.Block(compilationState.CompilationCheckOverflow, f.Return(invocation))
                         End If
 
                         f.CloseMethod(body)
@@ -1460,7 +1460,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 boundStatements.Add(constructorInitializerOpt)
                 boundStatements.AddRange(submissionInitialization)
                 boundStatements.Add(body)
-                body = New BoundBlock(body.Syntax, Nothing, ImmutableArray(Of LocalSymbol).Empty, boundStatements.ToImmutableAndFree(), body.HasErrors).MakeCompilerGenerated()
+                body = New BoundBlock(body.Syntax, body.CheckIntegerOverflow, statementListSyntax:=Nothing, ImmutableArray(Of LocalSymbol).Empty, boundStatements.ToImmutableAndFree(), body.HasErrors).MakeCompilerGenerated()
             End If
 
             ' NOTE: additional check for statement.HasErrors is needed to identify parse errors which didn't get into diagsForCurrentMethod

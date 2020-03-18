@@ -193,7 +193,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                         rewritten.Update(rewritten.OperatorKind,
                                                                          newArgs(0),
                                                                          newArgs(1),
-                                                                         rewritten.Checked,
+                                                                         rewritten.CheckIntegerOverflow,
                                                                          rewritten.ConstantValueOpt,
                                                                          rewritten.Type))
                 End If
@@ -382,7 +382,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Return SpillSequenceWithNewValue(spillSequence,
                                                  rewritten.Update(spillSequence.ValueOpt,
                                                                   rewritten.ConversionKind,
-                                                                  rewritten.Checked,
+                                                                  rewritten.CheckIntegerOverflow,
                                                                   rewritten.ExplicitCastInCode,
                                                                   rewritten.ConstantValueOpt,
                                                                   rewritten.ExtendedInfoOpt,
@@ -820,7 +820,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Return SpillSequenceWithNewValue(spill,
                                                  rewritten.Update(rewritten.OperatorKind,
                                                                   spill.ValueOpt,
-                                                                  rewritten.Checked,
+                                                                  rewritten.CheckIntegerOverflow,
                                                                   rewritten.ConstantValueOpt,
                                                                   rewritten.Type))
             End Function

@@ -17,7 +17,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
         Public Overrides Function VisitUserDefinedBinaryOperator(node As BoundUserDefinedBinaryOperator) As BoundNode
             If _inExpressionLambda Then
-                Return node.Update(node.OperatorKind, DirectCast(Visit(node.UnderlyingExpression), BoundExpression), node.Checked, node.Type)
+                Return node.Update(node.OperatorKind, DirectCast(Visit(node.UnderlyingExpression), BoundExpression), node.CheckIntegerOverflow, node.Type)
             End If
 
             If (node.OperatorKind And BinaryOperatorKind.Lifted) <> 0 Then
@@ -132,7 +132,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 If (binary.OperatorKind And BinaryOperatorKind.Lifted) <> 0 Then
                     left = FinishRewriteOfLiftedIntrinsicBinaryOperator(binary, left, right, tuple.OptimizeForConditionalBranch)
                 Else
-                    left = TransformRewrittenBinaryOperator(binary.Update(binary.OperatorKind, left, right, binary.Checked, binary.ConstantValueOpt, Me.VisitType(binary.Type)))
+                    left = TransformRewrittenBinaryOperator(binary.Update(binary.OperatorKind, left, right, binary.CheckIntegerOverflow, binary.ConstantValueOpt, Me.VisitType(binary.Type)))
                 End If
             Loop While binary IsNot node
 
@@ -192,7 +192,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     ' Dig through possible conversion. For example, in context of an expression tree it is not changed to DirectCast conversion.
                     Dim cast = DirectCast(operand, BoundConversion)
                     Return cast.Update(ReplaceMyGroupCollectionPropertyGetWithUnderlyingField(cast.Operand),
-                                       cast.ConversionKind, cast.Checked, cast.ExplicitCastInCode, cast.ConstantValueOpt,
+                                       cast.ConversionKind, cast.CheckIntegerOverflow, cast.ExplicitCastInCode, cast.ConstantValueOpt,
                                        cast.ExtendedInfoOpt,
                                        cast.Type)
 
@@ -240,7 +240,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     node = node.Update(node.OperatorKind,
                                        ReplaceMyGroupCollectionPropertyGetWithUnderlyingField(node.Left),
                                        ReplaceMyGroupCollectionPropertyGetWithUnderlyingField(node.Right),
-                                       node.Checked,
+                                       node.CheckIntegerOverflow,
                                        node.ConstantValueOpt,
                                        node.Type)
 
@@ -740,7 +740,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                         suppressObjectClone:=True)
 
                 If Me._inExpressionLambda AndAlso memberSymbol.ReturnType.IsObjectType AndAlso node.Type.IsBooleanType Then
-                    result = New BoundConversion(node.Syntax, DirectCast(result, BoundExpression), ConversionKind.NarrowingBoolean, node.Checked, False, node.Type)
+                    result = New BoundConversion(node.Syntax, DirectCast(result, BoundExpression), ConversionKind.NarrowingBoolean, node.CheckIntegerOverflow, False, node.Type)
                 End If
             End If
 
@@ -826,7 +826,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             If Me._inExpressionLambda Then
-                Return node.Update(node.OperatorKind, left, right, node.Checked, node.ConstantValueOpt, node.Type)
+                Return node.Update(node.OperatorKind, left, right, node.CheckIntegerOverflow, node.ConstantValueOpt, node.Type)
             End If
 
             ' Check for trivial (no nulls, two nulls) Cases
@@ -1512,7 +1512,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                         unliftedOpKind,
                                         left,
                                         right,
-                                        originalOperator.Checked,
+                                        originalOperator.CheckIntegerOverflow,
                                         originalOperator.Type.GetNullableUnderlyingType)
         End Function
     End Class

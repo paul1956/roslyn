@@ -122,7 +122,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 End If
             End If
 
-            Return New BoundBlock(accessorBlock, Nothing, ImmutableArray(Of LocalSymbol).Empty, ImmutableArray.Create(Of BoundStatement)(boundStatement))
+            Return New BoundBlock(accessorBlock,
+                                  compilationState.CompilationCheckOverflow,
+                                  statementListSyntax:=Nothing,
+                                  ImmutableArray(Of LocalSymbol).Empty,
+                                  ImmutableArray.Create(Of BoundStatement)(boundStatement))
         End Function
 
         Friend NotOverridable Overrides ReadOnly Property GenerateDebugInfoImpl As Boolean

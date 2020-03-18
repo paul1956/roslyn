@@ -344,6 +344,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.OptionStatement
                     Return True
 
+#If SupportCheckedStatement Then
+                Case SyntaxKind.CheckedBlock, SupportCheckedStatement
+                    Return True
+#End If
+
                 Case SyntaxKind.IfStatement,
                      SyntaxKind.ElseStatement,
                      SyntaxKind.ElseIfStatement,
@@ -407,6 +412,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                      SyntaxKind.EnumMemberDeclaration
                     Return False
 
+#If SupportCheckedStatement Then
+                Case SyntaxKind.CheckedStatement,
+                     SyntaxKind.EndCheckedStatement
+                    Return false
+#End If
                 Case Else
                     ' Unexpected statement kind; add to either stand-alone or non-standalone list.
                     Throw ExceptionUtilities.UnexpectedValue(node.Kind)

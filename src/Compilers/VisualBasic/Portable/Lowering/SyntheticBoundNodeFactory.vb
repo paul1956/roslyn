@@ -338,26 +338,26 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Return boundNode
         End Function
 
-        Public Function Block(statements As ImmutableArray(Of BoundStatement)) As BoundBlock
-            Return Block(ImmutableArray(Of LocalSymbol).Empty, statements)
+        Public Function Block(checkIntegerOverflow As Boolean, statements As ImmutableArray(Of BoundStatement)) As BoundBlock
+            Return Block(checkIntegerOverflow, ImmutableArray(Of LocalSymbol).Empty, statements)
         End Function
 
-        Public Function Block(locals As ImmutableArray(Of LocalSymbol), statements As ImmutableArray(Of BoundStatement)) As BoundBlock
-            Dim boundNode = New BoundBlock(_syntax, Nothing, locals, statements)
+        Public Function Block(checkIntegerOverflow As Boolean, locals As ImmutableArray(Of LocalSymbol), statements As ImmutableArray(Of BoundStatement)) As BoundBlock
+            Dim boundNode = New BoundBlock(_syntax, checkIntegerOverflow, statementListSyntax:=Nothing, locals, statements)
             boundNode.SetWasCompilerGenerated()
             Return boundNode
         End Function
 
         Public Function Block() As BoundBlock
-            Return Block(ImmutableArray(Of BoundStatement).Empty)
+            Return Block(True, ImmutableArray(Of BoundStatement).Empty)
         End Function
 
-        Public Function Block(ParamArray statements As BoundStatement()) As BoundBlock
-            Return Block(ImmutableArray.Create(Of BoundStatement)(statements))
+        Public Function Block(checkIntegerOverflow As Boolean, ParamArray statements As BoundStatement()) As BoundBlock
+            Return Block(checkIntegerOverflow, ImmutableArray.Create(Of BoundStatement)(statements))
         End Function
 
-        Public Function Block(locals As ImmutableArray(Of LocalSymbol), ParamArray statements As BoundStatement()) As BoundBlock
-            Return Block(locals, ImmutableArray.Create(Of BoundStatement)(statements))
+        Public Function Block(checkIntegerOverflow As Boolean, locals As ImmutableArray(Of LocalSymbol), ParamArray statements As BoundStatement()) As BoundBlock
+            Return Block(checkIntegerOverflow, locals, ImmutableArray.Create(Of BoundStatement)(statements))
         End Function
 
         Public Function StatementList() As BoundStatementList
@@ -633,7 +633,7 @@ nextm:
             Dim alt = New GeneratedLabelSymbol("alternative")
             Dim boundCondGoto = New BoundConditionalGoto(_syntax, condition, False, alt)
             boundCondGoto.SetWasCompilerGenerated()
-            Return Block(boundCondGoto, thenClause, [Goto](afterif), Label(alt), elseClause, Label(afterif))
+            Return Block(condition.Syntax.RequireOverflowCheck, boundCondGoto, thenClause, [Goto](afterif), Label(alt), elseClause, Label(afterif))
         End Function
 
         Public Function TernaryConditionalExpression(condition As BoundExpression, ifTrue As BoundExpression, ifFalse As BoundExpression) As BoundTernaryConditionalExpression
@@ -759,7 +759,7 @@ nextm:
 
             Dim boundCaseStatement = New BoundCaseStatement(_syntax, builder.ToImmutableAndFree(), Nothing)
             boundCaseStatement.SetWasCompilerGenerated()
-            Dim boundCaseBlock = New BoundCaseBlock(_syntax, boundCaseStatement, Block(ImmutableArray.Create(Of BoundStatement)(statements)))
+            Dim boundCaseBlock = New BoundCaseBlock(_syntax, boundCaseStatement, Block(_syntax.RequireOverflowCheck, ImmutableArray.Create(Of BoundStatement)(statements)))
             boundCaseBlock.SetWasCompilerGenerated()
             Return boundCaseBlock
         End Function
@@ -1117,7 +1117,7 @@ nextm:
         Public Sub CloseMethod(body As BoundStatement)
             Debug.Assert(Me.CurrentMethod IsNot Nothing)
             If body.Kind <> BoundKind.Block Then
-                body = Me.Block(body)
+                body = Me.Block(body.Syntax.RequireOverflowCheck, body)
             End If
             CompilationState.AddSynthesizedMethod(Me.CurrentMethod, body)
             Me.CurrentMethod = Nothing

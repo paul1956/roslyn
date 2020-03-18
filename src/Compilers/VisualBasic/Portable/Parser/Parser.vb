@@ -947,6 +947,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                 Case SyntaxKind.SyncLockKeyword
                     Return ParseExpressionBlockStatement()
 
+#If SupportCheckedStatement Then
+                Case SyntaxKind.CheckedKeyword
+                    Return ParseCheckedStatement()
+#End If
                 Case SyntaxKind.TryKeyword
                     Return ParseTry()
 
@@ -1874,6 +1878,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
 
                 Case SyntaxKind.WhileKeyword
                     Return SyntaxKind.EndWhileStatement
+
+#If SupportCheckedStatement Then
+                Case SyntaxKind.CheckedKeyword
+                    Return SyntaxKind.EndCheckedStatement
+#End If
 
                 Case Else
                     Return SyntaxKind.None

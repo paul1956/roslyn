@@ -199,7 +199,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Next
 
             sideEffects(count) = DirectCast(node, BoundStatement)
-            Return New BoundBlock(node.Syntax, Nothing, locals.AsImmutable, sideEffects.AsImmutableOrNull)
+            Return New BoundBlock(node.Syntax, node.Syntax.RequireOverflowCheck, statementListSyntax:=Nothing, locals.AsImmutable, sideEffects.AsImmutableOrNull)
         End Function
 
         Public Shared Function Rewrite(
@@ -399,7 +399,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Next
 
                 consequenceWithEnd(block.Statements.Length) = additionOpt
-                Return block.Update(block.StatementListSyntax, block.Locals, consequenceWithEnd.AsImmutableOrNull)
+                Return block.Update(block.CheckIntegerOverflow, block.StatementListSyntax, block.Locals, consequenceWithEnd.AsImmutableOrNull)
             Else
                 Dim consequenceWithEnd(1) As BoundStatement
                 consequenceWithEnd(0) = statement
@@ -420,7 +420,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Next
 
             consequenceWithEnd(block.Statements.Length) = additionOpt
-            Return block.Update(block.StatementListSyntax, block.Locals, consequenceWithEnd.AsImmutableOrNull)
+            Return block.Update(block.CheckIntegerOverflow, block.StatementListSyntax, block.Locals, consequenceWithEnd.AsImmutableOrNull)
         End Function
 
         ''' <summary>
@@ -442,7 +442,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             Return New BoundBlock(
                 block.Syntax,
-                Nothing,
+                block.CheckIntegerOverflow,
+                statementListSyntax:=Nothing,
                 ImmutableArray(Of LocalSymbol).Empty,
                 ImmutableArray.Create(Of BoundStatement)(prologueOpt, block))
         End Function

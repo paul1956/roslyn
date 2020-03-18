@@ -71,9 +71,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
         ' Create a binder using the given statement list.
         Private Sub CreateBinderFromStatementList(list As SyntaxList(Of StatementSyntax), outerBinder As Binder)
-            Dim newBinder = New StatementListBinder(outerBinder, list)
-            _listMap = _listMap.SetItem(list, newBinder)
-            VisitStatementsInList(list, newBinder)
+            Dim newBinder = New StatementListBinder(outerBinder, list).WithFlags(outerBinder.Flags)
+            _listMap = _listMap.SetItem(list, CType(newBinder, BlockBaseBinder))
+            VisitStatementsInList(list, CType(newBinder, BlockBaseBinder))
         End Sub
 
         ' Add a binder to the map.
@@ -220,6 +220,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             CreateBinderFromStatementList(node.Statements, _containingBinder)
         End Sub
 
+#If SupportCheckedStatement Then
+        Public Overrides Sub VisitCheckedBlock(node As CheckedBlockSyntax)
+            CreateBinderFromStatementList(node.Statements, _containingBinder)
+        End Sub
+#End If
         Public Overrides Sub VisitWithBlock(node As WithBlockSyntax)
             _containingBinder = New WithBlockBinder(_containingBinder, node)
 

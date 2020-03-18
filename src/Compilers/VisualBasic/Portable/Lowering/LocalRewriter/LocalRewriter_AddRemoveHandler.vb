@@ -168,7 +168,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             Return New BoundBlock(
-                syntax:=syntax,
+                syntax,
+                syntax.RequireOverflowCheck,
                 statementListSyntax:=Nothing,
                 locals:=ImmutableArray.Create(Of LocalSymbol)(boundTemp.LocalSymbol),
                 statements:=ImmutableArray.Create(Of BoundStatement)(

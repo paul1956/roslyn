@@ -516,7 +516,7 @@ Namespace Microsoft.CodeAnalysis.Operations
             Dim type As ITypeSymbol = boundUnaryOperator.Type
             Dim constantValue As [Optional](Of Object) = ConvertToOptional(boundUnaryOperator.ConstantValueOpt)
             Dim isLifted As Boolean = (boundUnaryOperator.OperatorKind And VisualBasic.UnaryOperatorKind.Lifted) <> 0
-            Dim isChecked As Boolean = boundUnaryOperator.Checked
+            Dim isChecked As Boolean = boundUnaryOperator.CheckIntegerOverflow
             Dim isImplicit As Boolean = boundUnaryOperator.WasCompilerGenerated
             Return New VisualBasicLazyUnaryOperation(Me, boundUnaryOperator, operatorKind, isLifted, isChecked, operatorMethod, _semanticModel, syntax, type, constantValue, isImplicit)
         End Function
@@ -1148,7 +1148,7 @@ Namespace Microsoft.CodeAnalysis.Operations
                                                                         New Lazy(Of IOperation)(Function() Operation.SetParentOperation(Create(operatorsOpt.GreaterThanOrEqual), Nothing)))
             End If
 
-            Return New VisualBasicLazyForToLoopOperation(Me, boundForToStatement, locals, boundForToStatement.Checked, (loopObj, userDefinedInfo), continueLabel, exitLabel,
+            Return New VisualBasicLazyForToLoopOperation(Me, boundForToStatement, locals, boundForToStatement.CheckIntegerOverflow, (loopObj, userDefinedInfo), continueLabel, exitLabel,
                                                          _semanticModel, syntax, type, constantValue, isImplicit)
         End Function
 
@@ -1390,6 +1390,15 @@ Namespace Microsoft.CodeAnalysis.Operations
             Dim isImplicit As Boolean = boundSyncLockStatement.WasCompilerGenerated
             Return New VisualBasicLazyLockOperation(Me, boundSyncLockStatement, lockTakenSymbol, _semanticModel, syntax, type, constantValue, isImplicit)
         End Function
+
+#If SupportCheckedStatement Then
+        Private Function CreateBoundCheckedStatementOperation(boundCheckedStatement As BoundCheckedStatement) As IBlockOperation
+            Dim type As ITypeSymbol = Nothing
+            Dim constantValue As [Optional](Of Object) = New [Optional](Of Object)()
+            Dim isImplicit As Boolean = boundCheckedStatement.WasCompilerGenerated
+            Return New VisualBasicLazyBlockOperation(Me, boundCheckedStatement.Body, Nothing, _semanticModel, boundCheckedStatement.Syntax, type, constantValue, isImplicit)
+        End Function
+#End If
 
         Private Function CreateBoundNoOpStatementOperation(boundNoOpStatement As BoundNoOpStatement) As IEmptyOperation
             Dim syntax As SyntaxNode = boundNoOpStatement.Syntax

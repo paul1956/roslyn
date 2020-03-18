@@ -50,7 +50,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 body = DirectCast(VisitBlock(node.Body), BoundBlock)
             End If
 
-            body = body.Update(body.StatementListSyntax,
+            body = body.Update(body.CheckIntegerOverflow,
+                               body.StatementListSyntax,
                                If(body.Locals.IsEmpty,
                                   ImmutableArray.Create(Of LocalSymbol)(_currentLineTemporary),
                                   body.Locals.Add(_currentLineTemporary)),
@@ -250,7 +251,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             statements.Add(nodeFactory.Goto(onErrorFailureLabel))
 
             ' Done with content of the try block.
-            Dim tryBlock = nodeFactory.Block(statements.ToImmutable())
+            Dim requireOverflowCheck As Boolean = node.Syntax.RequireOverflowCheck
+            Dim tryBlock = nodeFactory.Block(requireOverflowCheck, statements.ToImmutable())
             statements.Clear()
 
             statements.Add(RewriteTryStatement(
@@ -258,8 +260,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 tryBlock,
                 ImmutableArray.Create(New BoundCatchBlock(
                     node.Syntax,
-                    Nothing,
-                    Nothing,
+                    localOpt:=Nothing,
+                    exceptionSourceOpt:=Nothing,
                     If(_currentLineTemporary IsNot Nothing,
                         New BoundLocal(node.Syntax, _currentLineTemporary, isLValue:=False, type:=_currentLineTemporary.Type),
                         Nothing),
@@ -267,7 +269,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         nodeFactory.Local(_unstructuredExceptionHandling.ActiveHandlerTemporary, isLValue:=False),
                         nodeFactory.Local(_unstructuredExceptionHandling.ResumeTargetTemporary, isLValue:=False),
                         bool),
-                    nodeFactory.Block(ImmutableArray.Create(Of BoundStatement)(nodeFactory.Goto(onErrorLabel))),
+                    nodeFactory.Block(True, ImmutableArray.Create(Of BoundStatement)(nodeFactory.Goto(onErrorLabel))),
                     isSynthesizedAsyncCatchAll:=False)),
                 Nothing,
                 Nothing))
@@ -319,7 +321,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             _unstructuredExceptionHandling.ResumeLabel = Nothing
             _unstructuredExceptionHandling.OnErrorResumeNextCount = 0
 
-            Return nodeFactory.Block(locals.ToImmutableAndFree(), statements.ToImmutableAndFree())
+            Return nodeFactory.Block(requireOverflowCheck, locals.ToImmutableAndFree(), statements.ToImmutableAndFree())
         End Function
 
         Public Overrides Function VisitOnErrorStatement(node As BoundOnErrorStatement) As BoundNode

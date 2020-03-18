@@ -24,7 +24,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator
                     builder.Add(GenerateCreateVariableStatement(compilation, container, syntax, local))
                 Next
                 builder.AddRange(block.Statements)
-                block = New BoundBlock(syntax, block.StatementListSyntax, block.Locals, builder.ToImmutableAndFree())
+                block = New BoundBlock(syntax, compilation.Options.CheckOverflow, block.StatementListSyntax, block.Locals, builder.ToImmutableAndFree())
             End If
 
             locals.Free()

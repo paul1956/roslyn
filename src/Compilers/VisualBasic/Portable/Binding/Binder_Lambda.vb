@@ -470,7 +470,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                                expression.HasErrors)
                     boundReturn.SetWasCompilerGenerated()
 
-                    block = New BoundBlock(lambdaSyntax, Nothing, ImmutableArray(Of LocalSymbol).Empty,
+                    block = New BoundBlock(lambdaSyntax,
+                                           lambdaSyntax.RequireOverflowCheck(Me.CheckOverflow),
+                                           statementListSyntax:=Nothing,
+                                           ImmutableArray(Of LocalSymbol).Empty,
                                            ImmutableArray.Create(Of BoundStatement)(boundReturn),
                                            expression.HasErrors).MakeCompilerGenerated()
 
@@ -566,7 +569,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 localBuilder.AddRange(block.Locals)
             End If
 
-            block = block.Update(block.StatementListSyntax, localBuilder.ToImmutableAndFree(), statements.ToImmutableAndFree)
+            block = block.Update(block.CheckIntegerOverflow, block.StatementListSyntax, localBuilder.ToImmutableAndFree(), statements.ToImmutableAndFree)
             block.SetWasCompilerGenerated()
 
             If lambdaSymbol.IsAsync AndAlso Not CheckAwaitWalker.VisitBlock(bodyBinder, block, diagnostics) AndAlso

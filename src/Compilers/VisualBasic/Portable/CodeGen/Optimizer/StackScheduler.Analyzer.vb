@@ -969,7 +969,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.CodeGen
                     End If
 
                     Dim type As TypeSymbol = Me.VisitType(binary.Type)
-                    left = binary.Update(binary.OperatorKind, left, right, binary.Checked, binary.ConstantValueOpt, type)
+                    left = binary.Update(binary.OperatorKind, left, right, binary.CheckIntegerOverflow, binary.ConstantValueOpt, type)
 
                     If stack.Count = 0 Then
                         Exit Do
@@ -1003,7 +1003,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.CodeGen
                         ' implicit label here
                         EnsureStackState(cookie)
 
-                        Return node.Update(node.OperatorKind, left, right, node.Checked, node.ConstantValueOpt, node.Type)
+                        Return node.Update(node.OperatorKind, left, right, node.CheckIntegerOverflow, node.ConstantValueOpt, node.Type)
 
                     Case Else
                         Return MyBase.VisitBinaryOperator(node)
@@ -1012,12 +1012,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.CodeGen
 
             Public Overrides Function VisitUnaryOperator(node As BoundUnaryOperator) As BoundNode
                 ' checked(-x) is emitted as "0 - x"
-                If node.Checked AndAlso (node.OperatorKind And UnaryOperatorKind.OpMask) = UnaryOperatorKind.Minus Then
+                If node.CheckIntegerOverflow AndAlso (node.OperatorKind And UnaryOperatorKind.OpMask) = UnaryOperatorKind.Minus Then
                     Dim storedStack = Me.StackDepth
                     Me.PushEvalStack(Nothing, ExprContext.None)
                     Dim operand = DirectCast(Me.Visit(node.Operand), BoundExpression)
                     Me.SetStackDepth(storedStack)
-                    Return node.Update(node.OperatorKind, operand, node.Checked, node.ConstantValueOpt, node.Type)
+                    Return node.Update(node.OperatorKind, operand, node.CheckIntegerOverflow, node.ConstantValueOpt, node.Type)
 
                 Else
                     Return MyBase.VisitUnaryOperator(node)

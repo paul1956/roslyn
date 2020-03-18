@@ -87,6 +87,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Dim ifNullSkip = New BoundConditionalGoto(syntax, condition, True, skipEventRaise).MakeCompilerGenerated
 
                 result = New BoundBlock(syntax,
+                                        syntax.RequireOverflowCheck,
                                         Nothing,
                                         ImmutableArray.Create(temp),
                                         ImmutableArray.Create(Of BoundStatement)(

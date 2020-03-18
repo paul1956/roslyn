@@ -89,7 +89,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.CodeGen
 
                     Dim right = DirectCast(Me.Visit(binary.Right), BoundExpression)
                     Dim type As TypeSymbol = Me.VisitType(binary.Type)
-                    left = binary.Update(binary.OperatorKind, left, right, binary.Checked, binary.ConstantValueOpt, type)
+                    left = binary.Update(binary.OperatorKind, left, right, binary.CheckIntegerOverflow, binary.ConstantValueOpt, type)
 
                     If stack.Count = 0 Then
                         Exit Do

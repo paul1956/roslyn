@@ -198,13 +198,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                     {notifyCompletionAsLValue, Me.F.ReferenceOrByrefMe()}))
 
                         blockBuilder.Add(
-                            Me.F.Block(
+                            Me.F.Block(Me.F.Block.CheckIntegerOverflow,
                                 ImmutableArray.Create(Of LocalSymbol)(asCriticalNotifyCompletion, asNotifyCompletion),
                                 asCriticalNotifyCompletionAssignment,
                                 Me.F.If(
                                     condition:=Me.F.Not(Me.F.ReferenceIsNothing(Me.F.Local(asCriticalNotifyCompletion, False))),
                                     thenClause:=awaitUnsafeOnCompletedCall,
-                                    elseClause:=Me.F.Block(
+                                    elseClause:=Me.F.Block(F.Block.CheckIntegerOverflow,
                                         asNotifyCompletionAssignment,
                                         awaitOnCompletedCall))))
 
@@ -268,7 +268,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         Me.F.Field(Me.F.Me(), awaiterField, True),
                         Me.F.Null(awaiterField.Type)))
 
-                Return Me.F.Block(blockBuilder.ToImmutableAndFree())
+                Return Me.F.Block(F.Block.CheckIntegerOverflow,
+                                  blockBuilder.ToImmutableAndFree())
             End Function
 
             Protected Overrides Function MaterializeProxy(origExpression As BoundExpression, proxy As CapturedSymbolOrExpression) As BoundNode

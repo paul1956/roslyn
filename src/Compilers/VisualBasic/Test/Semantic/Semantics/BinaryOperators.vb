@@ -1504,6 +1504,114 @@ End Module
             CompileAndVerify(compilation, expectedOutput:="58430604")
         End Sub
 
+        <Fact>
+        Public Sub UncheckedExpression1()
+
+            Dim compilationDef =
+<compilation>
+    <file name="a.vb">
+Module M
+    Sub Main()
+        Dim ten = 10
+        Dim i2 = Unchecked ( 2147483647  + ten )
+        System.Console.WriteLine(i2)
+    End Sub
+End Module
+    </file>
+</compilation>
+            Dim compilation = CompilationUtils.CreateCompilation(compilationDef, options:=TestOptions.ReleaseExe)
+            compilation.VerifyDiagnostics()
+            CompileAndVerify(compilation, expectedOutput:="-2147483639")
+        End Sub
+
+        <Fact>
+        Public Sub UncheckedExpression2()
+
+            Dim compilationDef =
+<compilation>
+    <file name="a.vb">
+Module M
+    Sub Main()
+        Const i1 As ULong = (ULong.MaxValue)
+        Dim i2 as ULong = Unchecked( i1 + CType(1, ULong))
+        System.Console.WriteLine(i2)
+    End Sub
+End Module
+    </file>
+</compilation>
+            Dim compilation = CompilationUtils.CreateCompilation(compilationDef, options:=TestOptions.ReleaseExe)
+            compilation.VerifyDiagnostics()
+            CompileAndVerify(compilation, expectedOutput:="0")
+        End Sub
+
+#If SupportCheckedStatement Then
+        <Fact>
+        Public Sub UncheckedStatement1()
+
+            Dim compilationDef =
+<compilation>
+    <file name="a.vb">
+        Module M
+            Sub Main()
+                Dim ten As Byte = 10
+                Checked Off
+                    Dim i2 As Integer = 2147483647  + ten
+                    System.Console.WriteLine(i2)
+                End Checked
+            End Sub
+        End Module
+            </file>
+</compilation>
+            Dim compilation = CompilationUtils.CreateCompilation(compilationDef, options:=TestOptions.ReleaseExe)
+            compilation.VerifyDiagnostics()
+            CompileAndVerify(compilation, expectedOutput:="-2147483639")
+        End Sub
+
+        <Fact>
+        Public Sub UncheckedStatement2()
+
+            Dim compilationDef =
+<compilation>
+    <file name="a.vb">
+        Module M
+            Sub Main()
+                Const i1 As ULong = (ULong.MaxValue)
+                Checked Off
+                    Dim i2 as ULong = i1 + CType(1, ULong)
+                    System.Console.WriteLine(i2)
+                End Checked
+            End Sub
+        End Module
+            </file>
+</compilation>
+            Dim compilation = CompilationUtils.CreateCompilation(compilationDef, options:=TestOptions.ReleaseExe)
+            compilation.VerifyDiagnostics()
+            CompileAndVerify(compilation, expectedOutput:="0")
+        End Sub
+
+        <Fact>
+        Public Sub CheckedStatement2()
+
+            Dim compilationDef =
+<compilation>
+    <file name="a.vb">
+        Module M
+            Sub Main()
+                Const i1 As ULong = (ULong.MaxValue)
+                Checked Off
+                    Dim i2 as ULong = i1 - CType(1, ULong)
+                    System.Console.WriteLine(i2)
+                End Checked
+            End Sub
+        End Module
+            </file>
+</compilation>
+            Dim compilation = CompilationUtils.CreateCompilation(compilationDef, options:=TestOptions.ReleaseExe)
+            compilation.VerifyDiagnostics()
+            CompileAndVerify(compilation, expectedOutput:=$"{ULong.MaxValue - 1 }")
+        End Sub
+#End If
+
     End Class
 
 End Namespace

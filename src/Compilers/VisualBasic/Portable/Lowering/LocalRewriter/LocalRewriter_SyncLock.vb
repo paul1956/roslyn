@@ -126,6 +126,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             ' rewrite the SyncLock body
             Dim tryBody As BoundBlock = New BoundBlock(syntaxNode,
+                                                       syntaxNode.RequireOverflowCheck,
                                                        Nothing,
                                                        ImmutableArray(Of LocalSymbol).Empty,
                                                        tryStatements)
@@ -133,6 +134,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim statementInFinally As BoundStatement = GenerateMonitorExit(syntaxNode, boundLockObjectLocal, boundLockTakenLocal)
 
             Dim finallyBody As BoundBlock = New BoundBlock(syntaxNode,
+                                                           syntaxNode.RequireOverflowCheck,
                                                            Nothing,
                                                            ImmutableArray(Of LocalSymbol).Empty,
                                                            ImmutableArray.Create(Of BoundStatement)(statementInFinally))
@@ -157,7 +159,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             RestoreUnstructuredExceptionHandlingContext(node, saveState)
 
             Return New BoundBlock(syntaxNode,
-                                  Nothing,
+                                  syntaxNode.RequireOverflowCheck,
+                                  statementListSyntax:=Nothing,
                                   locals,
                                   statements.ToImmutableAndFree)
         End Function

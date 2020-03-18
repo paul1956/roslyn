@@ -52,7 +52,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Case BoundKind.Conversion
                     Dim conversion = DirectCast(convTestExpr, BoundConversion)
                     Dim paramSymbol As ParameterSymbol = CreateCoalesceLambdaParameterSymbol(testExpressionType)
-                    Dim lambdaBody As BoundExpression = BuildLambdaBodyForCoalesce(conversion, resultType, paramSymbol, conversion.Checked)
+                    Dim lambdaBody As BoundExpression = BuildLambdaBodyForCoalesce(conversion, resultType, paramSymbol, conversion.CheckIntegerOverflow)
                     Dim coalesceLambda As BoundExpression = BuildLambdaForCoalesceCall(resultType, paramSymbol, lambdaBody)
                     Return ConvertRuntimeHelperToExpressionTree("Coalesce", rewrittenTestExpression, rewrittenElseExpression, coalesceLambda)
 
@@ -151,7 +151,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                 inOutConversionFlags:=CByte(0),
                                 type:=nullableType),
                             conversionKind:=ConversionKind.Narrowing Or ConversionKind.UserDefined,
-                            checked:=isChecked,
+                            checkIntegerOverflow:=isChecked,
                             explicitCastInCode:=False,
                             constantValueOpt:=Nothing,
                             type:=underlyingType)
@@ -230,7 +230,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 type:=callType)
 
             If outConv IsNot Nothing Then
-                outConv = outConv.Update([call], outConv.ConversionKind, outConv.Checked, outConv.ExplicitCastInCode, outConv.ConstantValueOpt,
+                outConv = outConv.Update([call], outConv.ConversionKind, outConv.CheckIntegerOverflow, outConv.ExplicitCastInCode, outConv.ConstantValueOpt,
                                          outConv.ExtendedInfoOpt, outConv.Type)
             End If
 
@@ -244,7 +244,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             Return conversion.Update(userDefinedConv, newConversionKind,
-                                     conversion.Checked, conversion.ExplicitCastInCode, conversion.ConstantValueOpt,
+                                     conversion.CheckIntegerOverflow, conversion.ExplicitCastInCode, conversion.ConstantValueOpt,
                                      conversion.ExtendedInfoOpt, toType)
         End Function
 

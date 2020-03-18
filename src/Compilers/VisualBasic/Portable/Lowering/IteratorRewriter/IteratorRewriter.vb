@@ -214,7 +214,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                             F.IntEqual(F.Field(F.Me, StateField, False), F.Literal(StateMachineStates.FinishedStateMachine)),
                             F.IntEqual(F.Field(F.Me, _initialThreadIdField, False), managedThreadId)),
                     thenClause:=
-                        F.Block(
+                        F.Block(checkIntegerOverflow:=True, ' <Prototype>
                             F.Assignment(F.Field(F.Me, StateField, True), F.Literal(StateMachineStates.FirstUnusedState)),
                             F.Assignment(F.Local(resultVariable, True), F.Me),
                             If(Method.IsShared OrElse Method.MeParameter.Type.IsReferenceType,
@@ -252,7 +252,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Next
 
                 bodyBuilder.Add(F.Return(F.Local(resultVariable, False)))
-                F.CloseMethod(F.Block(ImmutableArray.Create(resultVariable), bodyBuilder.ToImmutableAndFree()))
+                F.CloseMethod(F.Block(checkIntegerOverflow:=True, ' <Prototype>
+                                      ImmutableArray.Create(resultVariable), bodyBuilder.ToImmutableAndFree()))
 
                 ' Generate IEnumerable.GetEnumerator
                 ' NOTE: this is a private implementing method. Its name is irrelevant
@@ -306,7 +307,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 End If
 
                 bodyBuilder.Add(F.Return())
-                F.CloseMethod(F.Block(bodyBuilder.ToImmutableAndFree()))
+                F.CloseMethod(F.Block(checkIntegerOverflow:=True, ' <Prototype>
+                                      bodyBuilder.ToImmutableAndFree()))
                 bodyBuilder = Nothing
             End If
 

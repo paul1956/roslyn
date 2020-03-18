@@ -151,7 +151,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             initializers.Free()
 
             bodyBuilder.Add(GenerateStateMachineCreation(stateMachineVariable, frameType))
-            Return Me.F.Block(
+            Return Me.F.Block(Body.Syntax.RequireOverflowCheck,
                 ImmutableArray.Create(Of LocalSymbol)(stateMachineVariable),
                 bodyBuilder.ToImmutableAndFree())
         End Function

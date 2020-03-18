@@ -114,7 +114,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Catch ex As BoundTreeVisitor.CancelledByStackGuardException
                 diagnostics.AddRangeAndFree(localDiagnostics)
                 ex.AddAnError(diagnostics)
-                Return New BoundBlock(body.Syntax, body.StatementListSyntax, body.Locals, body.Statements, hasErrors:=True)
+                Return New BoundBlock(body.Syntax, body.CheckIntegerOverflow, body.StatementListSyntax, body.Locals, body.Statements, hasErrors:=True)
             End Try
         End Function
 

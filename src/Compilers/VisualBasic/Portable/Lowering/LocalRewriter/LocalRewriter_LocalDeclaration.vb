@@ -311,7 +311,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             Dim tryBody As BoundBlock = New BoundBlock(syntax,
-                                                       Nothing,
+                                                       syntax.RequireOverflowCheck,
+                                                       statementListSyntax:=Nothing,
                                                        ImmutableArray(Of LocalSymbol).Empty,
                                                        statementsInTry)
 
@@ -322,7 +323,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim monitorExit As BoundStatement = GenerateMonitorExit(syntax, flagAsObject, boundLockTakenLocal)
 
             Dim finallyBody As BoundBlock = New BoundBlock(syntax,
-                                                           Nothing,
+                                                           syntax.RequireOverflowCheck,
+                                                           statementListSyntax:=Nothing,
                                                            ImmutableArray(Of LocalSymbol).Empty,
                                                            ImmutableArray.Create(flagStateAssignOne, monitorExit))
 
@@ -331,7 +333,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             statements.Add(tryFinally)
 
             Return New BoundBlock(syntax,
-                                  Nothing,
+                                  syntax.RequireOverflowCheck,
+                                  statementListSyntax:=Nothing,
                                   locals,
                                   statements.ToImmutableAndFree)
         End Function

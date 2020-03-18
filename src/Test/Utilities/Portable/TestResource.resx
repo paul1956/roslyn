@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
+  <!--
+    Microsoft ResX Schema
+
     Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
+
+    The primary goals of this format is to allow a simple XML format
+    that is mostly human readable. The generation and parsing of the
+    various data types are done through the TypeConverter classes
     associated with the data types.
-    
+
     Example:
-    
+
     ... ado.net/XML headers & schema ...
     <resheader name="resmimetype">text/microsoft-resx</resheader>
     <resheader name="version">2.0</resheader>
@@ -26,36 +26,36 @@
         <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
         <comment>This is a comment</comment>
     </data>
-                
-    There are any number of "resheader" rows that contain simple 
+
+    There are any number of "resheader" rows that contain simple
     name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
+
+    Each data row contains a name, and value. The row also contains a
+    type or mimetype. Type corresponds to a .NET class that support
+    text/value conversion through the TypeConverter architecture.
+    Classes that don't support this are serialized and stored with the
     mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
+
+    The mimetype is used for serialized objects, and tells the
+    ResXResourceReader how to depersist the object. This is currently not
     extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
+
+    Note - application/x-microsoft.net.object.binary.base64 is the format
+    that the ResXResourceWriter will generate, however the reader can
     read any of the formats listed below.
-    
+
     mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
             : and then encoded with base64 encoding.
-    
+
     mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
+    value   : The object must be serialized with
             : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
             : and then encoded with base64 encoding.
 
     mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
+    value   : The object must be serialized into a byte array
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
@@ -156,7 +156,7 @@ using Y = ABC.X&lt;int&gt;;
 
 #endregion
 
-[assembly: System.Copyright(@"(C)"" 
+[assembly: System.Copyright(@"(C)""
 
 2009")]
 [module: System.Copyright("\n\t\u0123(C) \"2009" + "\u0123")]
@@ -180,7 +180,7 @@ namespace My
 
         private const int global = int.MinValue - 1;
 
-        static A() 
+        static A()
         {
             int x = default;
             string y = null!;
@@ -275,7 +275,7 @@ namespace My
             uint @uint;
             ulong @ulong;
             ushort @ushort;
-            
+
             dynamic dynamic = local5;
             var add = 0;
             var ascending = 0;
@@ -316,12 +316,12 @@ namespace My
                 C = 0
             };
             var o5 = new { A = 0 };
-            var dictionaryInitializer = new Dictionary&lt;int, string&gt; 
-            { 
-                {1, ""}, 
-                {2, "a"} 
+            var dictionaryInitializer = new Dictionary&lt;int, string&gt;
+            {
+                {1, ""},
+                {2, "a"}
             };
-            float[] a = new float[] 
+            float[] a = new float[]
             {
                 0f,
                 1.1f
@@ -378,7 +378,7 @@ namespace My
             while (i &lt; 10);
             for (int j = 0; j &lt; 100; ++j)
             {
-                for(;;) 
+                for(;;)
                 {
                     for (int i = 0, j = 0; i &lt; length; i++, j++) { }
                     if (true) continue;
@@ -443,7 +443,7 @@ namespace My
             {
                 try { } catch { }
             }
-            var anonymous = 
+            var anonymous =
             {
                 A = 1,
                 B = 2,
@@ -752,7 +752,7 @@ namespace ConsoleApplication1
 namespace Comments.XmlComments.UndocumentedKeywords
 {
     /// &lt;summary&gt;
-    /// Whatever 
+    /// Whatever
     /// &lt;/summary&gt;
     /// &lt;!-- c --&gt;
     /// &lt;![CDATA[c]]&gt; //
@@ -805,7 +805,7 @@ namespace Comments.XmlComments.UndocumentedKeywords
         void Params(ref dynamic a, out dynamic b, params dynamic[] c) {}
         void Params(out dynamic a = 2, ref dynamic c = default(dynamic), params dynamic[][] c) {}
 
-        public override string ToString() { return base.ToString(); } 
+        public override string ToString() { return base.ToString(); }
 
         public partial void OnError();
 
@@ -932,7 +932,7 @@ L:
 #End If
             Const local? As Integer = Integer.MaxValue
             Const local0? As Guid = New Guid(r.ToString())
-            'Inserted Compiling code 
+            'Inserted Compiling code
             Dim r As Integer
             Dim Varioblelocal? As Integer = Integer.MaxValue
             Dim Varioblelocal0? As Guid = New Guid(r.ToString())
@@ -1039,9 +1039,7 @@ CaseLabel2:
                 End If
             Next i
 
-            ' There is no equivalent to a 'checked' block in VB.NET
-            '			checked
-            i += 1
+            Dim i As Byte = Unchecked(255 + 1) + Checked(1 + 1)
             'Modified use of synclock functions for VB
             Dim sText As String
             Dim objLock As Object = New Object()
@@ -1414,7 +1412,7 @@ End Class
 Namespace Comments.XmlComments.UndocumentedKeywords
 
     ''' &lt;summary&gt;
-    ''' Whatever 
+    ''' Whatever
     ''' &lt;/summary&gt;
     ''' &lt;!-- c --&gt; 
     ''' &lt;![CDATA[c]]&gt;  //
@@ -1921,8 +1919,8 @@ Imports X = ABC.X(Of Integer)
 Imports A.B
 
 #End Region
-&lt;Assembly: System.Copyright("(C) 2009")&gt; 
-&lt;Module: System.Copyright(vbLf &amp; vbTab &amp; ChrW(&amp;H123).ToString() &amp; "(C) 2009" &amp; ChrW(&amp;H123).ToString())&gt; 
+&lt;Assembly: System.Copyright("(C) 2009")&gt;
+&lt;Module: System.Copyright(vbLf &amp; vbTab &amp; ChrW(&amp;H123).ToString() &amp; "(C) 2009" &amp; ChrW(&amp;H123).ToString())&gt;
 Friend Interface CoContra(Of Out T, In K)
 End Interface
 Public Delegate Sub CoContra2()
@@ -1940,7 +1938,7 @@ Namespace My
 
         Shared Sub New()
         End Sub
-      
+
         &lt;Obsolete()&gt;
         Public Sub New(&lt;Obsolete()&gt; ByVal goo As Integer)
             MyBase.New(1)
@@ -1954,7 +1952,7 @@ L:
             Const local? As Integer = Integer.MaxValue
             Const local0? As Guid = New Guid(r.ToString())
 
-            'Inserted Compiling code 
+            'Inserted Compiling code
             Dim r As Integer
             Dim Varioblelocal? As Integer = Integer.MaxValue
             Dim Varioblelocal0? As Guid = New Guid(r.ToString())
@@ -2045,7 +2043,7 @@ CaseLabel2:
             Do
                 i += 1
             Loop While i &lt; 10
-            
+
             Do
                 i += 1
             Loop Until i &gt; 20
@@ -2068,9 +2066,7 @@ CaseLabel2:
                 End If
             Next i
 
-            ' There is no equivalent to a 'checked' block in VB.NET
-            '			checked
-            i += 1
+            Dim i As Byte = Unchecked(255 + 1) + Checked(1 + 1)
 
             'Modified use of synclock functions for VB
             Dim sText As String
@@ -2452,7 +2448,7 @@ Friend Class Test2
 End Class
 Namespace Comments.XmlComments.UndocumentedKeywords
     ''' &lt;summary&gt;
-    ''' Whatever 
+    ''' Whatever
     ''' &lt;/summary&gt;
     ''' &lt;!-- c --&gt;
     ''' &lt;![CDATA[c]]&gt; //

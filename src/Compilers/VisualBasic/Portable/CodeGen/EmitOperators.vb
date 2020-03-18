@@ -25,7 +25,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.CodeGen
                     ' If overflow checking is on, we must subtract from zero because Neg doesn't
                     ' check for overflow.
                     Dim targetPrimitiveType = expression.Type.PrimitiveTypeCode
-                    Dim useCheckedSubtraction As Boolean = (expression.Checked AndAlso
+                    Dim useCheckedSubtraction As Boolean = (expression.CheckIntegerOverflow AndAlso
                                                      (targetPrimitiveType = Cci.PrimitiveTypeCode.Int32 OrElse
                                                       targetPrimitiveType = Cci.PrimitiveTypeCode.Int64))
 
@@ -48,7 +48,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.CodeGen
 
                     ' The result of the math operation has either 4 or 8 byte width.
                     ' For 1 and 2 byte widths, convert the value back to the original type.
-                    DowncastResultOfArithmeticOperation(targetPrimitiveType, expression.Checked)
+                    DowncastResultOfArithmeticOperation(targetPrimitiveType, expression.CheckIntegerOverflow)
 
                 Case UnaryOperatorKind.Not
 
@@ -84,7 +84,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.CodeGen
         End Sub
 
         Private Shared Function OperatorHasSideEffects(expression As BoundUnaryOperator) As Boolean
-            If expression.Checked AndAlso
+            If expression.CheckIntegerOverflow AndAlso
                expression.OperatorKind = UnaryOperatorKind.Minus AndAlso
                expression.Type.IsIntegralType() Then
                 Return True
@@ -229,7 +229,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.CodeGen
                 Case BinaryOperatorKind.Multiply,
                      BinaryOperatorKind.Add,
                      BinaryOperatorKind.Subtract
-                    Return expression.Checked AndAlso expression.Type.IsIntegralType()
+                    Return expression.CheckIntegerOverflow AndAlso expression.Type.IsIntegralType()
 
                 Case Else
                     Return False
@@ -251,11 +251,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.CodeGen
             Select Case opKind
                 Case BinaryOperatorKind.Multiply
 
-                    If expression.Checked AndAlso
+                    If expression.CheckIntegerOverflow AndAlso
                         (targetPrimitiveType = Cci.PrimitiveTypeCode.Int32 OrElse targetPrimitiveType = Cci.PrimitiveTypeCode.Int64) Then
                         _builder.EmitOpCode(ILOpCode.Mul_ovf)
 
-                    ElseIf expression.Checked AndAlso
+                    ElseIf expression.CheckIntegerOverflow AndAlso
                         (targetPrimitiveType = Cci.PrimitiveTypeCode.UInt32 OrElse targetPrimitiveType = Cci.PrimitiveTypeCode.UInt64) Then
                         _builder.EmitOpCode(ILOpCode.Mul_ovf_un)
                     Else
@@ -270,11 +270,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.CodeGen
                     End If
 
                 Case BinaryOperatorKind.Add
-                    If expression.Checked AndAlso
+                    If expression.CheckIntegerOverflow AndAlso
                         (targetPrimitiveType = Cci.PrimitiveTypeCode.Int32 OrElse targetPrimitiveType = Cci.PrimitiveTypeCode.Int64) Then
                         _builder.EmitOpCode(ILOpCode.Add_ovf)
 
-                    ElseIf expression.Checked AndAlso
+                    ElseIf expression.CheckIntegerOverflow AndAlso
                         (targetPrimitiveType = Cci.PrimitiveTypeCode.UInt32 OrElse targetPrimitiveType = Cci.PrimitiveTypeCode.UInt64) Then
                         _builder.EmitOpCode(ILOpCode.Add_ovf_un)
                     Else
@@ -282,11 +282,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.CodeGen
                     End If
 
                 Case BinaryOperatorKind.Subtract
-                    If expression.Checked AndAlso
+                    If expression.CheckIntegerOverflow AndAlso
                         (targetPrimitiveType = Cci.PrimitiveTypeCode.Int32 OrElse targetPrimitiveType = Cci.PrimitiveTypeCode.Int64) Then
                         _builder.EmitOpCode(ILOpCode.Sub_ovf)
 
-                    ElseIf expression.Checked AndAlso
+                    ElseIf expression.CheckIntegerOverflow AndAlso
                         (targetPrimitiveType = Cci.PrimitiveTypeCode.UInt32 OrElse targetPrimitiveType = Cci.PrimitiveTypeCode.UInt64) Then
                         _builder.EmitOpCode(ILOpCode.Sub_ovf_un)
                     Else
@@ -342,7 +342,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.CodeGen
 
             ' The result of the math operation has either 4 or 8 byte width.
             ' For 1 and 2 byte widths, convert the value back to the original type.
-            DowncastResultOfArithmeticOperation(targetPrimitiveType, expression.Checked AndAlso
+            DowncastResultOfArithmeticOperation(targetPrimitiveType, expression.CheckIntegerOverflow AndAlso
                                                     opKind <> BinaryOperatorKind.LeftShift AndAlso
                                                     opKind <> BinaryOperatorKind.RightShift)
 

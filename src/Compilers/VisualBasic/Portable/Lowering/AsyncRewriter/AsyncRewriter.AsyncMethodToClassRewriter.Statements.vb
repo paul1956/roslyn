@@ -29,14 +29,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     If expression.Kind = BoundKind.SpillSequence Then
                         Dim spill = DirectCast(expression, BoundSpillSequence)
                         Debug.Assert(spill.ValueOpt IsNot Nothing)
-                        Return Me.F.Block(
+                        Return Me.F.Block(Me.F.Block.CheckIntegerOverflow,
                                     RewriteSpillSequenceIntoBlock(
                                         spill,
                                         False,
                                         Me.F.Assignment(Me.F.Local(Me._exprRetValue, True), spill.ValueOpt)),
                                     Me.F.Goto(Me._exprReturnLabel))
                     Else
-                        Return Me.F.Block(
+                        Return Me.F.Block(Me.F.Block.CheckIntegerOverflow,
                                     Me.F.Assignment(
                                         Me.F.Local(Me._exprRetValue, True), expression),
                                     Me.F.Goto(Me._exprReturnLabel))

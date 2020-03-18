@@ -48,7 +48,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                              If([isNot], BinaryOperatorKind.IsNot, BinaryOperatorKind.Is),
                                              left,
                                              right,
-                                             checked:=False,
+                                             CheckIntegerOverflow:=False,
                                              type:=booleanType,
                                              hasErrors:=booleanType.IsErrorType())
 
@@ -340,7 +340,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         (isOperandOfConditionalBranch AndAlso preliminaryOperatorKind <> BinaryOperatorKind.Like) Then
 
                         Dim booleanType As TypeSymbol = GetSpecialTypeForBinaryOperator(node, leftType, rightType, SpecialType.System_Boolean,
-                                                              False, diagnostics)
+                                                 makeNullable:=False, diagnostics)
 
                         If (operatorKind And BinaryOperatorKind.Lifted) <> 0 Then
 
@@ -443,7 +443,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             If explicitSemanticForConcatArgument AndAlso left IsNot beforeConversion AndAlso left.Kind = BoundKind.Conversion Then
                 Dim conversion = DirectCast(left, BoundConversion)
-                left = conversion.Update(conversion.Operand, conversion.ConversionKind, conversion.Checked, explicitCastInCode:=False,
+                left = conversion.Update(conversion.Operand, conversion.ConversionKind, conversion.CheckIntegerOverflow, explicitCastInCode:=False,
                                          constantValueOpt:=conversion.ConstantValueOpt, extendedInfoOpt:=conversion.ExtendedInfoOpt,
                                          type:=conversion.Type)
             End If
@@ -471,7 +471,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
                 If explicitSemanticForConcatArgument AndAlso right IsNot beforeConversion AndAlso right.Kind = BoundKind.Conversion Then
                     Dim conversion = DirectCast(right, BoundConversion)
-                    right = conversion.Update(conversion.Operand, conversion.ConversionKind, conversion.Checked, explicitCastInCode:=False,
+                    right = conversion.Update(conversion.Operand, conversion.ConversionKind, conversion.CheckIntegerOverflow, explicitCastInCode:=False,
                                               constantValueOpt:=conversion.ConstantValueOpt, extendedInfoOpt:=conversion.ExtendedInfoOpt,
                                               type:=conversion.Type)
                 End If
@@ -506,7 +506,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     ElseIf lengthOutOfLimit Then
                         Debug.Assert(value.IsBad)
                         ReportDiagnostic(diagnostics, right.Syntax, ErrorFactory.ErrorInfo(ERRID.ERR_ConstantStringTooLong))
-                    ElseIf (value.IsBad OrElse integerOverflow) Then
+                    ElseIf value.IsBad OrElse (integerOverflow AndAlso Me.CheckOverflow) Then
                         ' Overflows are reported regardless of the value of OptionRemoveIntegerOverflowChecks, Dev10 behavior.
                         ReportDiagnostic(diagnostics, node, ErrorFactory.ErrorInfo(ERRID.ERR_ExpressionOverflow1, operatorResultType))
 
@@ -796,7 +796,7 @@ Done:
             End If
 
             dbNullOperand = New BoundConversion(dbNullOperand.Syntax, dbNullOperand, ConversionKind.Widening,
-                                        checked:=False, explicitCastInCode:=False, type:=stringType,
+                                        checkIntegerOverflow:=False, explicitCastInCode:=False, type:=stringType,
                                         constantValueOpt:=ConstantValue.Nothing)
 
             Return stringType

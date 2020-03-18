@@ -108,9 +108,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         ' want to reclassify the array literal this early when it is within parentheses. 
                         Dim arrayLiteral = DirectCast(operand, BoundArrayLiteral)
                         Dim reclassified = ReclassifyArrayLiteralExpression(SyntaxKind.CTypeKeyword, arrayLiteral.Syntax, ConversionKind.Widening, False, arrayLiteral, arrayLiteral.InferredType, diagnostics)
-                        Return New BoundParenthesized(node, reclassified, reclassified.Type)
+                        Return New BoundParenthesized(node, reclassified, checkIntegerOverflow:=True, reclassified.Type)
                     Else
-                        Return New BoundParenthesized(node, operand, operand.Type)
+                        Return New BoundParenthesized(node, operand, checkIntegerOverflow:=True, operand.Type)
                     End If
 
                 Case SyntaxKind.UnaryPlusExpression,
@@ -243,6 +243,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Case SyntaxKind.AwaitExpression
                     Return BindAwait(DirectCast(node, AwaitExpressionSyntax), diagnostics)
 
+                Case SyntaxKind.CheckedExpression
+                    Me.WithCheckedOrUncheckedRegion(True)
+                    Return BindCheckedOrUncheckedExpression(DirectCast(node, OverflowHandlerExpressionSyntax), diagnostics)
+                Case SyntaxKind.UncheckedExpression
+                    Me.WithCheckedOrUncheckedRegion(False)
+                    Return BindCheckedOrUncheckedExpression(DirectCast(node, OverflowHandlerExpressionSyntax), diagnostics)
                 Case SyntaxKind.ConditionalAccessExpression
                     Return BindConditionalAccessExpression(DirectCast(node, ConditionalAccessExpressionSyntax), diagnostics)
 
@@ -260,6 +266,12 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     Return BadExpression(node, ImmutableArray(Of BoundExpression).Empty, ErrorTypeSymbol.UnknownResultType)
 
             End Select
+        End Function
+
+        Private Function BindCheckedOrUncheckedExpression(node As OverflowHandlerExpressionSyntax, diagnostics As DiagnosticBag) As BoundExpression
+            Dim doOverflowCheck1 As Boolean = node.Kind <> SyntaxKind.UncheckedExpression
+            Dim expr As BoundExpression = BindExpression(node.Expression, diagnostics)
+            Return New BoundParenthesized(node.Expression, expr, doOverflowCheck1, expr.Type, diagnostics.HasAnyErrors)
         End Function
 
         ''' <summary>
@@ -1224,7 +1236,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 If Not expr.IsNothingLiteral() Then
                     Dim parenthesized = DirectCast(expr, BoundParenthesized)
                     Dim enclosed As BoundExpression = MakeValue(parenthesized.Expression, diagnostics)
-                    Return parenthesized.Update(enclosed, enclosed.Type)
+                    Return parenthesized.Update(enclosed, parenthesized.CheckIntegerOverflow, enclosed.Type)
                 End If
             End If
 
@@ -1339,7 +1351,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             If expr.Kind = BoundKind.Parenthesized AndAlso Not expr.IsNothingLiteral() Then
                 Dim parenthesized = DirectCast(expr, BoundParenthesized)
                 Dim enclosed As BoundExpression = MakeRValue(parenthesized.Expression, diagnostics)
-                Return parenthesized.Update(enclosed, enclosed.Type)
+                Return parenthesized.Update(enclosed, parenthesized.CheckIntegerOverflow, enclosed.Type)
 
             ElseIf expr.Kind = BoundKind.XmlMemberAccess Then
                 Dim memberAccess = DirectCast(expr, BoundXmlMemberAccess)
@@ -1430,7 +1442,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     ' Reclassify enclosed expression.
                     Dim parenthesized = DirectCast(expr, BoundParenthesized)
                     Dim enclosed As BoundExpression = ReclassifyExpression(parenthesized.Expression, diagnostics)
-                    Return parenthesized.Update(enclosed, enclosed.Type)
+                    Return parenthesized.Update(enclosed, parenthesized.CheckIntegerOverflow, enclosed.Type)
 
                 Case BoundKind.UnboundLambda
                     Return ReclassifyUnboundLambdaExpression(DirectCast(expr, UnboundLambda), diagnostics)

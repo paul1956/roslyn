@@ -60,7 +60,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     If Not Me.BoundInitializers.IsEmpty Then
                         ' Create a dummy block
                         Dim block As New BoundBlock(Me.BoundInitializers(0).Syntax,
-                                                    Nothing,
+                                                    Me.BoundInitializers(0).Syntax.RequireOverflowCheck,
+                                                    statementListSyntax:=Nothing,
                                                     ImmutableArray(Of LocalSymbol).Empty,
                                                     StaticCast(Of BoundStatement).From(Me.BoundInitializers))
 

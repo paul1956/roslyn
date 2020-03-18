@@ -197,7 +197,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
         Friend Shared Function RewriteQueryLambda(rewrittenBody As BoundStatement, originalNode As BoundQueryLambda) As BoundLambda
             Dim lambdaBody = New BoundBlock(originalNode.Syntax,
-                                            Nothing,
+                                            originalNode.Syntax.RequireOverflowCheck,
+                                            statementListSyntax:=Nothing,
                                             ImmutableArray(Of LocalSymbol).Empty,
                                             ImmutableArray.Create(rewrittenBody)).MakeCompilerGenerated()
 

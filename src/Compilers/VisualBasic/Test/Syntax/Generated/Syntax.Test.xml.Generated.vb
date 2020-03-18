@@ -1388,6 +1388,14 @@ Partial Public Class GeneratedTests
             return InternalSyntax.SyntaxFactory.AwaitExpression(new InternalSyntax.KeywordSyntax(SyntaxKind.AwaitKeyword, String.Empty, Nothing, Nothing), GenerateGreenKeywordEventContainer())
         End Function
 
+        Private Shared Function GenerateGreenCheckedExpression() As InternalSyntax.OverflowHandlerExpressionSyntax
+            return InternalSyntax.SyntaxFactory.CheckedExpression(new InternalSyntax.KeywordSyntax(SyntaxKind.CheckedKeyword, String.Empty, Nothing, Nothing), new InternalSyntax.PunctuationSyntax(SyntaxKind.OpenParenToken, String.Empty, Nothing, Nothing), GenerateGreenKeywordEventContainer(), new InternalSyntax.PunctuationSyntax(SyntaxKind.CloseParenToken, String.Empty, Nothing, Nothing))
+        End Function
+
+        Private Shared Function GenerateGreenUncheckedExpression() As InternalSyntax.OverflowHandlerExpressionSyntax
+            return InternalSyntax.SyntaxFactory.UncheckedExpression(new InternalSyntax.KeywordSyntax(SyntaxKind.UncheckedKeyword, String.Empty, Nothing, Nothing), new InternalSyntax.PunctuationSyntax(SyntaxKind.OpenParenToken, String.Empty, Nothing, Nothing), GenerateGreenKeywordEventContainer(), new InternalSyntax.PunctuationSyntax(SyntaxKind.CloseParenToken, String.Empty, Nothing, Nothing))
+        End Function
+
         Private Shared Function GenerateGreenXmlNameToken() As InternalSyntax.XmlNameTokenSyntax
             return InternalSyntax.SyntaxFactory.XmlNameToken(String.Empty, SyntaxKind.IdentifierName, InternalSyntax.SyntaxFactory.SyntaxTrivia(SyntaxKind.WhitespaceTrivia, " "), InternalSyntax.SyntaxFactory.SyntaxTrivia(SyntaxKind.WhitespaceTrivia, " "))
         End Function
@@ -3606,6 +3614,18 @@ Partial Public Class GeneratedTests
         <Fact>
         Public Sub TestGreenAwaitExpression()
             dim objectUnderTest = GenerateGreenAwaitExpression()
+            AttachAndCheckDiagnostics(objectUnderTest)
+        End Sub
+
+        <Fact>
+        Public Sub TestGreenCheckedExpression()
+            dim objectUnderTest = GenerateGreenCheckedExpression()
+            AttachAndCheckDiagnostics(objectUnderTest)
+        End Sub
+
+        <Fact>
+        Public Sub TestGreenUncheckedExpression()
+            dim objectUnderTest = GenerateGreenUncheckedExpression()
             AttachAndCheckDiagnostics(objectUnderTest)
         End Sub
 
@@ -6597,6 +6617,22 @@ Partial Public Class GeneratedTests
         End Sub
 
         <Fact>
+        Public Sub TestGreenCheckedExpressionRewriter()
+            dim oldNode = GenerateGreenCheckedExpression()
+            Dim rewriter = New GreenIdentityRewriter()
+            Dim newNode = rewriter.Visit(oldNode)
+            Assert.Equal(oldNode, newNode)
+        End Sub
+
+        <Fact>
+        Public Sub TestGreenUncheckedExpressionRewriter()
+            dim oldNode = GenerateGreenUncheckedExpression()
+            Dim rewriter = New GreenIdentityRewriter()
+            Dim newNode = rewriter.Visit(oldNode)
+            Assert.Equal(oldNode, newNode)
+        End Sub
+
+        <Fact>
         Public Sub TestGreenSkippedTokensTriviaRewriter()
             dim oldNode = GenerateGreenSkippedTokensTrivia()
             Dim rewriter = New GreenIdentityRewriter()
@@ -9180,6 +9216,20 @@ Partial Public Class GeneratedTests
         <Fact>
         Public Sub TestGreenAwaitExpressionVisitor()
             Dim oldNode = GenerateGreenAwaitExpression()
+            Dim visitor = New GreenNodeVisitor()
+            visitor.Visit(oldNode)
+        End Sub
+
+        <Fact>
+        Public Sub TestGreenCheckedExpressionVisitor()
+            Dim oldNode = GenerateGreenCheckedExpression()
+            Dim visitor = New GreenNodeVisitor()
+            visitor.Visit(oldNode)
+        End Sub
+
+        <Fact>
+        Public Sub TestGreenUncheckedExpressionVisitor()
+            Dim oldNode = GenerateGreenUncheckedExpression()
             Dim visitor = New GreenNodeVisitor()
             visitor.Visit(oldNode)
         End Sub
@@ -17604,6 +17654,96 @@ Partial Public Class GeneratedTests
             return SyntaxFactory.AwaitExpression(SyntaxFactory.Token(SyntaxKind.AwaitKeyword), GenerateRedKeywordEventContainer())
         End Function
 
+        Private Shared Function GenerateRedCheckedExpression() As OverflowHandlerExpressionSyntax
+            Dim exceptionTest as boolean = false
+            Try
+            SyntaxFactory.CheckedExpression(SyntaxFactory.Token(SyntaxKind.CheckedKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), Nothing, SyntaxFactory.Token(SyntaxKind.CloseParenToken))
+            catch e as ArgumentNullException
+            exceptionTest = true
+            End Try
+            Debug.Assert(exceptionTest)
+            exceptionTest = false
+
+            Try
+            SyntaxFactory.CheckedExpression(SyntaxFactory.Token(SyntaxKind.ExternalSourceKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateRedKeywordEventContainer(), SyntaxFactory.Token(SyntaxKind.CloseParenToken))
+            catch e as ArgumentException
+            exceptionTest = true
+            End Try
+            Debug.Assert(exceptionTest)
+            exceptionTest = false
+
+            Try
+            SyntaxFactory.CheckedExpression(SyntaxFactory.Token(SyntaxKind.ExternalSourceKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateRedKeywordEventContainer(), SyntaxFactory.Token(SyntaxKind.CloseParenToken))
+            catch e as ArgumentException
+            exceptionTest = true
+            End Try
+            Debug.Assert(exceptionTest)
+            exceptionTest = false
+
+            Try
+            SyntaxFactory.CheckedExpression(SyntaxFactory.Token(SyntaxKind.CheckedKeyword), SyntaxFactory.Token(SyntaxKind.ExternalSourceKeyword), GenerateRedKeywordEventContainer(), SyntaxFactory.Token(SyntaxKind.CloseParenToken))
+            catch e as ArgumentException
+            exceptionTest = true
+            End Try
+            Debug.Assert(exceptionTest)
+            exceptionTest = false
+
+            Try
+            SyntaxFactory.CheckedExpression(SyntaxFactory.Token(SyntaxKind.CheckedKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateRedKeywordEventContainer(), SyntaxFactory.Token(SyntaxKind.ExternalSourceKeyword))
+            catch e as ArgumentException
+            exceptionTest = true
+            End Try
+            Debug.Assert(exceptionTest)
+            exceptionTest = false
+
+            return SyntaxFactory.CheckedExpression(SyntaxFactory.Token(SyntaxKind.CheckedKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateRedKeywordEventContainer(), SyntaxFactory.Token(SyntaxKind.CloseParenToken))
+        End Function
+
+        Private Shared Function GenerateRedUncheckedExpression() As OverflowHandlerExpressionSyntax
+            Dim exceptionTest as boolean = false
+            Try
+            SyntaxFactory.UncheckedExpression(SyntaxFactory.Token(SyntaxKind.UncheckedKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), Nothing, SyntaxFactory.Token(SyntaxKind.CloseParenToken))
+            catch e as ArgumentNullException
+            exceptionTest = true
+            End Try
+            Debug.Assert(exceptionTest)
+            exceptionTest = false
+
+            Try
+            SyntaxFactory.UncheckedExpression(SyntaxFactory.Token(SyntaxKind.ExternalSourceKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateRedKeywordEventContainer(), SyntaxFactory.Token(SyntaxKind.CloseParenToken))
+            catch e as ArgumentException
+            exceptionTest = true
+            End Try
+            Debug.Assert(exceptionTest)
+            exceptionTest = false
+
+            Try
+            SyntaxFactory.UncheckedExpression(SyntaxFactory.Token(SyntaxKind.ExternalSourceKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateRedKeywordEventContainer(), SyntaxFactory.Token(SyntaxKind.CloseParenToken))
+            catch e as ArgumentException
+            exceptionTest = true
+            End Try
+            Debug.Assert(exceptionTest)
+            exceptionTest = false
+
+            Try
+            SyntaxFactory.UncheckedExpression(SyntaxFactory.Token(SyntaxKind.UncheckedKeyword), SyntaxFactory.Token(SyntaxKind.ExternalSourceKeyword), GenerateRedKeywordEventContainer(), SyntaxFactory.Token(SyntaxKind.CloseParenToken))
+            catch e as ArgumentException
+            exceptionTest = true
+            End Try
+            Debug.Assert(exceptionTest)
+            exceptionTest = false
+
+            Try
+            SyntaxFactory.UncheckedExpression(SyntaxFactory.Token(SyntaxKind.UncheckedKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateRedKeywordEventContainer(), SyntaxFactory.Token(SyntaxKind.ExternalSourceKeyword))
+            catch e as ArgumentException
+            exceptionTest = true
+            End Try
+            Debug.Assert(exceptionTest)
+            exceptionTest = false
+
+            return SyntaxFactory.UncheckedExpression(SyntaxFactory.Token(SyntaxKind.UncheckedKeyword), SyntaxFactory.Token(SyntaxKind.OpenParenToken), GenerateRedKeywordEventContainer(), SyntaxFactory.Token(SyntaxKind.CloseParenToken))
+        End Function
+
         Private Shared Function GenerateRedXmlNameToken() As SyntaxToken
             Dim exceptionTest as boolean = false
             return SyntaxFactory.XmlNameToken(SyntaxFactory.TriviaList(SyntaxFactory.SyntaxTrivia(SyntaxKind.WhitespaceTrivia, " ")), String.Empty, SyntaxKind.IdentifierName, SyntaxFactory.TriviaList(SyntaxFactory.SyntaxTrivia(SyntaxKind.WhitespaceTrivia, " ")))
@@ -21594,6 +21734,28 @@ Partial Public Class GeneratedTests
         End Sub
 
         <Fact>
+        Public Sub TestRedCheckedExpression()
+            dim objectUnderTest = GenerateRedCheckedExpression()
+            Assert.NotNull(objectUnderTest.operatorToken)
+            Assert.NotNull(objectUnderTest.openParenToken)
+            Assert.NotNull(objectUnderTest.expression)
+            Assert.NotNull(objectUnderTest.closeParenToken)
+            Dim withObj = objectUnderTest.WithOperatorToken(objectUnderTest.OperatorToken).WithOpenParenToken(objectUnderTest.OpenParenToken).WithExpression(objectUnderTest.Expression).WithCloseParenToken(objectUnderTest.CloseParenToken)
+            Assert.Equal(withobj, objectUnderTest)
+        End Sub
+
+        <Fact>
+        Public Sub TestRedUncheckedExpression()
+            dim objectUnderTest = GenerateRedUncheckedExpression()
+            Assert.NotNull(objectUnderTest.operatorToken)
+            Assert.NotNull(objectUnderTest.openParenToken)
+            Assert.NotNull(objectUnderTest.expression)
+            Assert.NotNull(objectUnderTest.closeParenToken)
+            Dim withObj = objectUnderTest.WithOperatorToken(objectUnderTest.OperatorToken).WithOpenParenToken(objectUnderTest.OpenParenToken).WithExpression(objectUnderTest.Expression).WithCloseParenToken(objectUnderTest.CloseParenToken)
+            Assert.Equal(withobj, objectUnderTest)
+        End Sub
+
+        <Fact>
         Public Sub TestRedXmlNameToken()
             dim objectUnderTest = GenerateRedXmlNameToken()
         End Sub
@@ -24651,6 +24813,22 @@ Partial Public Class GeneratedTests
         <Fact>
         Public Sub TestRedAwaitExpressionRewriter()
             dim oldNode = GenerateRedAwaitExpression()
+            Dim rewriter = New RedIdentityRewriter()
+            Dim newNode = rewriter.Visit(oldNode)
+            Assert.Equal(oldNode, newNode)
+        End Sub
+
+        <Fact>
+        Public Sub TestRedCheckedExpressionRewriter()
+            dim oldNode = GenerateRedCheckedExpression()
+            Dim rewriter = New RedIdentityRewriter()
+            Dim newNode = rewriter.Visit(oldNode)
+            Assert.Equal(oldNode, newNode)
+        End Sub
+
+        <Fact>
+        Public Sub TestRedUncheckedExpressionRewriter()
+            dim oldNode = GenerateRedUncheckedExpression()
             Dim rewriter = New RedIdentityRewriter()
             Dim newNode = rewriter.Visit(oldNode)
             Assert.Equal(oldNode, newNode)

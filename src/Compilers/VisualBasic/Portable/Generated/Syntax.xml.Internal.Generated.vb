@@ -286,7 +286,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </summary>
         Friend  ReadOnly Property BlockKeyword As InternalSyntax.KeywordSyntax
             Get
@@ -32499,6 +32500,174 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
     End Class
 
     ''' <summary>
+    ''' Represents an expression what can deal with Integer Overflow.
+    ''' </summary>
+    Friend NotInheritable Class OverflowHandlerExpressionSyntax
+        Inherits ExpressionSyntax
+
+        Friend ReadOnly _operatorToken as KeywordSyntax
+        Friend ReadOnly _openParenToken as PunctuationSyntax
+        Friend ReadOnly _expression as ExpressionSyntax
+        Friend ReadOnly _closeParenToken as PunctuationSyntax
+
+        Friend Sub New(ByVal kind As SyntaxKind, operatorToken As InternalSyntax.KeywordSyntax, openParenToken As InternalSyntax.PunctuationSyntax, expression As ExpressionSyntax, closeParenToken As InternalSyntax.PunctuationSyntax)
+            MyBase.New(kind)
+            MyBase._slotCount = 4
+
+            AdjustFlagsAndWidth(operatorToken)
+            Me._operatorToken = operatorToken
+            AdjustFlagsAndWidth(openParenToken)
+            Me._openParenToken = openParenToken
+            AdjustFlagsAndWidth(expression)
+            Me._expression = expression
+            AdjustFlagsAndWidth(closeParenToken)
+            Me._closeParenToken = closeParenToken
+
+        End Sub
+
+        Friend Sub New(ByVal kind As SyntaxKind, operatorToken As InternalSyntax.KeywordSyntax, openParenToken As InternalSyntax.PunctuationSyntax, expression As ExpressionSyntax, closeParenToken As InternalSyntax.PunctuationSyntax, context As ISyntaxFactoryContext)
+            MyBase.New(kind)
+            MyBase._slotCount = 4
+            Me.SetFactoryContext(context)
+
+            AdjustFlagsAndWidth(operatorToken)
+            Me._operatorToken = operatorToken
+            AdjustFlagsAndWidth(openParenToken)
+            Me._openParenToken = openParenToken
+            AdjustFlagsAndWidth(expression)
+            Me._expression = expression
+            AdjustFlagsAndWidth(closeParenToken)
+            Me._closeParenToken = closeParenToken
+
+        End Sub
+
+        Friend Sub New(ByVal kind As SyntaxKind, ByVal errors as DiagnosticInfo(), ByVal annotations as SyntaxAnnotation(), operatorToken As InternalSyntax.KeywordSyntax, openParenToken As InternalSyntax.PunctuationSyntax, expression As ExpressionSyntax, closeParenToken As InternalSyntax.PunctuationSyntax)
+            MyBase.New(kind, errors, annotations)
+            MyBase._slotCount = 4
+
+            AdjustFlagsAndWidth(operatorToken)
+            Me._operatorToken = operatorToken
+            AdjustFlagsAndWidth(openParenToken)
+            Me._openParenToken = openParenToken
+            AdjustFlagsAndWidth(expression)
+            Me._expression = expression
+            AdjustFlagsAndWidth(closeParenToken)
+            Me._closeParenToken = closeParenToken
+
+        End Sub
+
+        Friend Sub New(reader as ObjectReader)
+          MyBase.New(reader)
+            MyBase._slotCount = 4
+          Dim _operatorToken = DirectCast(reader.ReadValue(), KeywordSyntax)
+          If _operatorToken isnot Nothing 
+             AdjustFlagsAndWidth(_operatorToken)
+             Me._operatorToken = _operatorToken
+          End If
+          Dim _openParenToken = DirectCast(reader.ReadValue(), PunctuationSyntax)
+          If _openParenToken isnot Nothing 
+             AdjustFlagsAndWidth(_openParenToken)
+             Me._openParenToken = _openParenToken
+          End If
+          Dim _expression = DirectCast(reader.ReadValue(), ExpressionSyntax)
+          If _expression isnot Nothing 
+             AdjustFlagsAndWidth(_expression)
+             Me._expression = _expression
+          End If
+          Dim _closeParenToken = DirectCast(reader.ReadValue(), PunctuationSyntax)
+          If _closeParenToken isnot Nothing 
+             AdjustFlagsAndWidth(_closeParenToken)
+             Me._closeParenToken = _closeParenToken
+          End If
+        End Sub
+        Friend Shared CreateInstance As Func(Of ObjectReader, Object) = Function(o) New OverflowHandlerExpressionSyntax(o)
+
+
+        Friend Overrides Sub WriteTo(writer as ObjectWriter)
+          MyBase.WriteTo(writer)
+          writer.WriteValue(Me._operatorToken)
+          writer.WriteValue(Me._openParenToken)
+          writer.WriteValue(Me._expression)
+          writer.WriteValue(Me._closeParenToken)
+        End Sub
+
+        Shared Sub New()
+          ObjectBinder.RegisterTypeReader(GetType(OverflowHandlerExpressionSyntax), Function(r) New OverflowHandlerExpressionSyntax(r))
+        End Sub
+
+        Friend Overrides Function CreateRed(ByVal parent As SyntaxNode, ByVal startLocation As Integer) As SyntaxNode
+            Return new Microsoft.CodeAnalysis.VisualBasic.Syntax.OverflowHandlerExpressionSyntax(Me, parent, startLocation)
+        End Function
+
+        ''' <summary>
+        ''' The keyword that identifies the handling of Integer Overflow. Must be one of:
+        ''' "Checked", "Unchecked"
+        ''' </summary>
+        Friend  ReadOnly Property OperatorToken As InternalSyntax.KeywordSyntax
+            Get
+                Return Me._operatorToken
+            End Get
+        End Property
+
+        ''' <summary>
+        ''' The "(" token
+        ''' </summary>
+        Friend  ReadOnly Property OpenParenToken As InternalSyntax.PunctuationSyntax
+            Get
+                Return Me._openParenToken
+            End Get
+        End Property
+
+        ''' <summary>
+        ''' The expression inside the parentheses.
+        ''' </summary>
+        Friend  ReadOnly Property Expression As InternalSyntax.ExpressionSyntax
+            Get
+                Return Me._expression
+            End Get
+        End Property
+
+        ''' <summary>
+        ''' The ")" token
+        ''' </summary>
+        Friend  ReadOnly Property CloseParenToken As InternalSyntax.PunctuationSyntax
+            Get
+                Return Me._closeParenToken
+            End Get
+        End Property
+
+        Friend Overrides Function GetSlot(i as Integer) as GreenNode
+            Select case i
+                Case 0
+                    Return Me._operatorToken
+                Case 1
+                    Return Me._openParenToken
+                Case 2
+                    Return Me._expression
+                Case 3
+                    Return Me._closeParenToken
+                Case Else
+                     Debug.Assert(false, "child index out of range")
+                     Return Nothing
+            End Select
+        End Function
+
+
+        Friend Overrides Function SetDiagnostics(ByVal newErrors As DiagnosticInfo()) As GreenNode
+            Return new OverflowHandlerExpressionSyntax(Me.Kind, newErrors, GetAnnotations, _operatorToken, _openParenToken, _expression, _closeParenToken)
+        End Function
+
+        Friend Overrides Function SetAnnotations(ByVal annotations As SyntaxAnnotation()) As GreenNode
+            Return new OverflowHandlerExpressionSyntax(Me.Kind, GetDiagnostics, annotations, _operatorToken, _openParenToken, _expression, _closeParenToken)
+        End Function
+
+        Public Overrides Function Accept(ByVal visitor As VisualBasicSyntaxVisitor) As VisualBasicSyntaxNode
+            Return visitor.VisitOverflowHandlerExpression(Me)
+        End Function
+
+    End Class
+
+    ''' <summary>
     ''' Represents a single syntactic token in a VB program. A token is a keyword,
     ''' punctuator, literal, identifier or XML token. The type of keyword or punctuator
     ''' can be determined from the Kind property.
@@ -37625,6 +37794,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             Debug.Assert(node IsNot Nothing)
             Return VisitExpression(node)
         End Function
+        Public Overridable Function VisitOverflowHandlerExpression(ByVal node As OverflowHandlerExpressionSyntax) As VisualBasicSyntaxNode
+            Debug.Assert(node IsNot Nothing)
+            Return VisitExpression(node)
+        End Function
         Public Overridable Function VisitStructuredTrivia(ByVal node As StructuredTriviaSyntax) As VisualBasicSyntaxNode
             Debug.Assert(node IsNot Nothing)
             Return VisitVisualBasicSyntaxNode(node)
@@ -41496,6 +41669,25 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             End If
         End Function
 
+        Public Overrides Function VisitOverflowHandlerExpression(ByVal node As OverflowHandlerExpressionSyntax) As VisualBasicSyntaxNode
+            Dim anyChanges As Boolean = False
+
+            Dim newOperatorToken = DirectCast(Visit(node.OperatorToken), KeywordSyntax)
+            If node._operatorToken IsNot newOperatorToken Then anyChanges = True
+            Dim newOpenParenToken = DirectCast(Visit(node.OpenParenToken), PunctuationSyntax)
+            If node._openParenToken IsNot newOpenParenToken Then anyChanges = True
+            Dim newExpression = DirectCast(Visit(node._expression), ExpressionSyntax)
+            If node._expression IsNot newExpression Then anyChanges = True
+            Dim newCloseParenToken = DirectCast(Visit(node.CloseParenToken), PunctuationSyntax)
+            If node._closeParenToken IsNot newCloseParenToken Then anyChanges = True
+
+            If anyChanges Then
+                Return New OverflowHandlerExpressionSyntax(node.Kind, node.GetDiagnostics, node.GetAnnotations, newOperatorToken, newOpenParenToken, newExpression, newCloseParenToken)
+            Else
+                Return node
+            End If
+        End Function
+
         Public Overrides Function VisitSkippedTokensTrivia(ByVal node As SkippedTokensTriviaSyntax) As VisualBasicSyntaxNode
             Dim anyChanges As Boolean = False
 
@@ -42192,6 +42384,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
               GetType(QualifiedCrefOperatorReferenceSyntax),
               GetType(YieldStatementSyntax),
               GetType(AwaitExpressionSyntax),
+              GetType(OverflowHandlerExpressionSyntax),
               GetType(SyntaxToken),
               GetType(KeywordSyntax),
               GetType(PunctuationSyntax),
@@ -42273,7 +42466,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndIfStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42304,7 +42498,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndUsingStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42335,7 +42530,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndWithStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42366,7 +42562,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndSelectStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42397,7 +42594,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndStructureStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42428,7 +42626,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndEnumStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42459,7 +42658,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndInterfaceStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42490,7 +42690,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndClassStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42521,7 +42722,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndModuleStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42552,7 +42754,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndNamespaceStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42583,7 +42786,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndSubStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42614,7 +42818,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndFunctionStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42645,7 +42850,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndGetStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42676,7 +42882,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndSetStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42707,7 +42914,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndPropertyStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42738,7 +42946,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndOperatorStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42769,7 +42978,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndEventStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42800,7 +43010,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndAddHandlerStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42831,7 +43042,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndRemoveHandlerStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42862,7 +43074,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndRaiseEventStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42893,7 +43106,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndWhileStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42924,7 +43138,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndTryStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42955,7 +43170,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndSyncLockStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -42996,7 +43212,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Shared Function EndBlockStatement(kind As SyntaxKind, endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(SyntaxFacts.IsEndBlockStatement(kind))
@@ -53551,6 +53768,86 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
 
 
         ''' <summary>
+        ''' Represents an expression what can deal with Integer Overflow.
+        ''' </summary>
+        ''' <param name="operatorToken">
+        ''' The keyword that identifies the handling of Integer Overflow. Must be one of:
+        ''' "Checked", "Unchecked"
+        ''' </param>
+        ''' <param name="openParenToken">
+        ''' The "(" token
+        ''' </param>
+        ''' <param name="expression">
+        ''' The expression inside the parentheses.
+        ''' </param>
+        ''' <param name="closeParenToken">
+        ''' The ")" token
+        ''' </param>
+        Friend Shared Function CheckedExpression(operatorToken As KeywordSyntax, openParenToken As PunctuationSyntax, expression As ExpressionSyntax, closeParenToken As PunctuationSyntax) As OverflowHandlerExpressionSyntax
+            Debug.Assert(operatorToken IsNot Nothing AndAlso operatorToken.Kind = SyntaxKind.CheckedKeyword)
+            Debug.Assert(openParenToken IsNot Nothing AndAlso openParenToken.Kind = SyntaxKind.OpenParenToken)
+            Debug.Assert(expression IsNot Nothing)
+            Debug.Assert(closeParenToken IsNot Nothing AndAlso closeParenToken.Kind = SyntaxKind.CloseParenToken)
+            Return New OverflowHandlerExpressionSyntax(SyntaxKind.CheckedExpression, operatorToken, openParenToken, expression, closeParenToken)
+        End Function
+
+
+        ''' <summary>
+        ''' Represents an expression what can deal with Integer Overflow.
+        ''' </summary>
+        ''' <param name="operatorToken">
+        ''' The keyword that identifies the handling of Integer Overflow. Must be one of:
+        ''' "Checked", "Unchecked"
+        ''' </param>
+        ''' <param name="openParenToken">
+        ''' The "(" token
+        ''' </param>
+        ''' <param name="expression">
+        ''' The expression inside the parentheses.
+        ''' </param>
+        ''' <param name="closeParenToken">
+        ''' The ")" token
+        ''' </param>
+        Friend Shared Function UncheckedExpression(operatorToken As KeywordSyntax, openParenToken As PunctuationSyntax, expression As ExpressionSyntax, closeParenToken As PunctuationSyntax) As OverflowHandlerExpressionSyntax
+            Debug.Assert(operatorToken IsNot Nothing AndAlso operatorToken.Kind = SyntaxKind.UncheckedKeyword)
+            Debug.Assert(openParenToken IsNot Nothing AndAlso openParenToken.Kind = SyntaxKind.OpenParenToken)
+            Debug.Assert(expression IsNot Nothing)
+            Debug.Assert(closeParenToken IsNot Nothing AndAlso closeParenToken.Kind = SyntaxKind.CloseParenToken)
+            Return New OverflowHandlerExpressionSyntax(SyntaxKind.UncheckedExpression, operatorToken, openParenToken, expression, closeParenToken)
+        End Function
+
+
+        ''' <summary>
+        ''' Represents an expression what can deal with Integer Overflow.
+        ''' </summary>
+        ''' <param name="kind">
+        ''' A <cref c="SyntaxKind"/> representing the specific kind of
+        ''' OverflowHandlerExpressionSyntax. One of CheckedExpression, UncheckedExpression.
+        ''' </param>
+        ''' <param name="operatorToken">
+        ''' The keyword that identifies the handling of Integer Overflow. Must be one of:
+        ''' "Checked", "Unchecked"
+        ''' </param>
+        ''' <param name="openParenToken">
+        ''' The "(" token
+        ''' </param>
+        ''' <param name="expression">
+        ''' The expression inside the parentheses.
+        ''' </param>
+        ''' <param name="closeParenToken">
+        ''' The ")" token
+        ''' </param>
+        Friend Shared Function OverflowHandlerExpression(kind As SyntaxKind, operatorToken As KeywordSyntax, openParenToken As PunctuationSyntax, expression As ExpressionSyntax, closeParenToken As PunctuationSyntax) As OverflowHandlerExpressionSyntax
+            Debug.Assert(SyntaxFacts.IsOverflowHandlerExpression(kind))
+            Debug.Assert(operatorToken IsNot Nothing AndAlso SyntaxFacts.IsOverflowHandlerExpressionOperatorToken(operatorToken.Kind))
+            Debug.Assert(openParenToken IsNot Nothing AndAlso openParenToken.Kind = SyntaxKind.OpenParenToken)
+            Debug.Assert(expression IsNot Nothing)
+            Debug.Assert(closeParenToken IsNot Nothing AndAlso closeParenToken.Kind = SyntaxKind.CloseParenToken)
+            Return New OverflowHandlerExpressionSyntax(kind, operatorToken, openParenToken, expression, closeParenToken)
+        End Function
+
+
+        ''' <summary>
         ''' Represents an Xml NCName per Namespaces in XML 1.0
         ''' </summary>
         ''' <param name="text">
@@ -54349,7 +54646,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndIfStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54380,7 +54678,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndUsingStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54411,7 +54710,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndWithStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54442,7 +54742,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndSelectStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54473,7 +54774,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndStructureStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54504,7 +54806,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndEnumStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54535,7 +54838,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndInterfaceStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54566,7 +54870,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndClassStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54597,7 +54902,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndModuleStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54628,7 +54934,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndNamespaceStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54659,7 +54966,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndSubStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54690,7 +54998,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndFunctionStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54721,7 +55030,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndGetStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54752,7 +55062,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndSetStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54783,7 +55094,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndPropertyStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54814,7 +55126,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndOperatorStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54845,7 +55158,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndEventStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54876,7 +55190,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndAddHandlerStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54907,7 +55222,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndRemoveHandlerStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54938,7 +55254,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndRaiseEventStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -54969,7 +55286,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndWhileStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -55000,7 +55318,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndTryStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -55031,7 +55350,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndSyncLockStatement(endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(endKeyword IsNot Nothing AndAlso endKeyword.Kind = SyntaxKind.EndKeyword)
@@ -55072,7 +55392,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </param>
         Friend Function EndBlockStatement(kind As SyntaxKind, endKeyword As KeywordSyntax, blockKeyword As KeywordSyntax) As EndBlockStatementSyntax
             Debug.Assert(SyntaxFacts.IsEndBlockStatement(kind))
@@ -65623,6 +65944,86 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             End If
 
             Return result
+        End Function
+
+
+        ''' <summary>
+        ''' Represents an expression what can deal with Integer Overflow.
+        ''' </summary>
+        ''' <param name="operatorToken">
+        ''' The keyword that identifies the handling of Integer Overflow. Must be one of:
+        ''' "Checked", "Unchecked"
+        ''' </param>
+        ''' <param name="openParenToken">
+        ''' The "(" token
+        ''' </param>
+        ''' <param name="expression">
+        ''' The expression inside the parentheses.
+        ''' </param>
+        ''' <param name="closeParenToken">
+        ''' The ")" token
+        ''' </param>
+        Friend Function CheckedExpression(operatorToken As KeywordSyntax, openParenToken As PunctuationSyntax, expression As ExpressionSyntax, closeParenToken As PunctuationSyntax) As OverflowHandlerExpressionSyntax
+            Debug.Assert(operatorToken IsNot Nothing AndAlso operatorToken.Kind = SyntaxKind.CheckedKeyword)
+            Debug.Assert(openParenToken IsNot Nothing AndAlso openParenToken.Kind = SyntaxKind.OpenParenToken)
+            Debug.Assert(expression IsNot Nothing)
+            Debug.Assert(closeParenToken IsNot Nothing AndAlso closeParenToken.Kind = SyntaxKind.CloseParenToken)
+            Return New OverflowHandlerExpressionSyntax(SyntaxKind.CheckedExpression, operatorToken, openParenToken, expression, closeParenToken, _factoryContext)
+        End Function
+
+
+        ''' <summary>
+        ''' Represents an expression what can deal with Integer Overflow.
+        ''' </summary>
+        ''' <param name="operatorToken">
+        ''' The keyword that identifies the handling of Integer Overflow. Must be one of:
+        ''' "Checked", "Unchecked"
+        ''' </param>
+        ''' <param name="openParenToken">
+        ''' The "(" token
+        ''' </param>
+        ''' <param name="expression">
+        ''' The expression inside the parentheses.
+        ''' </param>
+        ''' <param name="closeParenToken">
+        ''' The ")" token
+        ''' </param>
+        Friend Function UncheckedExpression(operatorToken As KeywordSyntax, openParenToken As PunctuationSyntax, expression As ExpressionSyntax, closeParenToken As PunctuationSyntax) As OverflowHandlerExpressionSyntax
+            Debug.Assert(operatorToken IsNot Nothing AndAlso operatorToken.Kind = SyntaxKind.UncheckedKeyword)
+            Debug.Assert(openParenToken IsNot Nothing AndAlso openParenToken.Kind = SyntaxKind.OpenParenToken)
+            Debug.Assert(expression IsNot Nothing)
+            Debug.Assert(closeParenToken IsNot Nothing AndAlso closeParenToken.Kind = SyntaxKind.CloseParenToken)
+            Return New OverflowHandlerExpressionSyntax(SyntaxKind.UncheckedExpression, operatorToken, openParenToken, expression, closeParenToken, _factoryContext)
+        End Function
+
+
+        ''' <summary>
+        ''' Represents an expression what can deal with Integer Overflow.
+        ''' </summary>
+        ''' <param name="kind">
+        ''' A <cref c="SyntaxKind"/> representing the specific kind of
+        ''' OverflowHandlerExpressionSyntax. One of CheckedExpression, UncheckedExpression.
+        ''' </param>
+        ''' <param name="operatorToken">
+        ''' The keyword that identifies the handling of Integer Overflow. Must be one of:
+        ''' "Checked", "Unchecked"
+        ''' </param>
+        ''' <param name="openParenToken">
+        ''' The "(" token
+        ''' </param>
+        ''' <param name="expression">
+        ''' The expression inside the parentheses.
+        ''' </param>
+        ''' <param name="closeParenToken">
+        ''' The ")" token
+        ''' </param>
+        Friend Function OverflowHandlerExpression(kind As SyntaxKind, operatorToken As KeywordSyntax, openParenToken As PunctuationSyntax, expression As ExpressionSyntax, closeParenToken As PunctuationSyntax) As OverflowHandlerExpressionSyntax
+            Debug.Assert(SyntaxFacts.IsOverflowHandlerExpression(kind))
+            Debug.Assert(operatorToken IsNot Nothing AndAlso SyntaxFacts.IsOverflowHandlerExpressionOperatorToken(operatorToken.Kind))
+            Debug.Assert(openParenToken IsNot Nothing AndAlso openParenToken.Kind = SyntaxKind.OpenParenToken)
+            Debug.Assert(expression IsNot Nothing)
+            Debug.Assert(closeParenToken IsNot Nothing AndAlso closeParenToken.Kind = SyntaxKind.CloseParenToken)
+            Return New OverflowHandlerExpressionSyntax(kind, operatorToken, openParenToken, expression, closeParenToken, _factoryContext)
         End Function
 
 

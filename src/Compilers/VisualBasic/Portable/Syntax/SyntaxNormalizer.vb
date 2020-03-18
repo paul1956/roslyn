@@ -925,6 +925,22 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax
             Return MyBase.VisitSyncLockBlock(node)
         End Function
 
+#If SupportCheckedStatement Then
+   Public Overrides Function VisitCheckedBlock(node As CheckedBlockSyntax) As SyntaxNode
+            AddLinebreaksAfterTokenIfNeeded(node.CheckedStatement.GetLastToken(), 1)
+
+            AddLinebreaksAfterElementsIfNeeded(node.Statements, 1, 1)
+
+            If _lastStatementsInBlocks.Contains(node) Then
+                AddLinebreaksAfterTokenIfNeeded(node.EndCheckedStatement.GetLastToken(), 1)
+            Else
+                AddLinebreaksAfterTokenIfNeeded(node.EndCheckedStatement.GetLastToken(), 2)
+            End If
+
+            Return MyBase.VisitCheckedBlock(node)
+        End Function
+#End If
+
         Public Overrides Function VisitMethodBlock(node As MethodBlockSyntax) As SyntaxNode
             AddLinebreaksAfterTokenIfNeeded(node.BlockStatement.GetLastToken(), 1)
 
@@ -1274,6 +1290,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax
 
             Return result
         End Function
+
+#If SupportCheckedStatement Then
+        Public Overrides Function VisitCheckedStatement(node As CheckedStatementSyntax) As SyntaxNode
+            Dim result = MyBase.VisitCheckedStatement(node)
+            _indentationDepth += 1
+
+            Return result
+        End Function
+#End If
 
         Public Overrides Function VisitModuleStatement(node As ModuleStatementSyntax) As SyntaxNode
             Dim result = MyBase.VisitModuleStatement(node)

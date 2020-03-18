@@ -119,13 +119,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.CodeGen
                 ' no intermediate value in other cases, so no need for the forced convert
             End If
 
-            EmitConvertSimpleNumeric(conversion, underlyingFrom, underlyingTo, conversion.Checked)
+            EmitConvertSimpleNumeric(conversion, underlyingFrom, underlyingTo, conversion.CheckIntegerOverflow)
         End Sub
 
-        Private Sub EmitConvertSimpleNumeric(conversion As BoundConversion, typeFrom As PrimitiveTypeCode, typeTo As PrimitiveTypeCode, checked As Boolean)
+        Private Sub EmitConvertSimpleNumeric(conversion As BoundConversion, typeFrom As PrimitiveTypeCode, typeTo As PrimitiveTypeCode, CheckIntegerOverflow As Boolean)
             Debug.Assert(typeFrom.IsIntegral() OrElse typeFrom.IsFloatingPoint() OrElse typeFrom = PrimitiveTypeCode.Char)
             Debug.Assert(typeTo.IsIntegral() OrElse typeTo.IsFloatingPoint())
-            _builder.EmitNumericConversion(typeFrom, typeTo, checked)
+            _builder.EmitNumericConversion(typeFrom, typeTo, CheckIntegerOverflow)
         End Sub
 
         Private Sub EmitConversionExpression(conversion As BoundConversion, used As Boolean)

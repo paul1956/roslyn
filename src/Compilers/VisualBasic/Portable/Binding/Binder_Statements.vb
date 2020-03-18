@@ -105,6 +105,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Case SyntaxKind.SyncLockBlock
                     Return BindSyncLockBlock(DirectCast(node, SyncLockBlockSyntax), diagnostics)
 
+#If SupportCheckedStatement Then
+                Case SyntaxKind.CheckedBlock
+                    Return BindCheckedBlock(DirectCast(node, CheckedBlockSyntax), diagnostics)
+#End If
+
                 Case SyntaxKind.TryBlock
                     Return BindTryBlock(DirectCast(node, TryBlockSyntax), diagnostics)
 
@@ -215,6 +220,15 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                    node.Parent.Kind = SyntaxKind.UsingBlock)))
 
                     Return New BoundBadStatement(node, ImmutableArray(Of BoundNode).Empty, hasErrors:=True)
+
+#If SupportCheckedStatement Then
+                Case SyntaxKind.EndCheckedStatement
+                    Debug.Assert(IsSemanticModelBinder OrElse
+                                node.ContainsDiagnostics OrElse
+                                 (node.IsMissing AndAlso
+                                    node.Parent.Kind = SyntaxKind.CheckedBlock))
+                    Return New BoundBadStatement(node, ImmutableArray(Of BoundNode).Empty, hasErrors:=True)
+#End If
 
                 Case SyntaxKind.SimpleLoopStatement,
                      SyntaxKind.LoopWhileStatement,
@@ -350,13 +364,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         If InitializerRewriter.HasExplicitMeConstructorCall(body, ContainingMember.ContainingType, hasMyBaseConstructorCall) OrElse hasMyBaseConstructorCall Then
                             ' Move the explicit constructor call out of the block
                             statements.Add(body.Statements(0))
-                            body = body.Update(body.StatementListSyntax, body.Locals, body.Statements.RemoveAt(0))
+                            body = body.Update(body.CheckIntegerOverflow, body.StatementListSyntax, body.Locals, body.Statements.RemoveAt(0))
                         End If
                     End If
 
                     ' The implicit exitLabelStatement should be the last statement inside BoundUnstructuredExceptionHandlingStatement
                     ' in order to make sure that explicit returns do not bypass a call to Microsoft.VisualBasic.CompilerServices.ProjectData.ClearProjectError.
-                    body = body.Update(body.StatementListSyntax, body.Locals, body.Statements.Add(exitLabelStatement))
+                    body = body.Update(body.CheckIntegerOverflow, body.StatementListSyntax, body.Locals, body.Statements.Add(exitLabelStatement))
 
                     statements.Add(New BoundUnstructuredExceptionHandlingStatement(methodBlock,
                                                                                    containsOnError,
@@ -412,7 +426,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 statements.Add(New BoundReturnStatement(methodBlock.EndBlockStatement, Nothing, Nothing, Nothing))
             End If
 
-            Return New BoundBlock(methodBlock, If(methodBlock IsNot Nothing, methodBlock.Statements, Nothing), locals, statements.ToImmutableAndFree())
+            Return New BoundBlock(methodBlock, Me.CheckOverflow, If(methodBlock IsNot Nothing, methodBlock.Statements, Nothing), locals, statements.ToImmutableAndFree())
         End Function
 
         ''' <summary>
@@ -559,6 +573,13 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Return Nothing
             End Function
 
+#If SupportCheckedStatement Then
+            Public Overrides Function VisitCheckedStatement(node As BoundCheckedStatement) As BoundNode
+                Debug.Assert(Not node.WasCompilerGenerated)
+                MyBase.VisitCheckedStatement(node)
+                Return Nothing
+            End Function
+#End If
             Public Overrides Function VisitUsingStatement(node As BoundUsingStatement) As BoundNode
                 Debug.Assert(Not node.WasCompilerGenerated)
                 Dim save = _enclosingSyncLockOrUsing
@@ -871,6 +892,17 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         End Function
 
         Private Shared Function IsValidBranchTarget(block As VisualBasicSyntaxNode, labelSyntax As LabelSyntax) As Boolean
+#If SupportCheckedStatement Then
+            Debug.Assert(block.Kind = SyntaxKind.TryBlock OrElse
+                         block.Kind = SyntaxKind.CatchBlock OrElse
+                         block.Kind = SyntaxKind.FinallyBlock OrElse
+                         block.Kind = SyntaxKind.UsingBlock OrElse
+                         block.Kind = SyntaxKind.SyncLockBlock OrElse
+                         block.Kind = SyntaxKind.CheckedBlock OrElse
+                         block.Kind = SyntaxKind.WithBlock OrElse
+                         block.Kind = SyntaxKind.ForBlock OrElse
+                         block.Kind = SyntaxKind.ForEachBlock)
+#Else
             Debug.Assert(block.Kind = SyntaxKind.TryBlock OrElse
                          block.Kind = SyntaxKind.CatchBlock OrElse
                          block.Kind = SyntaxKind.FinallyBlock OrElse
@@ -879,6 +911,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                          block.Kind = SyntaxKind.WithBlock OrElse
                          block.Kind = SyntaxKind.ForBlock OrElse
                          block.Kind = SyntaxKind.ForEachBlock)
+#End If
+
 
             Dim parent = labelSyntax.Parent
             While parent IsNot Nothing
@@ -2028,7 +2062,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         ''' Binds a list of statements and puts in a scope.
         ''' </summary>
         Friend Function BindBlock(syntax As SyntaxNode, stmtList As SyntaxList(Of StatementSyntax), diagnostics As DiagnosticBag) As BoundBlock
-            Dim stmtListBinder = Me.GetBinder(stmtList)
+            Dim stmtListBinder = Me.GetBinder(stmtList).WithCheckedOrUncheckedRegion(syntax.RequireOverflowCheck(Me.CheckOverflow))
             Return BindBlock(syntax, stmtList, diagnostics, stmtListBinder)
         End Function
 
@@ -2061,10 +2095,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Next i
 
             If locals Is Nothing Then
-                Return New BoundBlock(syntax, stmtList, ImmutableArray(Of LocalSymbol).Empty, boundStatements.AsImmutableOrNull())
+                Return New BoundBlock(syntax, syntax.RequireOverflowCheck(Me.CheckOverflow), stmtList, ImmutableArray(Of LocalSymbol).Empty, boundStatements.AsImmutableOrNull())
             End If
 
-            Return New BoundBlock(syntax, stmtList, locals.ToImmutableAndFree, boundStatements.AsImmutableOrNull())
+            Return New BoundBlock(syntax, syntax.RequireOverflowCheck(Me.CheckOverflow), stmtList, locals.ToImmutableAndFree, boundStatements.AsImmutableOrNull())
         End Function
 
         Private Shared Sub DeclareLocal(ByRef locals As ArrayBuilder(Of LocalSymbol), localDecl As BoundLocalDeclarationBase)
@@ -2207,7 +2241,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             ' SemanticModel should be able to find node corresponding to the MidExpressionSyntax, which has type String and no associated symbols. 
             ' Wrapping 'original' with BoundParenthesized node tied to MidExpressionSyntax should suffice for this purpose.
             Dim right As BoundExpression = New BoundMidResult(node,
-                                                              New BoundParenthesized(midExpression, original, original.Type),
+                                                              New BoundParenthesized(midExpression, original, node.RequireOverflowCheck, original.Type),
                                                               start, lengthOpt, source, stringType).MakeCompilerGenerated()
 
             If Not isError Then
@@ -4690,6 +4724,17 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim boundBody = BindBlock(node, node.Statements, diagnostics).MakeCompilerGenerated()
             Return New BoundSyncLockStatement(node, lockExpression, boundBody)
         End Function
+
+#If SupportCheckedStatement Then
+        Public Function BindCheckedBlock(node As CheckedBlockSyntax, diagnostics As DiagnosticBag) As BoundCheckedStatement
+            Debug.Assert(node IsNot Nothing)
+            Dim checkIntegerOverflow As Boolean = Not node.CheckedStatement.ValueKeyword.IsKind(SyntaxKind.OffKeyword)
+
+            Me.WithCheckedOrUncheckedRegion(checkIntegerOverflow)
+            Dim boundBody As BoundBlock = BindBlock(node, node.Statements, diagnostics).MakeCompilerGenerated()
+            Return New BoundCheckedStatement(node, checkIntegerOverflow, boundBody)
+        End Function
+#End If
 
         Public Function BindTryBlock(node As TryBlockSyntax, diagnostics As DiagnosticBag) As BoundTryStatement
             Debug.Assert(node IsNot Nothing)

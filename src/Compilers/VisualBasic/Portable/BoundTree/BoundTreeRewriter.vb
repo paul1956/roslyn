@@ -135,7 +135,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
                 Dim right = DirectCast(Me.Visit(binary.Right), BoundExpression)
                 Dim type As TypeSymbol = Me.VisitType(binary.Type)
-                left = binary.Update(binary.OperatorKind, left, right, binary.Checked, binary.ConstantValueOpt, type)
+                left = binary.Update(binary.OperatorKind, left, right, binary.CheckIntegerOverflow, binary.ConstantValueOpt, type)
             Loop While stack.Count > 0
 
             Debug.Assert(binary Is node)

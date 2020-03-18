@@ -126,6 +126,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             Return If(result,
                       New BoundBlock(
                         DirectCast(eventSymbol.SyntaxReference.GetSyntax(), VisualBasicSyntaxNode),
+                        compilation.Options.CheckOverflow,
                         Nothing,
                         ImmutableArray(Of LocalSymbol).Empty,
                         ImmutableArray(Of BoundStatement).Empty,
@@ -236,6 +237,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 Dim returnStatement = New BoundReturnStatement(syntax, processHandlerCall, functionLocalOpt:=Nothing, exitLabelOpt:=Nothing)
                 Return New BoundBlock(
                     syntax,
+                    compilation.Options.CheckOverflow,
                     statementListSyntax:=Nothing,
                     locals:=ImmutableArray(Of LocalSymbol).Empty,
                     statements:=ImmutableArray.Create(Of BoundStatement)(returnStatement)).MakeCompilerGenerated()
@@ -248,6 +250,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 Dim returnStatement = New BoundReturnStatement(syntax, expressionOpt:=Nothing, functionLocalOpt:=Nothing, exitLabelOpt:=Nothing)
                 Return New BoundBlock(
                     syntax,
+                    compilation.Options.CheckOverflow,
                     statementListSyntax:=Nothing,
                     locals:=ImmutableArray(Of LocalSymbol).Empty,
                     statements:=ImmutableArray.Create(Of BoundStatement)(callStatement, returnStatement)).MakeCompilerGenerated()
@@ -305,7 +308,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
             If updateMethod Is Nothing Then
                 Return New BoundBlock(syntax,
-                                  Nothing,
+                                  compilation.Options.CheckOverflow,
+                                  statementListSyntax:=Nothing,
                                   ImmutableArray(Of LocalSymbol).Empty,
                                   ImmutableArray.Create(Of BoundStatement)([return])
                                   ).MakeCompilerGenerated
@@ -362,7 +366,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                                                                                                     ).MakeCompilerGenerated
 
                 Return New BoundBlock(syntax,
-                                  Nothing,
+                                  compilation.Options.CheckOverflow,
+                                  statementListSyntax:=Nothing,
                                   ImmutableArray(Of LocalSymbol).Empty,
                                   ImmutableArray.Create(Of BoundStatement)(
                                       eventUpdate,
@@ -468,6 +473,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                                                                      loopLabel).MakeCompilerGenerated
 
             Return New BoundBlock(syntax,
+                                  compilation.Options.CheckOverflow,
                                   Nothing,
                                   tmps.AsImmutable(),
                                   ImmutableArray.Create(Of BoundStatement)(

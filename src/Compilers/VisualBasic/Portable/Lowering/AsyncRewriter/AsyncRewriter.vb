@@ -184,7 +184,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Me.F.CloseMethod(F.Return())
             Else
                 Me.CloseMethod(
-                Me.F.Block(
+                Me.F.Block(Me.F.Block.CheckIntegerOverflow,
                     Me.F.ExpressionStatement(
                         Me.GenerateMethodCall(
                             Me.F.Field(Me.F.Me(), Me._builderField, False),
@@ -197,7 +197,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             ' Constructor
             If StateMachineType.TypeKind = TypeKind.Class Then
                 Me.F.CurrentMethod = StateMachineType.Constructor
-                Me.F.CloseMethod(F.Block(ImmutableArray.Create(F.BaseInitialization(), F.Return())))
+                Me.F.CloseMethod(F.Block(F.Block.CheckIntegerOverflow,
+                                         ImmutableArray.Create(F.BaseInitialization(), F.Return())))
             End If
 
         End Sub
@@ -246,7 +247,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                    Me.F.Return(),
                    Me.F.Return(Me.GeneratePropertyGet(builderFieldAsLValue, builderType, "Task"))))
 
-            Return RewriteBodyIfNeeded(Me.F.Block(ImmutableArray(Of LocalSymbol).Empty, bodyBuilder.ToImmutableAndFree()), Me.F.TopLevelMethod, Me.Method)
+            Return RewriteBodyIfNeeded(Me.F.Block(Me.F.Block.CheckIntegerOverflow,
+                                                  ImmutableArray(Of LocalSymbol).Empty, bodyBuilder.ToImmutableAndFree()), Me.F.TopLevelMethod, Me.Method)
         End Function
 
         Private Sub GenerateMoveNext(moveNextMethod As MethodSymbol)
@@ -275,7 +277,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim symbolsCapturedWithoutCtor As ISet(Of Symbol) = Nothing
 
             If body.Kind <> BoundKind.Block Then
-                body = Me.F.Block(body)
+                body = Me.F.Block(body.Syntax.RequireOverflowCheck, body)
             End If
 
             Const rewritingFlags As LocalRewriter.RewritingFlags =

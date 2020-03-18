@@ -14,11 +14,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             syntax As SyntaxNode,
             operatorKind As UnaryOperatorKind,
             operand As BoundExpression,
-            checked As Boolean,
+            CheckIntegerOverflow As Boolean,
             type As TypeSymbol,
             Optional hasErrors As Boolean = False
         )
-            Me.New(syntax, operatorKind, operand, checked, constantValueOpt:=Nothing, type:=type, hasErrors:=hasErrors OrElse operand.HasErrors())
+            Me.New(syntax, operatorKind, operand, CheckIntegerOverflow, constantValueOpt:=Nothing, type:=type, hasErrors:=hasErrors OrElse operand.HasErrors())
         End Sub
 
 #If DEBUG Then
@@ -40,7 +40,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         Return New SynthesizedIntrinsicOperatorSymbol(operandType,
                                                                       opName,
                                                                       Type.GetNullableUnderlyingTypeOrSelf(),
-                                                                      Checked AndAlso operandType.IsIntegralType() AndAlso
+                                                                      CheckIntegerOverflow AndAlso operandType.IsIntegralType() AndAlso
                                                                           op = UnaryOperatorKind.Minus)
                     End If
                 End If

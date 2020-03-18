@@ -141,7 +141,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             Return New BoundBlock(node.Syntax,
-                                  Nothing,
+                                  node.Syntax.RequireOverflowCheck,
+                                  statementListSyntax:=Nothing,
                                   locals.ToImmutableAndFree(),
                                   statements.ToImmutableAndFree)
         End Function
@@ -389,7 +390,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                         BinaryOperatorKind.Add,
                                                         boundIndex.MakeRValue(),
                                                         New BoundLiteral(syntaxNode, ConstantValue.Create(1), expressionType),
-                                                        checked:=True,
+                                                        CheckIntegerOverflow:=True,
                                                         type:=expressionType)
 
             ' if this ever fails, you found a test case to see how the suppressObjectClone flag should be set to match
@@ -456,7 +457,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             ' declare the control variable inside of the while loop to capture it for each
             ' iteration of this loop with a copy constructor
             Dim rewrittenBodyBlock As BoundBlock = New BoundBlock(statementSyntax,
-                                                                  Nothing,
+                                                                  statementSyntax.RequireOverflowCheck,
+                                                                  statementListSyntax:=Nothing,
                                                                   If(forEachStatement.DeclaredOrInferredLocalOpt IsNot Nothing,
                                                                      ImmutableArray.Create(Of LocalSymbol)(forEachStatement.DeclaredOrInferredLocalOpt),
                                                                      ImmutableArray(Of LocalSymbol).Empty),
@@ -468,7 +470,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                             BinaryOperatorKind.LessThan,
                                                             index.MakeRValue(),
                                                             limit,
-                                                            checked:=False,
+                                                            CheckIntegerOverflow:=False,
                                                             type:=booleanType))
 
             ' now build while loop
@@ -608,7 +610,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             ' declare the control variable inside of the while loop to capture it for each
             ' iteration of this loop with a copy constructor
-            Dim rewrittenBodyBlock As BoundBlock = New BoundBlock(syntaxNode, Nothing, If(node.DeclaredOrInferredLocalOpt IsNot Nothing, ImmutableArray.Create(Of LocalSymbol)(node.DeclaredOrInferredLocalOpt), ImmutableArray(Of LocalSymbol).Empty), rewrittenBodyStatements)
+            Dim rewrittenBodyBlock As BoundBlock = New BoundBlock(syntaxNode, syntaxNode.RequireOverflowCheck, statementListSyntax:=Nothing, If(node.DeclaredOrInferredLocalOpt IsNot Nothing, ImmutableArray.Create(Of LocalSymbol)(node.DeclaredOrInferredLocalOpt), ImmutableArray(Of LocalSymbol).Empty), rewrittenBodyStatements)
 
             Dim bodyEpilogue As BoundStatement = New BoundLabelStatement(syntaxNode, node.ContinueLabel)
 
@@ -655,12 +657,16 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Else
                     Dim boundTryFinally = New BoundTryStatement(syntaxNode,
                                                                 New BoundBlock(syntaxNode,
-                                                                               Nothing, ImmutableArray(Of LocalSymbol).Empty,
+                                                                               syntaxNode.RequireOverflowCheck,
+                                                                               statementListSyntax:=Nothing,
+                                                                               ImmutableArray(Of LocalSymbol).Empty,
                                                                                ImmutableArray.Create(Of BoundStatement)(boundEnumeratorAssignment,
                                                                                                                        visitedWhile)),
                                                                 ImmutableArray(Of BoundCatchBlock).Empty,
                                                                 New BoundBlock(syntaxNode,
-                                                                               Nothing, ImmutableArray(Of LocalSymbol).Empty,
+                                                                               syntaxNode.RequireOverflowCheck,
+                                                                               statementListSyntax:=Nothing,
+                                                                               ImmutableArray(Of LocalSymbol).Empty,
                                                                                ImmutableArray.Create(Of BoundStatement)(disposalStatement)),
                                                                            exitLabelOpt:=Nothing)
                     boundTryFinally.SetWasCompilerGenerated() ' used to not create sequence points

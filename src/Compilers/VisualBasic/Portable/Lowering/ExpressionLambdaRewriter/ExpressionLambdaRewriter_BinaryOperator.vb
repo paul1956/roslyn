@@ -63,7 +63,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Private Function VisitUserDefinedBinaryOperator(node As BoundUserDefinedBinaryOperator) As BoundExpression
             Dim opKind As BinaryOperatorKind = node.OperatorKind And BinaryOperatorKind.OpMask
             Dim isLifted As Boolean = (node.OperatorKind And BinaryOperatorKind.Lifted) <> 0
-            Dim isChecked As Boolean = node.Checked AndAlso IsIntegralType(node.Call.Method.ReturnType)
+            Dim isChecked As Boolean = node.CheckIntegerOverflow AndAlso IsIntegralType(node.Call.Method.ReturnType)
 
             Select Case opKind
                 Case BinaryOperatorKind.Like,
@@ -202,7 +202,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 helper = GetHelperForDateTimeBinaryOperation(opKind)
             End If
 
-            Dim isChecked As Boolean = node.Checked AndAlso IsIntegralType(resultUnderlyingType)
+            Dim isChecked As Boolean = node.CheckIntegerOverflow AndAlso IsIntegralType(resultUnderlyingType)
             Dim opMethod As String = GetBinaryOperatorMethodName(opKind, isChecked)
 
             If helper IsNot Nothing Then
@@ -245,8 +245,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 ' Assuming both operands are of the same type
                 Dim newType As TypeSymbol = If(operandIsNullable, Me._factory.NullableOf(operandUnderlyingType), operandUnderlyingType)
 
-                left = CreateBuiltInConversion(operandActiveType, newType, left, node.Checked, False, ConversionSemantics.[Default])
-                right = CreateBuiltInConversion(operandActiveType, newType, right, node.Checked, False, ConversionSemantics.[Default])
+                left = CreateBuiltInConversion(operandActiveType, newType, left, node.CheckIntegerOverflow, False, ConversionSemantics.[Default])
+                right = CreateBuiltInConversion(operandActiveType, newType, right, node.CheckIntegerOverflow, False, ConversionSemantics.[Default])
 
                 operandActiveType = newType
             End If
@@ -254,8 +254,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             ' Check if we need to convert the boolean arguments to Int32.
             If convertOperandsToInteger AndAlso Not isIsIsNot Then
                 Dim newType As TypeSymbol = If(operandIsNullable, Me._factory.NullableOf(Me.Int32Type), Me.Int32Type)
-                left = Convert(left, newType, node.Checked)
-                right = Convert(right, newType, node.Checked)
+                left = Convert(left, newType, node.CheckIntegerOverflow)
+                right = Convert(right, newType, node.CheckIntegerOverflow)
                 operandActiveType = newType
             End If
 
@@ -286,11 +286,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             If resultUnderlyingType.IsObjectType Then
                 Dim systemBool As TypeSymbol = _factory.SpecialType(SpecialType.System_Boolean)
-                left = CreateBuiltInConversion(resultType, systemBool, left, node.Checked, False, ConversionSemantics.[Default])
-                right = CreateBuiltInConversion(resultType, systemBool, right, node.Checked, False, ConversionSemantics.[Default])
+                left = CreateBuiltInConversion(resultType, systemBool, left, node.CheckIntegerOverflow, False, ConversionSemantics.[Default])
+                right = CreateBuiltInConversion(resultType, systemBool, right, node.CheckIntegerOverflow, False, ConversionSemantics.[Default])
             End If
 
-            Dim isChecked As Boolean = node.Checked AndAlso IsIntegralType(resultUnderlyingType)
+            Dim isChecked As Boolean = node.CheckIntegerOverflow AndAlso IsIntegralType(resultUnderlyingType)
             Dim opMethod As String = GetBinaryOperatorMethodName(opKind, isChecked)
 
             Dim result As BoundExpression = ConvertRuntimeHelperToExpressionTree(opMethod, left, right)
@@ -337,7 +337,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 helper = Me._factory.WellKnownMember(Of MethodSymbol)(WellKnownMember.System_Math__PowDoubleDouble)
             End If
 
-            Dim isChecked As Boolean = node.Checked AndAlso IsIntegralType(resultUnderlyingType)
+            Dim isChecked As Boolean = node.CheckIntegerOverflow AndAlso IsIntegralType(resultUnderlyingType)
             Dim opMethod As String = GetBinaryOperatorMethodName(opKind, isChecked)
 
             Dim left As BoundExpression = Visit(node.Left)
@@ -392,7 +392,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
         Private Function GenerateCastsForBinaryAndUnaryOperator(loweredOperand As BoundExpression,
                                                                 isNullable As Boolean,
                                                                 notNullableType As TypeSymbol,
-                                                                checked As Boolean,
+                                                                checkIntegerOverflow As Boolean,
                                                                 needToCastBackToByteOrSByte As Boolean) As BoundExpression
 
             ' Convert enums to their underlying types
@@ -403,7 +403,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             ' Byte and SByte promote operators to Int32, then demote after
             If needToCastBackToByteOrSByte Then
-                loweredOperand = Convert(loweredOperand, If(isNullable, Me._factory.NullableOf(Me.Int32Type), Me.Int32Type), checked)
+                loweredOperand = Convert(loweredOperand, If(isNullable, Me._factory.NullableOf(Me.Int32Type), Me.Int32Type), checkIntegerOverflow)
             End If
 
             Return loweredOperand

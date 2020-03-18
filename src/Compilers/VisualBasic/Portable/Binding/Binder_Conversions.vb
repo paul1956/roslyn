@@ -333,7 +333,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Return New BoundConversion(node,
                                            argument,
                                            conversionKind:=Nothing,
-                                           checked:=CheckOverflow,
+                                           CheckOverflow,
                                            explicitCastInCode:=isExplicit,
                                            type:=targetType,
                                            hasErrors:=True)
@@ -1180,7 +1180,7 @@ DoneWithDiagnostics:
 
                         ' Reclassify enclosed expression.
                         If ReclassifyExpression(enclosed, conversionSemantics, enclosed.Syntax, convKind, isExplicit, targetType, diagnostics) Then
-                            argument = parenthesized.Update(enclosed, enclosed.Type)
+                            argument = parenthesized.Update(enclosed, parenthesized.CheckIntegerOverflow, enclosed.Type)
 
                             Return True
                         End If
@@ -1655,7 +1655,7 @@ DoneWithDiagnostics:
 
             If Not TypeSymbol.Equals(sourceTuple.Type, destination, TypeCompareKind.ConsiderEverything) AndAlso convKind <> Nothing Then
                 ' literal cast is applied to the literal 
-                result = New BoundConversion(sourceTuple.Syntax, result, convKind, checked:=False, explicitCastInCode:=isExplicit, type:=destination)
+                result = New BoundConversion(sourceTuple.Syntax, result, convKind, checkIntegerOverflow:=False, explicitCastInCode:=isExplicit, type:=destination)
             End If
 
             ' If we had a cast in the code, keep conversion in the tree.
@@ -1665,7 +1665,7 @@ DoneWithDiagnostics:
                     tree,
                     result,
                     ConversionKind.Identity,
-                    checked:=False,
+                    checkIntegerOverflow:=False,
                     explicitCastInCode:=isExplicit,
                     type:=destination)
             End If

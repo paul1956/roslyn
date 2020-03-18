@@ -50,7 +50,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             Dim node As SyntaxNode = Me.Syntax
             Return New BoundBlock(
                 node,
-                Nothing,
+                compilationState.CompilationCheckOverflow,
+                statementListSyntax:=Nothing,
                 ImmutableArray(Of LocalSymbol).Empty,
                 ImmutableArray.Create(Of BoundStatement)(New BoundReturnStatement(node, Nothing, Nothing, Nothing)))
         End Function

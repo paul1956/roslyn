@@ -213,6 +213,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax
                 SyntaxKind.WhereKeyword, QueryClause Or CanFollowExpr,
                 SyntaxKind.AsyncKeyword, None,
                 SyntaxKind.AwaitKeyword, PrecedenceAwait,
+                SyntaxKind.CheckedKeyword, PrecedenceChecked,
+                SyntaxKind.UncheckedKeyword, PrecedenceUnchecked,
                 SyntaxKind.IteratorKeyword, None,
                 SyntaxKind.YieldKeyword, None,
                 SyntaxKind.EndIfKeyword, None,
@@ -400,6 +402,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax
         PrecedenceMultiply
         PrecedenceNegate
         PrecedenceExponentiate
+        PrecedenceChecked
+        PrecedenceUnchecked
         PrecedenceAwait
     End Enum
 

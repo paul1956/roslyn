@@ -130,7 +130,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             End If
 
             Dim lambdaBody = New BoundBlock(syntaxNode,
-                                            Nothing,
+                                            binder.CheckOverflow,
+                                            statementListSyntax:=Nothing,
                                             ImmutableArray(Of LocalSymbol).Empty,
                                             statementList)
             lambdaBody.SetWasCompilerGenerated()

@@ -21,7 +21,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     result = node.Update(
                         result,
                         ConversionKind.Identity,
-                        checked:=False,
+                        checkIntegerOverflow:=False,
                         explicitCastInCode:=True,
                         constantValueOpt:=node.ConstantValueOpt,
                         extendedInfoOpt:=node.ExtendedInfoOpt,
@@ -35,7 +35,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 If _inExpressionLambda Then
                     Return node.Update(DirectCast(Visit(node.Operand), BoundExpression),
                                        node.ConversionKind,
-                                       node.Checked,
+                                       node.CheckIntegerOverflow,
                                        node.ExplicitCastInCode,
                                        node.ConstantValueOpt,
                                        node.ExtendedInfoOpt,
@@ -93,7 +93,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                             Return Visit(binary.Update(binary.OperatorKind,
                                                        binary.Left,
                                                        binary.Right,
-                                                       binary.Checked,
+                                                       binary.CheckIntegerOverflow,
                                                        binary.ConstantValueOpt,
                                                        node.Type))
                     End Select
@@ -240,14 +240,14 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 ' COMPAT: skip relaxation in this case. ET can drop the return value of the inner lambda.
                 returnValue = MyBase.VisitConversion(
                     node.Update(node.Operand,
-                                      node.ConversionKind, node.Checked, node.ExplicitCastInCode,
+                                      node.ConversionKind, node.CheckIntegerOverflow, node.ExplicitCastInCode,
                                       node.ConstantValueOpt,
                                       extendedInfoOpt:=Nothing, type:=node.Type))
 
                 returnValue = TransformRewrittenConversion(DirectCast(returnValue, BoundConversion))
             Else
                 returnValue = node.Update(VisitExpressionNode(relaxationLambda),
-                                      node.ConversionKind, node.Checked, node.ExplicitCastInCode,
+                                      node.ConversionKind, node.CheckIntegerOverflow, node.ExplicitCastInCode,
                                       node.ConstantValueOpt,
                                       extendedInfoOpt:=Nothing, type:=node.Type)
             End If
@@ -433,7 +433,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                     TransformRewrittenConversion(
                                         node.Update(rewrittenOperand,
                                                     convKind,
-                                                    node.Checked,
+                                                    node.CheckIntegerOverflow,
                                                     node.ExplicitCastInCode,
                                                     node.ConstantValueOpt,
                                                     node.ExtendedInfoOpt,
@@ -466,7 +466,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Return TransformRewrittenConversion(
                             node.Update(rewrittenOperand,
                                         node.ConversionKind And (Not ConversionKind.Nullable),
-                                        node.Checked,
+                                        node.CheckIntegerOverflow,
                                         node.ExplicitCastInCode,
                                         node.ConstantValueOpt,
                                         node.ExtendedInfoOpt,
@@ -544,7 +544,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
                 If constantResult IsNot Nothing AndAlso Not constantResult.IsBad Then
                     ' Overflow should have been detected at classification time during binding.
-                    Debug.Assert(Not integerOverflow OrElse Not node.Checked)
+                    Debug.Assert(Not integerOverflow OrElse Not node.CheckIntegerOverflow)
                     operand = RewriteConstant(New BoundLiteral(node.Syntax, constantResult, unwrappedResultType), constantResult)
 
                 Else
@@ -557,7 +557,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         operand = TransformRewrittenConversion(New BoundConversion(node.Syntax,
                                                     operand,
                                                     convKind,
-                                                    node.Checked,
+                                                    node.CheckIntegerOverflow,
                                                     node.ExplicitCastInCode,
                                                     node.ConstantValueOpt,
                                                     node.ExtendedInfoOpt,
@@ -608,7 +608,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                             TransformRewrittenConversion(
                                 node.Update(rewrittenOperand,
                                             convKind,
-                                            node.Checked,
+                                            node.CheckIntegerOverflow,
                                             node.ExplicitCastInCode,
                                             node.ConstantValueOpt,
                                             node.ExtendedInfoOpt,
@@ -630,7 +630,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Return TransformRewrittenConversion(
                             node.Update(rewrittenOperand,
                                         node.ConversionKind And (Not ConversionKind.Nullable),
-                                        node.Checked,
+                                        node.CheckIntegerOverflow,
                                         node.ExplicitCastInCode,
                                         node.ConstantValueOpt,
                                         node.ExtendedInfoOpt,
@@ -994,7 +994,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 #End If
 
                         result = New BoundConversion(node.Syntax, DirectCast(result, BoundExpression),
-                                                     conv, node.Checked, node.ExplicitCastInCode, targetResultType, Nothing)
+                                                     conv, node.CheckIntegerOverflow, node.ExplicitCastInCode, targetResultType, Nothing)
                     End If
                 End If
             End If
@@ -1069,7 +1069,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     Debug.Assert(conv = Conversions.ClassifyConversion(operandType, memberSymbol.Parameters(0).Type, useSiteDiagnostics).Key)
 #End If
 
-                    operand = New BoundConversion(node.Syntax, operand, conv, node.Checked, node.ExplicitCastInCode,
+                    operand = New BoundConversion(node.Syntax, operand, conv, node.CheckIntegerOverflow, node.ExplicitCastInCode,
                                                   memberSymbol.Parameters(0).Type, Nothing)
                 End If
 
@@ -1145,7 +1145,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 #End If
 
                         result = New BoundConversion(node.Syntax, DirectCast(result, BoundExpression),
-                                                     conv, node.Checked, node.ExplicitCastInCode, targetResultType, Nothing)
+                                                     conv, node.CheckIntegerOverflow, node.ExplicitCastInCode, targetResultType, Nothing)
                     End If
                 End If
             End If
@@ -1214,7 +1214,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     Debug.Assert(conv = Conversions.ClassifyConversion(operandType, memberSymbol.Parameters(0).Type, useSiteDiagnostics).Key)
 #End If
 
-                    operand = New BoundConversion(node.Syntax, operand, conv, node.Checked, node.ExplicitCastInCode,
+                    operand = New BoundConversion(node.Syntax, operand, conv, node.CheckIntegerOverflow, node.ExplicitCastInCode,
                                                   memberSymbol.Parameters(0).Type, Nothing)
                 End If
 
@@ -1288,7 +1288,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 #End If
 
                     result = New BoundConversion(node.Syntax, DirectCast(result, BoundExpression),
-                                                 conv, node.Checked, node.ExplicitCastInCode, targetResultType, Nothing)
+                                                 conv, node.CheckIntegerOverflow, node.ExplicitCastInCode, targetResultType, Nothing)
                 End If
             End If
 
@@ -1305,7 +1305,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Dim callOperand = DirectCast(operand, BoundCall)
                 If IsFloatingTruncation(callOperand) Then
                     ' CInt(Fix(number)) and the like can be simplified to just truncate the number to the integral type
-                    Return New BoundConversion(node.Syntax, callOperand.Arguments(0), node.ConversionKind, node.Checked, node.ExplicitCastInCode, node.Type)
+                    Return New BoundConversion(node.Syntax, callOperand.Arguments(0), node.ConversionKind, node.CheckIntegerOverflow, node.ExplicitCastInCode, node.Type)
                 ElseIf ReturnsWholeNumberDouble(callOperand) Then
                     ' CInt(Math.Floor(number)) and the like can omit rounding the result of Floor, which is already a whole number
                     Return node
@@ -1328,7 +1328,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 #If DEBUG Then
                     Debug.Assert(ConversionKind.WideningNumeric = Conversions.ClassifyConversion(typeFrom, mathRound.Parameters(0).Type, useSiteDiagnostics).Key)
 #End If
-                    operand = New BoundConversion(node.Syntax, operand, ConversionKind.WideningNumeric, node.Checked, node.ExplicitCastInCode,
+                    operand = New BoundConversion(node.Syntax, operand, ConversionKind.WideningNumeric, node.CheckIntegerOverflow, node.ExplicitCastInCode,
                                                   mathRound.Parameters(0).Type, Nothing)
                 End If
 
@@ -1340,7 +1340,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 #End If
 
                 result = New BoundConversion(node.Syntax, callMathRound, node.ConversionKind,
-                                             node.Checked, node.ExplicitCastInCode, node.Type, Nothing)
+                                             node.CheckIntegerOverflow, node.ExplicitCastInCode, node.Type, Nothing)
             End If
 
             Return result

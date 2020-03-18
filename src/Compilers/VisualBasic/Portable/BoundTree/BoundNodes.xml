@@ -135,6 +135,8 @@
         <Field Name="Type" Type="TypeSymbol" Override="true" Null="allow"/>
 
         <Field Name="Expression" Type="BoundExpression"/>
+        <Field Name="CheckIntegerOverflow" Type="Boolean" Null="allow"/>
+
     </Node>
 
     <!-- This is an error node.  It is created when an lvalue is needed and we don't want to create a specific lvalue such as a local.
@@ -302,7 +304,7 @@
 
         <Field Name="OperatorKind" Type="UnaryOperatorKind"/>
         <Field Name="Operand" Type="BoundExpression"/>
-        <Field Name="Checked" Type="Boolean"/>
+        <Field Name="CheckIntegerOverflow" Type="Boolean"/>
         <Field Name="ConstantValueOpt" PropertyOverrides="true" Type="ConstantValue" Null="allow"/>
     </Node>
 
@@ -335,7 +337,7 @@
         <Field Name="OperatorKind" Type="BinaryOperatorKind"/>
         <Field Name="Left" Type="BoundExpression"/>
         <Field Name="Right" Type="BoundExpression"/>
-        <Field Name="Checked" Type="Boolean"/>
+        <Field Name="CheckIntegerOverflow" Type="Boolean"/>
         <Field Name="ConstantValueOpt" PropertyOverrides="true" Type="ConstantValue" Null="allow"/>
     </Node>
 
@@ -349,7 +351,7 @@
         <Field Name="UnderlyingExpression" Type="BoundExpression"/>
 
         <!-- NOTE: This flag does not have any meaning outside Expression Lambda -->
-        <Field Name="Checked" Type="Boolean"/>
+        <Field Name="CheckIntegerOverflow" Type="Boolean"/>
     </Node>
   
     <Node Name="BoundUserDefinedShortCircuitingOperator" Base="BoundExpression" HasValidate="true">
@@ -456,7 +458,7 @@
 
         <Field Name="Operand" PropertyOverrides="true" Type="BoundExpression"/>
         <Field Name="ConversionKind" PropertyOverrides="true" Type="ConversionKind"/>
-        <Field Name="Checked" Type="Boolean"/>
+        <Field Name="CheckIntegerOverflow" Type="Boolean"/>
         <Field Name="ExplicitCastInCode" PropertyOverrides="true" Type="Boolean"/>
         <Field Name="ConstantValueOpt" PropertyOverrides="true" Type="ConstantValue" Null="allow"/>
 
@@ -986,6 +988,7 @@
           That is why unassigned use is just a warning and jumps into blocks are generally allowed.
     -->
     <Node Name="BoundBlock" Base="BoundStatement">
+        <Field Name="CheckIntegerOverflow" Type="Boolean"/>
         <Field Name="StatementListSyntax" Type="SyntaxList(Of StatementSyntax)"/>
         <Field Name="Locals" Type="ImmutableArray(Of LocalSymbol)"/>
         <Field Name="Statements" Type="ImmutableArray(Of BoundStatement)"/>
@@ -1241,7 +1244,7 @@
       <Field Name="InitialValue" Type="BoundExpression"/>
       <Field Name="LimitValue" Type="BoundExpression"/>
       <Field Name="StepValue" Type="BoundExpression"/>
-      <Field Name="Checked" Type="Boolean"/>
+      <Field Name="CheckIntegerOverflow" Type="Boolean"/>
       <Field Name="OperatorsOpt" Type="BoundForToUserDefinedOperators"  Null="allow"/>
   </Node>
 
@@ -1682,6 +1685,13 @@
     <!-- The bound lock object expression-->
     <Field Name="LockExpression" Type="BoundExpression" Null="disallow" />
     
+    <!-- The bound SyncLock body -->
+    <Field Name="Body" Type="BoundBlock" Null="disallow" />
+  </Node>
+
+  <Node Name="BoundCheckedStatement" Base="BoundStatement">
+    <Field Name="ThrowOnIntegerOverflow" Type="Boolean" />
+
     <!-- The bound SyncLock body -->
     <Field Name="Body" Type="BoundBlock" Null="disallow" />
   </Node>

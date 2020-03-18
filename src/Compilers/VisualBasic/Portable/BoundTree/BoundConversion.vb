@@ -14,25 +14,25 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             syntax As SyntaxNode,
             operand As BoundExpression,
             conversionKind As ConversionKind,
-            checked As Boolean,
+            checkIntegerOverflow As Boolean,
             explicitCastInCode As Boolean,
             type As TypeSymbol,
             Optional hasErrors As Boolean = False
         )
-            Me.New(syntax, operand, conversionKind, checked, explicitCastInCode, constantValueOpt:=Nothing, type:=type, hasErrors:=hasErrors)
+            Me.New(syntax, operand, conversionKind, checkIntegerOverflow, explicitCastInCode, constantValueOpt:=Nothing, type:=type, hasErrors:=hasErrors)
         End Sub
 
         Public Sub New(
                 syntax As SyntaxNode,
                 operand As BoundExpression,
                 conversionKind As ConversionKind,
-                checked As Boolean,
+                checkIntegerOverflow As Boolean,
                 explicitCastInCode As Boolean,
                 constantValueOpt As ConstantValue,
                 type As TypeSymbol,
                 Optional hasErrors As Boolean = False
             )
-            Me.New(syntax, operand, conversionKind, checked, explicitCastInCode, constantValueOpt:=constantValueOpt, extendedInfoOpt:=Nothing, type:=type, hasErrors:=hasErrors)
+            Me.New(syntax, operand, conversionKind, checkIntegerOverflow, explicitCastInCode, constantValueOpt:=constantValueOpt, extendedInfoOpt:=Nothing, type:=type, hasErrors:=hasErrors)
         End Sub
 
 #If DEBUG Then

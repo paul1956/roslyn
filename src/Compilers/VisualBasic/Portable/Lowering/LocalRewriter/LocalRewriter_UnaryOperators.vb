@@ -60,7 +60,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                     Debug.Assert((binary.OperatorKind And BinaryOperatorKind.Lifted) <> 0)
                                     optimizableForConditionalBranch = True
                                     Return binary.Update(binary.OperatorKind Or BinaryOperatorKind.OptimizableForConditionalBranch,
-                                                         binary.Left, binary.Right, binary.Checked, binary.ConstantValueOpt, binary.Type)
+                                                         binary.Left, binary.Right, binary.CheckIntegerOverflow, binary.ConstantValueOpt, binary.Type)
                             End Select
                         End If
 
@@ -330,7 +330,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         New BoundUnaryOperator(originalOperator.Syntax,
                                                unliftedOpKind,
                                                operandValue,
-                                               originalOperator.Checked,
+                                               originalOperator.CheckIntegerOverflow,
                                                originalOperator.Type.GetNullableUnderlyingType))
         End Function
     End Class

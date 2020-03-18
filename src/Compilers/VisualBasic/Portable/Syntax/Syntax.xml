@@ -246,6 +246,10 @@ Unify Enum declarations with other block type declarations.
         <lm-equiv name="EndBlock" />
         <native-equiv name="Statement.Opcodes.EndSyncLock" />
       </node-kind>
+      <!--<node-kind name="EndCheckedStatement">
+        <lm-equiv name="EndBlock" />
+        <native-equiv name="" />
+      </node-kind>-->
 
       <child name="EndKeyword" kind="EndKeyword">
         <description>The "End" keyword</description>
@@ -256,7 +260,9 @@ Unify Enum declarations with other block type declarations.
       <child name="BlockKeyword">
         <description>
           The keyword that ends the block. Must be one of:
-          "If", "Using", "With", "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace", "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler", "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+          "If", "Using", "With", "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
+          "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler", "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+          "Checked" will be added in future
         </description>
         <lm-equiv name="Block"></lm-equiv>
         <native-equiv name=""></native-equiv>
@@ -283,6 +289,7 @@ Unify Enum declarations with other block type declarations.
         <kind name="WhileKeyword" node-kind="EndWhileStatement"/>
         <kind name="TryKeyword" node-kind="EndTryStatement"/>
         <kind name="SyncLockKeyword" node-kind="EndSyncLockStatement"/>
+        <!--<kind name="CheckedKeyword" node-kind="EndCheckedStatement"/>-->
       </child>
     </node-structure>
 
@@ -7757,6 +7764,103 @@ Unify Enum declarations with other block type declarations.
       </child>
     </node-structure>
 
+    <!--****************
+      -  Checked/Unchecked Expression
+      ******************-->
+    <node-structure name="OverflowHandlerExpressionSyntax" parent="ExpressionSyntax">
+      <description>Represents an expression what can deal with Integer Overflow.</description>
+      <lm-equiv name="OverflowHandlerNode"></lm-equiv>
+      <native-equiv name=""></native-equiv>
+
+      <node-kind name="CheckedExpression">
+      </node-kind>
+      <node-kind name="UncheckedExpression">
+      </node-kind>
+
+      <child name="OperatorToken">
+        <description>
+          The keyword that identifies the handling of Integer Overflow.
+          Must be one of: "Checked", "Unchecked"
+        </description>
+        <lm-equiv name="Operator"></lm-equiv>
+        <native-equiv name=""></native-equiv>
+        <kind name="CheckedKeyword" node-kind="CheckedExpression"/>
+        <kind name="UncheckedKeyword" node-kind="UncheckedExpression"/>
+      </child>
+
+      <child name="OpenParenToken" kind="OpenParenToken">
+        <description>The "(" token</description>
+        <lm-equiv name="LeftParenthesis"></lm-equiv>
+        <native-equiv name=""></native-equiv>
+      </child>
+
+      <child name="Expression" kind="@ExpressionSyntax">
+        <description>The expression inside the parentheses.</description>
+        <lm-equiv name="Expression"></lm-equiv>
+        <native-equiv name=""></native-equiv>
+      </child>
+
+      <child name="CloseParenToken" kind="CloseParenToken">
+        <description>The ")" token</description>
+        <lm-equiv name="RightParenthesis"></lm-equiv>
+        <native-equiv name=""></native-equiv>
+      </child>
+
+      <TypeComment>
+        <summary>Class which represents the syntax node for Checked expression.</summary>
+      </TypeComment>
+      <FactoryComment>
+        <summary>Creates a CheckedExpressionSyntax node.</summary>
+      </FactoryComment>
+    </node-structure>
+
+    <!--****************
+      -  CheckedStatement
+      ******************-->
+    <!--<node-structure name="CheckedStatementSyntax" parent="StatementSyntax">
+      <description>
+        Represents the "Checked" statement that begins a "Checked" block.
+      </description>
+      <lm-equiv name="CheckedNode"></lm-equiv>
+      <native-equiv name="ExecutableBlockStatement"></native-equiv>
+
+      <node-kind name="CheckedStatement">
+        <lm-equiv name="Checked" />
+      </node-kind>
+
+      <child name="CheckedKeyword" kind="CheckedKeyword">
+        <description>The "Checked" keyword.</description>
+        <lm-equiv name="CheckedKeyword"></lm-equiv>
+        <native-equiv name=""></native-equiv>
+      </child>
+
+      <child name="ValueKeyword" optional="true" kind="OnKeyword|OffKeyword">
+        <description>The keyword that identifiers the value being set for the option: On, Off.</description>
+        <lm-equiv name="Value"></lm-equiv>
+        <native-equiv name=""></native-equiv>
+      </child>
+    </node-structure>
+
+    <node-structure name="CheckedBlockSyntax" parent="ExecutableStatementSyntax">
+      <description>
+        Represents a "Checked On or Checked Off... End Checked" block.
+      </description>
+      <node-kind name="CheckedBlock" />
+
+      <child name="CheckedStatement" kind="CheckedStatement">
+        <description>The "Checked" statement that begins the "Checked" block. </description>
+      </child>
+
+      <child name="Statements" optional="true" list="true" kind="@StatementSyntax">
+        <description>A list of statements to be executed.</description>
+        <lm-equiv name="BlockNode.Contents"></lm-equiv>
+        <native-equiv name="BlockStatement.Children"></native-equiv>
+      </child>
+      <child name="EndCheckedStatement" kind="EndCheckedStatement">
+        <description>The "End Checked" statement.</description>
+      </child>
+    </node-structure>-->
+
     <!-- ************************************************************************************************** -->
     <!-- **  TOKENS                                                                                      ** -->
     <!-- ************************************************************************************************** -->
@@ -8587,6 +8691,16 @@ Unify Enum declarations with other block type declarations.
       </node-kind>
       <node-kind name="YieldKeyword" token-text="Yield">
         <lm-equiv name="YieldKeyword" />
+        <native-equiv name="" />
+      </node-kind>
+      <!-- Visual Basic 16.0 Keywords -->
+
+      <node-kind name="CheckedKeyword" token-text="Checked">
+        <lm-equiv name="CheckedKeyword" />
+        <native-equiv name="" />
+      </node-kind>
+      <node-kind name="UncheckedKeyword" token-text="Unchecked">
+        <lm-equiv name="UncheckedKeyword" />
         <native-equiv name="" />
       </node-kind>
 

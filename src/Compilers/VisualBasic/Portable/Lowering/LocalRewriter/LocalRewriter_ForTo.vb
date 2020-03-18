@@ -137,7 +137,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                                                 BinaryOperatorKind.GreaterThanOrEqual,
                                                                                 stepValue,
                                                                                 literal,
-                                                                                checked:=False,
+                                                                                CheckIntegerOverflow:=False,
                                                                                 type:=GetSpecialType(SpecialType.System_Boolean)))
 
                     If stepHasValue IsNot Nothing Then
@@ -200,7 +200,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Dim rewrittenIncrement As BoundStatement = RewriteForLoopIncrement(
                                                 rewrittenControlVariable,
                                                 rewrittenStep,
-                                                forStatement.Checked,
+                                                forStatement.CheckIntegerOverflow,
                                                 forStatement.OperatorsOpt)
 
             If generateUnstructuredExceptionHandlingResumeCode Then
@@ -301,7 +301,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             Return New BoundBlock(
                 blockSyntax,
-                Nothing,
+                blockSyntax.RequireOverflowCheck,
+                statementListSyntax:=Nothing,
                 locals.ToImmutableAndFree(),
                 statements.ToImmutableAndFree
             )
@@ -551,7 +552,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
             Return New BoundBlock(
                 blockSyntax,
-                Nothing,
+                blockSyntax.RequireOverflowCheck,
+                statementListSyntax:=Nothing,
                 locals.ToImmutableAndFree(),
                 statements)
         End Function
@@ -686,7 +688,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                     BinaryOperatorKind.LessThanOrEqual,
                                                     controlVariable.MakeRValue(),
                                                     limit,
-                                                    checked:=False,
+                                                    CheckIntegerOverflow:=False,
                                                     type:=booleanType))
             End If
 
@@ -708,7 +710,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                     comparisonOperator,
                                                     controlVariable.MakeRValue(),
                                                     limit,
-                                                    checked:=False,
+                                                    CheckIntegerOverflow:=False,
                                                     type:=booleanType))
             End If
 
@@ -723,7 +725,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                     BinaryOperatorKind.LessThanOrEqual,
                                                     NegateIfStepNegative(controlVariable.MakeRValue(), stepValue),
                                                     NegateIfStepNegative(limit, stepValue),
-                                                    checked:=False,
+                                                    CheckIntegerOverflow:=False,
                                                     type:=booleanType))
             End If
 
@@ -749,7 +751,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                         BinaryOperatorKind.LessThanOrEqual,
                                                         controlVariable.MakeRValue(),
                                                         limit,
-                                                        checked:=False,
+                                                        CheckIntegerOverflow:=False,
                                                         type:=booleanType))
 
                 Dim gte = TransformRewrittenBinaryOperator(
@@ -757,7 +759,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                         BinaryOperatorKind.GreaterThanOrEqual,
                                                         controlVariable.MakeRValue(),
                                                         limit,
-                                                        checked:=False,
+                                                        CheckIntegerOverflow:=False,
                                                         type:=booleanType))
 
                 Dim isUp As BoundExpression = New BoundLocal(limit.Syntax,

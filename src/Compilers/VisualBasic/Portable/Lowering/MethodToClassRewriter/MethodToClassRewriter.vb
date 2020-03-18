@@ -418,7 +418,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             Next
 
             'TODO: we may not need to update if there was nothing to rewrite.
-            Return node.Update(node.StatementListSyntax, newLocals.ToImmutableAndFree(), newStatements.ToImmutableAndFree())
+            Return node.Update(node.CheckIntegerOverflow, node.StatementListSyntax, newLocals.ToImmutableAndFree(), newStatements.ToImmutableAndFree())
         End Function
 
         Protected Function RewriteBlock(node As BoundBlock) As BoundBlock

@@ -46,7 +46,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 statements.Add(New BoundReturnStatement(syntax, Nothing, Nothing, Nothing).MakeCompilerGenerated())
 
                 ' Create a bound block 
-                Return New BoundBlock(syntax, Nothing, ImmutableArray(Of LocalSymbol).Empty, statements.ToImmutableAndFree()).MakeCompilerGenerated()
+                Return New BoundBlock(syntax, compilationState.CompilationCheckOverflow, statementListSyntax:=Nothing, ImmutableArray(Of LocalSymbol).Empty, statements.ToImmutableAndFree()).MakeCompilerGenerated()
             End Function
         End Class
 
@@ -75,7 +75,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                                                                          Nothing, AnonymousType.Manager.System_Boolean).MakeCompilerGenerated()
 
                 ' Create a bound block 
-                Return New BoundBlock(syntax, Nothing, ImmutableArray(Of LocalSymbol).Empty,
+                Return New BoundBlock(syntax, compilationState.CompilationCheckOverflow, statementListSyntax:=Nothing, ImmutableArray(Of LocalSymbol).Empty,
                                       ImmutableArray.Create(Of BoundStatement)(
                                           New BoundReturnStatement(syntax, boundCallToEquals, Nothing, Nothing).MakeCompilerGenerated()))
             End Function
@@ -173,7 +173,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 Next
 
                 ' Create a bound block 
-                Return New BoundBlock(syntax, Nothing,
+                Return New BoundBlock(syntax, compilationState.CompilationCheckOverflow, statementListSyntax:=Nothing,
                                       ImmutableArray(Of LocalSymbol).Empty,
                                       ImmutableArray.Create(Of BoundStatement)(
                                           New BoundReturnStatement(syntax, expression, Nothing, Nothing).MakeCompilerGenerated()))
@@ -217,7 +217,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                 Dim finalEqualityCheck = BuildAndAlso(valIsNotNothing, combinedFieldCheck, booleanType)
 
                 ' Create a bound block 
-                Return New BoundBlock(syntax, Nothing,
+                Return New BoundBlock(syntax, compilationState.CompilationCheckOverflow, statementListSyntax:=Nothing,
                                       ImmutableArray.Create(localMyFieldBoxed, localOtherFieldBoxed),
                                       ImmutableArray.Create(Of BoundStatement)(
                                           New BoundReturnStatement(syntax, finalEqualityCheck, Nothing, Nothing).MakeCompilerGenerated()))
@@ -372,7 +372,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
                                                               Nothing, stringType).MakeCompilerGenerated()
 
                 ' Create a bound block 
-                Return New BoundBlock(syntax, Nothing,
+                Return New BoundBlock(syntax, compilationState.CompilationCheckOverflow, statementListSyntax:=Nothing,
                                       ImmutableArray(Of LocalSymbol).Empty,
                                       ImmutableArray.Create(Of BoundStatement)(
                                           New BoundReturnStatement(syntax, [call], Nothing, Nothing).MakeCompilerGenerated()))

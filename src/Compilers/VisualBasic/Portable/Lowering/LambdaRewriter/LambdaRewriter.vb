@@ -336,6 +336,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     ' Frame.inst = New Frame()
                     Dim F = New SyntheticBoundNodeFactory(frame.SharedConstructor, frame.SharedConstructor, syntax, CompilationState, diagnostics)
                     Dim body = F.Block(
+                            CompilationState.CompilationCheckOverflow,
                             F.Assignment(
                                 F.Field(Nothing, frame.SingletonCache, isLValue:=True),
                                 F.[New](frame.Constructor)),
@@ -472,7 +473,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             builder.Add(New BoundReturnStatement(syntaxNode, Nothing, Nothing, Nothing))
 
             Return New BoundBlock(syntaxNode,
-                                Nothing,
+                                  syntaxNode.RequireOverflowCheck,
+                                  statementListSyntax:=Nothing,
                                 ImmutableArray(Of LocalSymbol).Empty,
                                 builder.ToImmutableAndFree())
         End Function
@@ -723,7 +725,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Return node.Update(newStatements.ToImmutableAndFree())
             Else
                 Return New BoundBlock(node.Syntax,
-                                      Nothing,
+                                      node.Syntax.RequireOverflowCheck,
+                                      statementListSyntax:=Nothing,
                                       newLocals.ToImmutableAndFree(),
                                       newStatements.ToImmutableAndFree())
             End If
@@ -947,7 +950,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             If _inExpressionLambda Then
                 result = conversion.Update(result,
                                            conversion.ConversionKind,
-                                           conversion.Checked,
+                                           conversion.CheckIntegerOverflow,
                                            conversion.ExplicitCastInCode,
                                            conversion.ConstantValueOpt,
                                            conversion.ExtendedInfoOpt,
@@ -991,7 +994,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 ' EnC is not supported in this case.
                 lambdaOrLambdaBodySyntax = syntax
                 isLambdaBody = False
-            ElseIf LambdaUtilities.IsNonUserCodeQueryLambda(syntax)
+            ElseIf LambdaUtilities.IsNonUserCodeQueryLambda(syntax) Then
                 lambdaOrLambdaBodySyntax = syntax
                 isLambdaBody = False
             Else
@@ -1046,7 +1049,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 translatedLambdaContainer = _frames(lambdaScope)
                 closureKind = ClosureKind.General
                 closureOrdinal = _frames(lambdaScope).ClosureOrdinal
-            ElseIf _analysis.capturedVariablesByLambda(node.LambdaSymbol).Count = 0
+            ElseIf _analysis.capturedVariablesByLambda(node.LambdaSymbol).Count = 0 Then
                 translatedLambdaContainer = GetStaticFrame(node, Diagnostics)
                 closureKind = ClosureKind.Static
                 closureOrdinal = LambdaDebugInfo.StaticClosureOrdinal

@@ -307,7 +307,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
                 Return New BoundBlock(
                     syntax,
-                    Nothing,
+                    syntax.RequireOverflowCheck,
+                    statementListSyntax:=Nothing,
                     ImmutableArray.Create(Of LocalSymbol)(scriptLocal.LocalSymbol),
                     ImmutableArray.Create(Of BoundStatement)(scriptAssignment, scriptInitialize, returnStatement)).MakeCompilerGenerated()
             End Function
@@ -387,7 +388,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
 
                 Return New BoundBlock(
                     syntax,
-                    Nothing,
+                    syntax.RequireOverflowCheck,
+                    statementListSyntax:=Nothing,
                     ImmutableArray.Create(Of LocalSymbol)(submissionLocal.LocalSymbol),
                     ImmutableArray.Create(Of BoundStatement)(submissionAssignment, returnStatement)).MakeCompilerGenerated()
             End Function

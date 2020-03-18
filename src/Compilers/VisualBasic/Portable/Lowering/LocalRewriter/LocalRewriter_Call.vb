@@ -25,7 +25,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Return New BoundConversion(node.Syntax,
                                            VisitExpressionNode(arguments(0)),
                                            ConversionKind.WideningNumeric,
-                                           checked:=False,
+                                           checkIntegerOverflow:=False,
                                            explicitCastInCode:=True,
                                            type:=node.Type)
             End If

@@ -275,7 +275,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax
         ''' The keyword that ends the block. Must be one of: "If", "Using", "With",
         ''' "Select", "Structure", "Enum", "Interface", "Class", "Module", "Namespace",
         ''' "Sub", "Function", "Get, "Set", "Property", "Operator", "Event", "AddHandler",
-        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock".
+        ''' "RemoveHandler", "RaiseEvent", "While", "Try" or "SyncLock". "Checked" will be
+        ''' added in future
         ''' </summary>
         Public  ReadOnly Property BlockKeyword As SyntaxToken
             Get
@@ -33103,6 +33104,157 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax
         Public Function Update(awaitKeyword As SyntaxToken, expression As ExpressionSyntax) As AwaitExpressionSyntax
             If awaitKeyword <> Me.AwaitKeyword OrElse expression IsNot Me.Expression Then
                 Dim newNode = SyntaxFactory.AwaitExpression(awaitKeyword, expression)
+                Dim annotations = Me.GetAnnotations()
+                If annotations IsNot Nothing AndAlso annotations.Length > 0
+                    return newNode.WithAnnotations(annotations)
+                End If
+                Return newNode
+            End If
+            Return Me
+        End Function
+
+    End Class
+
+    ''' <summary>
+    ''' Represents an expression what can deal with Integer Overflow.
+    ''' </summary>
+    Public NotInheritable Class OverflowHandlerExpressionSyntax
+        Inherits ExpressionSyntax
+
+        Friend _expression as ExpressionSyntax
+
+        Friend Sub New(ByVal green As GreenNode, ByVal parent as SyntaxNode, ByVal startLocation As Integer)
+            MyBase.New(green, parent, startLocation)
+            Debug.Assert(green IsNot Nothing)
+            Debug.Assert(startLocation >= 0)
+        End Sub
+
+        Friend Sub New(ByVal kind As SyntaxKind, ByVal errors as DiagnosticInfo(), ByVal annotations as SyntaxAnnotation(), operatorToken As InternalSyntax.KeywordSyntax, openParenToken As InternalSyntax.PunctuationSyntax, expression As ExpressionSyntax, closeParenToken As InternalSyntax.PunctuationSyntax)
+            Me.New(New Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.OverflowHandlerExpressionSyntax(kind, errors, annotations, operatorToken, openParenToken, DirectCast(expression.Green, Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.ExpressionSyntax), closeParenToken), Nothing, 0)
+        End Sub
+
+        ''' <summary>
+        ''' The keyword that identifies the handling of Integer Overflow. Must be one of:
+        ''' "Checked", "Unchecked"
+        ''' </summary>
+        Public  ReadOnly Property OperatorToken As SyntaxToken
+            Get
+                return new SyntaxToken(Me, DirectCast(Me.Green, Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.OverflowHandlerExpressionSyntax)._operatorToken, Me.Position, 0)
+            End Get
+        End Property
+
+        ''' <summary>
+        ''' Returns a copy of this with the OperatorToken property changed to the specified
+        ''' value. Returns this instance if the specified value is the same as the current
+        ''' value.
+        ''' </summary>
+        Public Shadows Function WithOperatorToken(operatorToken as SyntaxToken) As OverflowHandlerExpressionSyntax
+            return Update(Me.Kind, operatorToken, Me.OpenParenToken, Me.Expression, Me.CloseParenToken)
+        End Function
+
+        ''' <summary>
+        ''' The "(" token
+        ''' </summary>
+        Public  ReadOnly Property OpenParenToken As SyntaxToken
+            Get
+                return new SyntaxToken(Me, DirectCast(Me.Green, Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.OverflowHandlerExpressionSyntax)._openParenToken, Me.GetChildPosition(1), Me.GetChildIndex(1))
+            End Get
+        End Property
+
+        ''' <summary>
+        ''' Returns a copy of this with the OpenParenToken property changed to the
+        ''' specified value. Returns this instance if the specified value is the same as
+        ''' the current value.
+        ''' </summary>
+        Public Shadows Function WithOpenParenToken(openParenToken as SyntaxToken) As OverflowHandlerExpressionSyntax
+            return Update(Me.Kind, Me.OperatorToken, openParenToken, Me.Expression, Me.CloseParenToken)
+        End Function
+
+        ''' <summary>
+        ''' The expression inside the parentheses.
+        ''' </summary>
+        Public  ReadOnly Property Expression As ExpressionSyntax
+            Get
+                Return GetRed(_expression, 2)
+            End Get
+        End Property
+
+        ''' <summary>
+        ''' Returns a copy of this with the Expression property changed to the specified
+        ''' value. Returns this instance if the specified value is the same as the current
+        ''' value.
+        ''' </summary>
+        Public Shadows Function WithExpression(expression as ExpressionSyntax) As OverflowHandlerExpressionSyntax
+            return Update(Me.Kind, Me.OperatorToken, Me.OpenParenToken, expression, Me.CloseParenToken)
+        End Function
+
+        ''' <summary>
+        ''' The ")" token
+        ''' </summary>
+        Public  ReadOnly Property CloseParenToken As SyntaxToken
+            Get
+                return new SyntaxToken(Me, DirectCast(Me.Green, Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax.OverflowHandlerExpressionSyntax)._closeParenToken, Me.GetChildPosition(3), Me.GetChildIndex(3))
+            End Get
+        End Property
+
+        ''' <summary>
+        ''' Returns a copy of this with the CloseParenToken property changed to the
+        ''' specified value. Returns this instance if the specified value is the same as
+        ''' the current value.
+        ''' </summary>
+        Public Shadows Function WithCloseParenToken(closeParenToken as SyntaxToken) As OverflowHandlerExpressionSyntax
+            return Update(Me.Kind, Me.OperatorToken, Me.OpenParenToken, Me.Expression, closeParenToken)
+        End Function
+
+        Friend Overrides Function GetCachedSlot(i as Integer) as SyntaxNode
+            Select case i
+                Case 2
+                    Return Me._expression
+                Case Else
+                     Return Nothing
+            End Select
+        End Function
+
+        Friend Overrides Function GetNodeSlot(i as Integer) as SyntaxNode
+            Select case i
+                Case 2
+                    Return Me.Expression
+                Case Else
+                     Return Nothing
+            End Select
+        End Function
+
+        Public Overrides Function Accept(Of TResult)(ByVal visitor As VisualBasicSyntaxVisitor(Of TResult)) As TResult
+            Return visitor.VisitOverflowHandlerExpression(Me)
+        End Function
+
+        Public Overrides Sub Accept(ByVal visitor As VisualBasicSyntaxVisitor)
+            visitor.VisitOverflowHandlerExpression(Me)
+        End Sub
+
+
+        ''' <summary>
+        ''' Returns a copy of this with the specified changes. Returns this instance if
+        ''' there are no actual changes.
+        ''' </summary>
+        ''' <param name="kind">
+        ''' The new kind.
+        ''' </param>
+        ''' <param name="operatorToken">
+        ''' The value for the OperatorToken property.
+        ''' </param>
+        ''' <param name="openParenToken">
+        ''' The value for the OpenParenToken property.
+        ''' </param>
+        ''' <param name="expression">
+        ''' The value for the Expression property.
+        ''' </param>
+        ''' <param name="closeParenToken">
+        ''' The value for the CloseParenToken property.
+        ''' </param>
+        Public Function Update(kind As SyntaxKind, operatorToken As SyntaxToken, openParenToken As SyntaxToken, expression As ExpressionSyntax, closeParenToken As SyntaxToken) As OverflowHandlerExpressionSyntax
+            If kind <> Me.Kind OrElse operatorToken <> Me.OperatorToken OrElse openParenToken <> Me.OpenParenToken OrElse expression IsNot Me.Expression OrElse closeParenToken <> Me.CloseParenToken Then
+                Dim newNode = SyntaxFactory.OverflowHandlerExpression(kind, operatorToken, openParenToken, expression, closeParenToken)
                 Dim annotations = Me.GetAnnotations()
                 If annotations IsNot Nothing AndAlso annotations.Length > 0
                     return newNode.WithAnnotations(annotations)

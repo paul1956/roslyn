@@ -72,7 +72,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Case SyntaxKind.ParenthesizedExpression
                     Dim parenthesizedExpr = DirectCast(node, ParenthesizedExpressionSyntax)
                     Dim boundExpression = BindSelectExpression(parenthesizedExpr.Expression, diagnostics)
-                    Return New BoundParenthesized(node, boundExpression, boundExpression.Type)
+                    Return New BoundParenthesized(node, boundExpression, checkIntegerOverflow:=Not node.Parent.Kind = SyntaxKind.UncheckedExpression, boundExpression.Type)
 
                 Case SyntaxKind.AddressOfExpression
                     errorId = ERRID.ERR_AddressOfInSelectCaseExpr

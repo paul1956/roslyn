@@ -66,8 +66,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 ' state_0:
                 ' state = -1
                 ' [[rewritten body]]
+                Dim requireOverflowCheck As Boolean = body.Syntax.RequireOverflowCheck
                 F.CloseMethod(
-                    F.Block(
+                    F.Block(requireOverflowCheck,
                         ImmutableArray.Create(Me._methodValue, Me.CachedState),
                         SyntheticBoundNodeFactory.HiddenSequencePoint(),
                         F.Assignment(Me.F.Local(Me.CachedState, True), F.Field(F.Me, Me.StateField, False)),
@@ -94,7 +95,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                     F.Goto(breakLabel))).ToArray()
 
                 If (sections.Length > 0) Then
-                    F.CloseMethod(F.Block(
+                    F.CloseMethod(F.Block(F.Block.CheckIntegerOverflow,
                         F.Select(
                             F.Field(F.Me, Me.StateField, False),
                             sections),
@@ -116,7 +117,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                     '  _methodValue = False
                     ' exitlabel:
                     '  Return _methodValue
-                    Return F.Block(
+                    Return F.Block(checkIntegerOverflow:=True, ' <Prototype Check>
                             SyntheticBoundNodeFactory.HiddenSequencePoint(),
                             F.Assignment(F.Local(Me._methodValue, True), F.Literal(True)),
                             F.Label(Me._exitLabel),
@@ -139,7 +140,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         Me._exitLabel = F.GenerateLabel("exitLabel")
                     End If
 
-                    Return Me.F.Block(
+                    Return Me.F.Block(checkIntegerOverflow:=True, ' <Prototype Check>
                         Me.F.Assignment(Me.F.Local(Me._methodValue, True), result),
                         Me.F.Goto(Me._exitLabel)
                     )
@@ -183,7 +184,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Dim newState = AddState()
                 Return F.SequencePoint(
                     node.Syntax,
-                    F.Block(
+                    F.Block(node.Syntax.RequireOverflowCheck,
                         F.Assignment(F.Field(F.Me, Me._current, True), DirectCast(Visit(node.Expression), BoundExpression)),
                         F.Assignment(F.Field(F.Me, Me.StateField, True), F.AssignmentExpression(F.Local(Me.CachedState, True), F.Literal(newState.Number))),
                         GenerateReturn(finished:=False),

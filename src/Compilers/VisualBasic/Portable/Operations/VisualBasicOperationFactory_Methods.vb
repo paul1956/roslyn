@@ -133,7 +133,7 @@ Namespace Microsoft.CodeAnalysis.Operations
                 binaryOperatorKind:=Helper.DeriveBinaryOperatorKind(boundBinaryOperator.OperatorKind, boundBinaryOperator.Left),
                 operatorMethod:=Nothing,
                 isLifted:=(boundBinaryOperator.OperatorKind And VisualBasic.BinaryOperatorKind.Lifted) <> 0,
-                isChecked:=boundBinaryOperator.Checked,
+                isChecked:=boundBinaryOperator.CheckIntegerOverflow,
                 isCompareText:=(boundBinaryOperator.OperatorKind And VisualBasic.BinaryOperatorKind.CompareText) <> 0)
         End Function
 
@@ -144,7 +144,7 @@ Namespace Microsoft.CodeAnalysis.Operations
                 binaryOperatorKind:=Helper.DeriveBinaryOperatorKind(boundUserDefinedBinaryOperator.OperatorKind, leftOpt:=Nothing),
                 operatorMethod:=If(boundUserDefinedBinaryOperator.UnderlyingExpression.Kind = BoundKind.Call, boundUserDefinedBinaryOperator.Call.Method, Nothing),
                 isLifted:=(boundUserDefinedBinaryOperator.OperatorKind And VisualBasic.BinaryOperatorKind.Lifted) <> 0,
-                isChecked:=boundUserDefinedBinaryOperator.Checked,
+                isChecked:=boundUserDefinedBinaryOperator.CheckIntegerOverflow,
                 isCompareText:=False)
         End Function
 

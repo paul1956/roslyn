@@ -1445,6 +1445,41 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
             Return statement
         End Function
 
+#If SupportCheckedStatement Then
+        Private Function ParseCheckedStatement() As StatementSyntax
+            Debug.Assert(CurrentToken.Kind = SyntaxKind.CheckedKeyword, "ParseChecked called on wrong token")
+
+            Dim checkedKeyword As KeywordSyntax = DirectCast(CurrentToken, KeywordSyntax)
+            GetNextToken()
+
+            Dim optionValue As KeywordSyntax = Nothing
+            Dim errorId As ERRID
+            If CurrentToken.Kind = SyntaxKind.OnKeyword Then
+                optionValue = DirectCast(CurrentToken, KeywordSyntax)
+                GetNextToken()
+
+            ElseIf TryTokenAsContextualKeyword(CurrentToken, optionValue) AndAlso
+                            optionValue.Kind = SyntaxKind.OffKeyword Then
+                GetNextToken()
+
+            ElseIf IsValidStatementTerminator(CurrentToken) Then
+                optionValue = InternalSyntaxFactory.MissingKeyword(SyntaxKind.OnKeyword)
+                errorId = ERRID.ERR_ExpectedCheckedOptionStmt
+            Else
+                errorId = ERRID.ERR_InvalidCheckedOption
+            End If
+
+            Dim statement = SyntaxFactory.CheckedStatement(checkedKeyword, optionValue)
+
+            If errorId <> ERRID.ERR_None Then
+                ' Resync at EOS so we don't get anymore errors
+                statement = statement.AddTrailingSyntax(ResyncAt(), errorId)
+            End If
+
+            Return statement
+        End Function
+#End If
+
         ' File: Parser.cpp
         ' Lines: 11933 - 11933
         ' .Parser::ParseCatch( [ _Inout_ bool& ErrorInConstruct ] )

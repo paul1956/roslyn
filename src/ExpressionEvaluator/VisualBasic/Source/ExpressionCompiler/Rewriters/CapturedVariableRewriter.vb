@@ -45,7 +45,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator
         Public Overrides Function VisitBlock(node As BoundBlock) As BoundNode
             Dim rewrittenLocals = node.Locals.WhereAsArray(AddressOf IncludeLocal)
             Dim rewrittenStatements = VisitList(node.Statements)
-            Return node.Update(node.StatementListSyntax, rewrittenLocals, rewrittenStatements)
+            Return node.Update(node.CheckIntegerOverflow, node.StatementListSyntax, rewrittenLocals, rewrittenStatements)
         End Function
 
         Private Function IncludeLocal(local As LocalSymbol) As Boolean

@@ -155,7 +155,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Dim exceptionLocal = Me.F.SynthesizedLocal(Me.F.WellKnownType(WellKnownType.System_Exception))
                 bodyBuilder.Add(
                     Me.F.Try(
-                        Me.F.Block(
+                        Me.F.Block(Me.F.Block.CheckIntegerOverflow,
                             ImmutableArray(Of LocalSymbol).Empty,
                             SyntheticBoundNodeFactory.HiddenSequencePoint(),
                             Me.Dispatch(),
@@ -164,7 +164,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         Me.F.CatchBlocks(
                             Me.F.Catch(
                                 exceptionLocal,
-                                Me.F.Block(
+                                Me.F.Block(Me.F.Block.CheckIntegerOverflow,
                                     SyntheticBoundNodeFactory.HiddenSequencePoint(),
                                     Me.F.Assignment(Me.F.Field(Me.F.Me(), Me.StateField, True), Me.F.Literal(StateMachineStates.FinishedStateMachine)),
                                     Me.F.ExpressionStatement(
@@ -206,7 +206,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 bodyBuilder.Add(Me.F.Return())
 
                 Dim newStatements As ImmutableArray(Of BoundStatement) = bodyBuilder.ToImmutableAndFree()
-                Dim newBody = Me.F.Block(
+                Dim newBody = Me.F.Block(Me.F.Block.CheckIntegerOverflow,
                         If(Me._exprRetValue IsNot Nothing,
                            ImmutableArray.Create(Me._exprRetValue, Me.CachedState),
                            ImmutableArray.Create(Me.CachedState)),

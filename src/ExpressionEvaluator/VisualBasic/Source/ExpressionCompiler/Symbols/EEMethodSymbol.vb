@@ -480,7 +480,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator
             Next
             originalLocalsSet.Free()
             Dim originalLocals = originalLocalsBuilder.ToImmutableAndFree()
-            Dim newBody = New BoundBlock(syntax, Nothing, originalLocals, statementsBuilder.ToImmutableAndFree())
+            Dim newBody = New BoundBlock(syntax, compilationState.CompilationCheckOverflow, statementListSyntax:=Nothing, originalLocals, statementsBuilder.ToImmutableAndFree())
 
             If diagnostics.HasAnyErrors() Then
                 Return newBody
@@ -576,7 +576,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.ExpressionEvaluator
                 Next
 
                 localMap.Free()
-                newBody = newBody.Update(newBody.StatementListSyntax, localBuilder.ToImmutableAndFree(), newBody.Statements)
+                newBody = newBody.Update(newBody.CheckIntegerOverflow, newBody.StatementListSyntax, localBuilder.ToImmutableAndFree(), newBody.Statements)
                 TypeParameterChecker.Check(newBody, _allTypeParameters)
 
             Catch ex As BoundTreeVisitor.CancelledByStackGuardException

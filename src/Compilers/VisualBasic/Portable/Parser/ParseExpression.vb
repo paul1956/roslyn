@@ -108,6 +108,42 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
                         Dim Operand = ParseExpressionCore(OperatorPrecedence.PrecedenceNegate)
                         expression = SyntaxFactory.AddressOfExpression(startToken, Operand)
 
+                    Case SyntaxKind.CheckedKeyword
+                        GetNextToken()
+
+                        Dim openParen As PunctuationSyntax = Nothing
+                        TryGetTokenAndEatNewLine(SyntaxKind.OpenParenToken, openParen, createIfMissing:=True)
+
+                        expression = ParseExpressionCore()
+
+                        Dim closeParen As PunctuationSyntax = Nothing
+                        TryEatNewLineAndGetToken(SyntaxKind.CloseParenToken, closeParen, createIfMissing:=True)
+                        expression = CheckFeatureAvailability(Feature.IntegerOverflowHandling,
+                                                              SyntaxFactory.OverflowHandlerExpression(
+                                                                    SyntaxKind.CheckedExpression,
+                                                                    CType(startToken, KeywordSyntax),
+                                                                    openParen,
+                                                                    expression,
+                                                                    closeParen)
+                                                             )
+                    Case SyntaxKind.UncheckedKeyword
+                        GetNextToken()
+
+                        Dim openParen As PunctuationSyntax = Nothing
+                        TryGetTokenAndEatNewLine(SyntaxKind.OpenParenToken, openParen, createIfMissing:=True)
+
+                        expression = ParseExpressionCore()
+
+                        Dim closeParen As PunctuationSyntax = Nothing
+                        TryEatNewLineAndGetToken(SyntaxKind.CloseParenToken, closeParen, createIfMissing:=True)
+                        expression = CheckFeatureAvailability(Feature.IntegerOverflowHandling,
+                                                              SyntaxFactory.OverflowHandlerExpression(
+                                                                    SyntaxKind.UncheckedExpression,
+                                                                    CType(startToken, KeywordSyntax),
+                                                                    openParen,
+                                                                    expression,
+                                                                    closeParen)
+                                                             )
                     Case Else
                         expression = ParseTerm(bailIfFirstTokenRejected)
 

@@ -236,7 +236,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             ''' Must remain in sync with <see cref="TryUnwrapBoundStateMachineScope"/>.
             ''' </remarks>
             Friend Function MakeStateMachineScope(hoistedLocals As ImmutableArray(Of FieldSymbol), statement As BoundStatement) As BoundBlock
-                Return Me.F.Block(New BoundStateMachineScope(Me.F.Syntax, hoistedLocals, statement).MakeCompilerGenerated)
+                Return Me.F.Block(Me.F.Syntax.RequireOverflowCheck, New BoundStateMachineScope(Me.F.Syntax, hoistedLocals, statement).MakeCompilerGenerated)
             End Function
 
             ''' <remarks>
@@ -289,7 +289,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 Me._currentFinalizerState = -1
                 Me._hasFinalizerState = False
 
-                Dim tryBlock As BoundBlock = Me.F.Block(DirectCast(Me.Visit(node.TryBlock), BoundStatement))
+                Dim tryBlock As BoundBlock = Me.F.Block(Me.F.Block.CheckIntegerOverflow,
+                                                        DirectCast(Me.Visit(node.TryBlock), BoundStatement))
                 Dim dispatchLabel As GeneratedLabelSymbol = Nothing
                 If Me.Dispatches IsNot Nothing Then
                     dispatchLabel = Me.F.GenerateLabel("tryDispatch")
@@ -300,7 +301,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                         Me.Dispatches.Add(finalizer, New List(Of Integer)() From {Me._currentFinalizerState})
 
                         Dim skipFinalizer As GeneratedLabelSymbol = Me.F.GenerateLabel("skipFinalizer")
-                        tryBlock = Me.F.Block(SyntheticBoundNodeFactory.HiddenSequencePoint(),
+                        tryBlock = Me.F.Block(Me.F.Block.CheckIntegerOverflow,
+                                              SyntheticBoundNodeFactory.HiddenSequencePoint(),
                                               Me.Dispatch(),
                                               Me.F.Goto(skipFinalizer),
                                               Me.F.Label(finalizer),
@@ -311,7 +313,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                               Me.F.Label(skipFinalizer),
                                               tryBlock)
                     Else
-                        tryBlock = Me.F.Block(SyntheticBoundNodeFactory.HiddenSequencePoint(), Me.Dispatch(), tryBlock)
+                        tryBlock = Me.F.Block(Me.F.Block.CheckIntegerOverflow,
+                                              SyntheticBoundNodeFactory.HiddenSequencePoint(), Me.Dispatch(), tryBlock)
                     End If
 
                     If oldDispatches Is Nothing Then
@@ -328,7 +331,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
                 Dim catchBlocks As ImmutableArray(Of BoundCatchBlock) = Me.VisitList(node.CatchBlocks)
                 Dim finallyBlockOpt As BoundBlock = If(node.FinallyBlockOpt Is Nothing, Nothing,
-                                                       Me.F.Block(
+                                                       Me.F.Block(Me.F.Block.CheckIntegerOverflow,
                                                            SyntheticBoundNodeFactory.HiddenSequencePoint(),
                                                            Me.F.If(
                                                                condition:=Me.F.IntLessThan(
@@ -339,7 +342,8 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
 
                 Dim result As BoundStatement = node.Update(tryBlock, catchBlocks, finallyBlockOpt, node.ExitLabelOpt)
                 If dispatchLabel IsNot Nothing Then
-                    result = Me.F.Block(SyntheticBoundNodeFactory.HiddenSequencePoint(), Me.F.Label(dispatchLabel), result)
+                    result = Me.F.Block(Me.F.Block.CheckIntegerOverflow,
+                                        SyntheticBoundNodeFactory.HiddenSequencePoint(), Me.F.Label(dispatchLabel), result)
                 End If
 
                 Return result

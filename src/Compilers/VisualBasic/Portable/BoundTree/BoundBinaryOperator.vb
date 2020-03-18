@@ -15,11 +15,11 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
             operatorKind As BinaryOperatorKind,
             left As BoundExpression,
             right As BoundExpression,
-            checked As Boolean,
+            CheckIntegerOverflow As Boolean,
             type As TypeSymbol,
             Optional hasErrors As Boolean = False
         )
-            Me.New(syntax, operatorKind, left, right, checked, constantValueOpt:=Nothing, type:=type, hasErrors:=hasErrors)
+            Me.New(syntax, operatorKind, left, right, CheckIntegerOverflow, constantValueOpt:=Nothing, type:=type, hasErrors:=hasErrors)
 
         End Sub
 
@@ -48,7 +48,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                                                       opName,
                                                                       Right.Type.GetNullableUnderlyingTypeOrSelf(),
                                                                       Type.GetNullableUnderlyingTypeOrSelf(),
-                                                                      Checked AndAlso leftType.IsIntegralType() AndAlso
+                                                                      CheckIntegerOverflow AndAlso leftType.IsIntegralType() AndAlso
                                                                           (op = BinaryOperatorKind.Multiply OrElse
                                                                            op = BinaryOperatorKind.Add OrElse
                                                                            op = BinaryOperatorKind.Subtract OrElse

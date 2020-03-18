@@ -94,6 +94,18 @@ Public Class ParseExpressionTest
         ParseExpression("AddressOf 3")
     End Sub
 
+    <Fact>
+    Public Sub ParseExpressionTest10()
+        Dim expr = ParseExpression("Checked 3", True)
+        Dim issues = expr.GetDiagnostics.ToArray
+    End Sub
+
+    <Fact>
+    Public Sub ParseExpressionTest11()
+        Dim expr = ParseExpression("Unchecked 3", True)
+        Dim issues = expr.GetDiagnostics.ToArray
+    End Sub
+
 #Region "Literal Test"
 
     <Fact, Trait("IntegerLiteral_Prefix", "Hex")>

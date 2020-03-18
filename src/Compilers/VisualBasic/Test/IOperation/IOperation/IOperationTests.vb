@@ -533,6 +533,29 @@ BC30518: Overload resolution failed because no accessible 'P1' can be called wit
 
         <CompilerTrait(CompilerFeature.IOperation)>
         <Fact>
+        Public Sub TestCloneVBCheckedUnchecked()
+            Dim sourceCode = "Imports System
+
+Module Program
+    Sub Main()
+        Dim i As Byte = Unchecked(255 + 1)
+        Dim J As Byte = Checked(3 + 1)
+        Dim K As Byte = Unchecked(2 + 1) + Checked(1 + 1)
+    End Sub
+End Module"
+
+            Dim fileName = "a.vb"
+            Dim syntaxTree = Parse(sourceCode, fileName, options:=Nothing)
+
+            Dim compilation = CreateEmptyCompilation({syntaxTree}, DefaultVbReferences.Concat({ValueTupleRef, SystemRuntimeFacadeRef}))
+            Dim tree = (From t In compilation.SyntaxTrees Where t.FilePath = fileName).Single()
+            Dim model = compilation.GetSemanticModel(tree)
+
+            VerifyClone(model)
+        End Sub
+
+        <CompilerTrait(CompilerFeature.IOperation)>
+        <Fact>
         Public Sub TestParentOperations()
             Dim sourceCode = TestResource.AllInOneVisualBasicCode
 

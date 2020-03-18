@@ -43,7 +43,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                                            relaxationLambda.Syntax,
                                            relaxationLambda,
                                            ConversionKind.Lambda Or ConversionKind.Widening,
-                                           checked:=False,
+                                           checkIntegerOverflow:=False,
                                            explicitCastInCode:=False,
                                            Type:=node.Type,
                                            hasErrors:=node.HasErrors)

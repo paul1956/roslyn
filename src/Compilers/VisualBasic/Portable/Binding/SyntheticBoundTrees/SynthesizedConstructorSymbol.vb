@@ -16,7 +16,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Symbols
             methodBodyBinder = Nothing
             Dim returnStmt = New BoundReturnStatement(Me.Syntax, Nothing, Nothing, Nothing)
             returnStmt.SetWasCompilerGenerated()
-            Return New BoundBlock(Me.Syntax, Nothing, ImmutableArray(Of LocalSymbol).Empty, ImmutableArray.Create(Of BoundStatement)(returnStmt))
+            Return New BoundBlock(Me.Syntax, Me.Syntax.RequireOverflowCheck(compilationState.CompilationCheckOverflow), statementListSyntax:=Nothing, ImmutableArray(Of LocalSymbol).Empty, ImmutableArray.Create(Of BoundStatement)(returnStmt))
         End Function
 
     End Class
