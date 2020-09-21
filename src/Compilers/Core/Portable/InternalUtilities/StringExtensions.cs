@@ -80,7 +80,7 @@ namespace Roslyn.Utilities
             Func<char, char> convert)
         {
             // Special case the common .NET pattern of "IGoo" as a type name.  In this case we
-            // want to generate "goo" as the parameter name.  
+            // want to generate "goo" as the parameter name.
             if (!RoslynString.IsNullOrEmpty(shortName))
             {
                 if (trimLeadingTypePrefix && (shortName.LooksLikeInterfaceName() || shortName.LooksLikeTypeParameterName()))
@@ -253,19 +253,19 @@ namespace Roslyn.Utilities
             return -1;
         }
 
-        // String isn't IEnumerable<char> in the current Portable profile. 
+        // String isn't IEnumerable<char> in the current Portable profile.
         internal static char First(this string arg)
         {
             return arg[0];
         }
 
-        // String isn't IEnumerable<char> in the current Portable profile. 
+        // String isn't IEnumerable<char> in the current Portable profile.
         internal static char Last(this string arg)
         {
             return arg[arg.Length - 1];
         }
 
-        // String isn't IEnumerable<char> in the current Portable profile. 
+        // String isn't IEnumerable<char> in the current Portable profile.
         internal static bool All(this string arg, Predicate<char> predicate)
         {
             foreach (char c in arg)
