@@ -146,7 +146,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.CodeGen
         Private Sub EmitConvertSimpleNumeric(conversion As BoundConversion, typeFrom As PrimitiveTypeCode, typeTo As PrimitiveTypeCode, checked As Boolean)
             Debug.Assert(IsIntegral(typeFrom) OrElse typeFrom.IsFloatingPoint() OrElse typeFrom = PrimitiveTypeCode.Char)
             Debug.Assert(IsIntegral(typeTo) OrElse typeTo.IsFloatingPoint())
-            _builder.EmitNumericConversion(typeFrom, typeTo, CheckIntegerOverflow)
+            _builder.EmitNumericConversion(typeFrom, typeTo, checked)
         End Sub
 
         Private Sub EmitConversionExpression(conversion As BoundConversion, used As Boolean)

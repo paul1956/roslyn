@@ -13949,7 +13949,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic
                 New TreeDumperNode("initialValue", Nothing, New TreeDumperNode() {Visit(node.InitialValue, Nothing)}),
                 New TreeDumperNode("limitValue", Nothing, New TreeDumperNode() {Visit(node.LimitValue, Nothing)}),
                 New TreeDumperNode("stepValue", Nothing, New TreeDumperNode() {Visit(node.StepValue, Nothing)}),
-                New TreeDumperNode("checked", node.Checked, Nothing),
+                New TreeDumperNode("checked", node.CheckIntegerOverflow, Nothing),
                 New TreeDumperNode("operatorsOpt", Nothing, New TreeDumperNode() {Visit(node.OperatorsOpt, Nothing)}),
                 New TreeDumperNode("declaredOrInferredLocalOpt", node.DeclaredOrInferredLocalOpt, Nothing),
                 New TreeDumperNode("controlVariable", Nothing, New TreeDumperNode() {Visit(node.ControlVariable, Nothing)}),
