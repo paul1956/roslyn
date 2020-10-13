@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -51,7 +53,6 @@ namespace Microsoft.CodeAnalysis.Shared.Utilities
                 yield break;
             }
 
-            var pairs = new List<ValueTuple<SyntaxToken, SyntaxToken>>();
             var previousOne = root.ConvertToTokenPair(spans[0]);
 
             // iterate through each spans and make sure each one doesn't overlap each other
@@ -152,9 +153,7 @@ namespace Microsoft.CodeAnalysis.Shared.Utilities
         }
 
         public static string GetText(this SourceText text, SyntaxToken token1, SyntaxToken token2)
-        {
-            return (token1.RawKind == 0) ? text.ToString(TextSpan.FromBounds(0, token2.SpanStart)) : text.ToString(TextSpan.FromBounds(token1.Span.End, token2.SpanStart));
-        }
+            => (token1.RawKind == 0) ? text.ToString(TextSpan.FromBounds(0, token2.SpanStart)) : text.ToString(TextSpan.FromBounds(token1.Span.End, token2.SpanStart));
 
         public static string GetTextBetween(SyntaxToken token1, SyntaxToken token2)
         {
@@ -180,8 +179,6 @@ namespace Microsoft.CodeAnalysis.Shared.Utilities
                 AppendTrailingTriviaText(token1, builder);
                 return;
             }
-
-            var token1PartOftoken2LeadingTrivia = token1.FullSpan.Start > token2.FullSpan.Start;
 
             if (token1.FullSpan.End == token2.FullSpan.Start)
             {
@@ -357,14 +354,10 @@ namespace Microsoft.CodeAnalysis.Shared.Utilities
         }
 
         public static bool IsNull<T>(T t) where T : class
-        {
-            return t == null;
-        }
+            => t == null;
 
         public static bool IsNotNull<T>(T t) where T : class
-        {
-            return !IsNull(t);
-        }
+            => !IsNull(t);
 
         public static TextSpan GetFormattingSpan(SyntaxNode root, TextSpan span)
         {

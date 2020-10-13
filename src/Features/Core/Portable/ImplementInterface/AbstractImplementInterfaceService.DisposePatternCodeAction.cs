@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
-
 using System;
 using System.Collections.Immutable;
 using System.Linq;
@@ -17,7 +15,6 @@ using Microsoft.CodeAnalysis.Editing;
 using Microsoft.CodeAnalysis.LanguageServices;
 using Microsoft.CodeAnalysis.PooledObjects;
 using Microsoft.CodeAnalysis.Shared.Extensions;
-using Microsoft.CodeAnalysis.Shared.Naming;
 using Microsoft.CodeAnalysis.Shared.Utilities;
 using Roslyn.Utilities;
 
@@ -31,7 +28,7 @@ namespace Microsoft.CodeAnalysis.ImplementInterface
             ImmutableArray.Create("disposed", "value");
 
         // C#: `Dispose(bool disposed)`.  VB: `Dispose(disposed As Boolean)`
-        private static SymbolDisplayFormat s_format = new SymbolDisplayFormat(
+        private static readonly SymbolDisplayFormat s_format = new(
             memberOptions: SymbolDisplayMemberOptions.IncludeParameters,
             parameterOptions: SymbolDisplayParameterOptions.IncludeName | SymbolDisplayParameterOptions.IncludeType,
             miscellaneousOptions: SymbolDisplayMiscellaneousOptions.UseSpecialTypes);
@@ -59,7 +56,7 @@ namespace Microsoft.CodeAnalysis.ImplementInterface
             return null;
         }
 
-        private bool ShouldImplementDisposePattern(State state, bool explicitly)
+        private static bool ShouldImplementDisposePattern(State state, bool explicitly)
         {
             // Dispose pattern should be implemented only if -
             // 1. An interface named 'System.IDisposable' is unimplemented.
@@ -170,7 +167,7 @@ namespace Microsoft.CodeAnalysis.ImplementInterface
                 return await AddFinalizerCommentAsync(docWithAllMembers, finalizer, cancellationToken).ConfigureAwait(false);
             }
 
-            private async Task<Document> AddFinalizerCommentAsync(
+            private static async Task<Document> AddFinalizerCommentAsync(
                 Document document, SyntaxNode finalizer, CancellationToken cancellationToken)
             {
                 var root = await document.GetRequiredSyntaxRootAsync(cancellationToken).ConfigureAwait(false);
@@ -202,15 +199,14 @@ namespace Microsoft.CodeAnalysis.ImplementInterface
             {
                 var disposeImplMethod = CreateDisposeImplementationMethod(compilation, document, classType, disposeMethod, disposedValueField);
 
-                var symbolDisplay = document.GetRequiredLanguageService<ISymbolDisplayService>();
-                var disposeMethodDisplayString = symbolDisplay.ToDisplayString(disposeImplMethod, s_format);
+                var disposeMethodDisplayString = this.Service.ToDisplayString(disposeImplMethod, s_format);
 
                 var disposeInterfaceMethod = CreateDisposeInterfaceMethod(
                     compilation, document, classType, disposeMethod,
                     disposedValueField, disposeMethodDisplayString);
 
                 var g = document.GetRequiredLanguageService<SyntaxGenerator>();
-                var finalizer = this.Service.CreateFinalizer(g, classType, disposeMethodDisplayString);
+                var finalizer = Service.CreateFinalizer(g, classType, disposeMethodDisplayString);
 
                 return (ImmutableArray.Create<ISymbol>(disposeImplMethod, disposeInterfaceMethod), finalizer);
             }
@@ -237,7 +233,7 @@ namespace Microsoft.CodeAnalysis.ImplementInterface
                 //     // TODO: dispose managed state...
                 // }
                 var ifDisposingStatement = g.IfStatement(g.IdentifierName(DisposingName), Array.Empty<SyntaxNode>());
-                ifDisposingStatement = this.Service.AddCommentInsideIfStatement(
+                ifDisposingStatement = Service.AddCommentInsideIfStatement(
                     ifDisposingStatement,
                     CreateCommentTrivia(g, FeaturesResources.TODO_colon_dispose_managed_state_managed_objects))
                         .WithoutTrivia().WithTrailingTrivia(g.CarriageReturnLineFeed, g.CarriageReturnLineFeed);
@@ -294,14 +290,14 @@ namespace Microsoft.CodeAnalysis.ImplementInterface
                 statements.Add(g.ExpressionStatement(
                     g.InvocationExpression(
                         g.MemberAccessExpression(
-                            g.TypeExpression(compilation.GetTypeByMetadataName(typeof(GC).FullName)),
+                            g.TypeExpression(compilation.GetTypeByMetadataName(typeof(GC).FullName!)),
                             nameof(GC.SuppressFinalize)),
                         g.ThisExpression())));
 
                 var modifiers = DeclarationModifiers.From(disposeMethod);
                 modifiers = modifiers.WithIsAbstract(false);
 
-                var explicitInterfaceImplementations = Explicitly || !this.Service.CanImplementImplicitly
+                var explicitInterfaceImplementations = Explicitly || !Service.CanImplementImplicitly
                     ? ImmutableArray.Create(disposeMethod) : default;
 
                 var result = CodeGenerationSymbolFactory.CreateMethodSymbol(
@@ -314,14 +310,15 @@ namespace Microsoft.CodeAnalysis.ImplementInterface
                 return result;
             }
 
-            private async Task<IFieldSymbol> CreateDisposedValueFieldAsync(
+            private static async Task<IFieldSymbol> CreateDisposedValueFieldAsync(
                 Document document,
                 INamedTypeSymbol containingType,
                 CancellationToken cancellationToken)
             {
-                var rules = await document.GetNamingRulesAsync(FallbackNamingRules.RefactoringMatchLookupRules, cancellationToken).ConfigureAwait(false);
+                var rule = await document.GetApplicableNamingRuleAsync(
+                    SymbolKind.Field, Accessibility.Private, cancellationToken).ConfigureAwait(false);
                 var options = await document.GetOptionsAsync(cancellationToken).ConfigureAwait(false);
-                var requireAccessiblity = options.GetOption(CodeStyleOptions.RequireAccessibilityModifiers);
+                var requireAccessiblity = options.GetOption(CodeStyleOptions2.RequireAccessibilityModifiers);
 
                 var compilation = await document.Project.GetRequiredCompilationAsync(cancellationToken).ConfigureAwait(false);
                 var boolType = compilation.GetSpecialType(SpecialType.System_Boolean);
@@ -329,23 +326,13 @@ namespace Microsoft.CodeAnalysis.ImplementInterface
                     ? Accessibility.NotApplicable
                     : Accessibility.Private;
 
-                foreach (var rule in rules)
-                {
-                    if (rule.SymbolSpecification.AppliesTo(SymbolKind.Field, Accessibility.Private))
-                    {
-                        var uniqueName = GenerateUniqueNameForDisposedValueField(containingType, rule);
+                var uniqueName = GenerateUniqueNameForDisposedValueField(containingType, rule);
 
-                        return CodeGenerationSymbolFactory.CreateFieldSymbol(
-                            default,
-                            accessibilityLevel,
-                            DeclarationModifiers.None,
-                            boolType, uniqueName);
-                    }
-                }
-
-                // We place a special rule in s_builtInRules that matches all fields.  So we should 
-                // always find a matching rule.
-                throw ExceptionUtilities.Unreachable;
+                return CodeGenerationSymbolFactory.CreateFieldSymbol(
+                    default,
+                    accessibilityLevel,
+                    DeclarationModifiers.None,
+                    boolType, uniqueName);
             }
 
             private static string GenerateUniqueNameForDisposedValueField(INamedTypeSymbol containingType, NamingRule rule)

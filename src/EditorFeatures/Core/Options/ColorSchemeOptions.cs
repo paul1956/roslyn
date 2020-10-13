@@ -2,9 +2,13 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
+using System;
 using System.Collections.Immutable;
 using System.Composition;
 using Microsoft.CodeAnalysis.Editor.ColorSchemes;
+using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Options.Providers;
 
@@ -14,12 +18,12 @@ namespace Microsoft.CodeAnalysis.Editor.Options
     {
         internal const string ColorSchemeSettingKey = "TextEditor.Roslyn.ColorScheme";
 
-        public static readonly Option<SchemeName> ColorScheme = new Option<SchemeName>(nameof(ColorSchemeOptions),
+        public static readonly Option2<SchemeName> ColorScheme = new(nameof(ColorSchemeOptions),
             nameof(ColorScheme),
             defaultValue: SchemeName.VisualStudio2019,
             storageLocations: new RoamingProfileStorageLocation(ColorSchemeSettingKey));
 
-        public static readonly Option<UseEnhancedColors> LegacyUseEnhancedColors = new Option<UseEnhancedColors>(nameof(ColorSchemeOptions),
+        public static readonly Option2<UseEnhancedColors> LegacyUseEnhancedColors = new(nameof(ColorSchemeOptions),
             nameof(LegacyUseEnhancedColors),
             defaultValue: UseEnhancedColors.Default,
             storageLocations: new RoamingProfileStorageLocation("WindowManagement.Options.UseEnhancedColorsForManagedLanguages"));
@@ -37,6 +41,7 @@ namespace Microsoft.CodeAnalysis.Editor.Options
     internal class ColorSchemeOptionsProvider : IOptionProvider
     {
         [ImportingConstructor]
+        [Obsolete(MefConstruction.ImportingConstructorMessage, error: true)]
         public ColorSchemeOptionsProvider()
         {
         }

@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using Microsoft.CodeAnalysis.CodeStyle;
 using Microsoft.CodeAnalysis.CSharp.CodeStyle;
 using Microsoft.CodeAnalysis.CSharp.Formatting;
@@ -22,9 +24,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.CodeStyle
         [InlineData(" none ", BinaryOperatorSpacingOptions.Remove)]
         [InlineData(" before_and_after ", BinaryOperatorSpacingOptions.Single)]
         public void TestParseSpacingAroundBinaryOperator(string rawValue, BinaryOperatorSpacingOptions parsedValue)
-        {
-            Assert.Equal(parsedValue, CSharpFormattingOptions.ParseEditorConfigSpacingAroundBinaryOperator(rawValue));
-        }
+            => Assert.Equal(parsedValue, CSharpFormattingOptions2.ParseEditorConfigSpacingAroundBinaryOperator(rawValue));
 
         [Theory]
         [InlineData("flush_left", LabelPositionOptions.LeftMost)]
@@ -36,9 +36,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.CodeStyle
         [InlineData(" no_change ", LabelPositionOptions.NoIndent)]
         [InlineData(" one_less_than_current ", LabelPositionOptions.OneLess)]
         public void TestParseLabelPositioning(string rawValue, LabelPositionOptions parsedValue)
-        {
-            Assert.Equal(parsedValue, CSharpFormattingOptions.ParseEditorConfigLabelPositioning(rawValue));
-        }
+            => Assert.Equal(parsedValue, CSharpFormattingOptions2.ParseEditorConfigLabelPositioning(rawValue));
 
         [Theory]
         [InlineData("false:none", (int)ExpressionBodyPreference.Never, ReportDiagnostic.Suppress)]
@@ -51,7 +49,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UnitTests.CodeStyle
         [InlineData("when_on_single_line : error", (int)ExpressionBodyPreference.WhenOnSingleLine, ReportDiagnostic.Error)]
         public void TestParseExpressionBodyPreference(string optionString, int parsedValue, ReportDiagnostic severity)
         {
-            var defaultValue = new CodeStyleOption<ExpressionBodyPreference>(ExpressionBodyPreference.Never, NotificationOption.Error);
+            var defaultValue = new CodeStyleOption2<ExpressionBodyPreference>(ExpressionBodyPreference.Never, NotificationOption2.Error);
             var codeStyleOption = CSharpCodeStyleOptions.ParseExpressionBodyPreference(optionString, defaultValue);
 
             Assert.NotSame(defaultValue, codeStyleOption);

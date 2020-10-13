@@ -2,8 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text;
 using Microsoft.CodeAnalysis.PooledObjects;
 
@@ -14,39 +15,22 @@ namespace Microsoft.CodeAnalysis
         private const int Threshold = 512;
 
         public static PooledObject<StringBuilder> GetPooledObject(this ObjectPool<StringBuilder> pool)
-        {
-            return PooledObject<StringBuilder>.Create(pool);
-        }
-
-        public static PooledObject<Stopwatch> GetPooledObject(this ObjectPool<Stopwatch> pool)
-        {
-            return PooledObject<Stopwatch>.Create(pool);
-        }
+            => PooledObject<StringBuilder>.Create(pool);
 
         public static PooledObject<Stack<TItem>> GetPooledObject<TItem>(this ObjectPool<Stack<TItem>> pool)
-        {
-            return PooledObject<Stack<TItem>>.Create(pool);
-        }
+            => PooledObject<Stack<TItem>>.Create(pool);
 
         public static PooledObject<Queue<TItem>> GetPooledObject<TItem>(this ObjectPool<Queue<TItem>> pool)
-        {
-            return PooledObject<Queue<TItem>>.Create(pool);
-        }
+            => PooledObject<Queue<TItem>>.Create(pool);
 
         public static PooledObject<HashSet<TItem>> GetPooledObject<TItem>(this ObjectPool<HashSet<TItem>> pool)
-        {
-            return PooledObject<HashSet<TItem>>.Create(pool);
-        }
+            => PooledObject<HashSet<TItem>>.Create(pool);
 
         public static PooledObject<Dictionary<TKey, TValue>> GetPooledObject<TKey, TValue>(this ObjectPool<Dictionary<TKey, TValue>> pool)
-        {
-            return PooledObject<Dictionary<TKey, TValue>>.Create(pool);
-        }
+            => PooledObject<Dictionary<TKey, TValue>>.Create(pool);
 
         public static PooledObject<List<TItem>> GetPooledObject<TItem>(this ObjectPool<List<TItem>> pool)
-        {
-            return PooledObject<List<TItem>>.Create(pool);
-        }
+            => PooledObject<List<TItem>>.Create(pool);
 
         public static PooledObject<List<TItem>> GetPooledObject<TItem>(this ObjectPool<List<TItem>> pool, out List<TItem> list)
         {
@@ -56,9 +40,7 @@ namespace Microsoft.CodeAnalysis
         }
 
         public static PooledObject<T> GetPooledObject<T>(this ObjectPool<T> pool) where T : class
-        {
-            return new PooledObject<T>(pool, p => p.Allocate(), (p, o) => p.Free(o));
-        }
+            => new(pool, p => p.Allocate(), (p, o) => p.Free(o));
 
         public static StringBuilder AllocateAndClear(this ObjectPool<StringBuilder> pool)
         {
@@ -66,14 +48,6 @@ namespace Microsoft.CodeAnalysis
             sb.Clear();
 
             return sb;
-        }
-
-        public static Stopwatch AllocateAndClear(this ObjectPool<Stopwatch> pool)
-        {
-            var watch = pool.Allocate();
-            watch.Reset();
-
-            return watch;
         }
 
         public static Stack<T> AllocateAndClear<T>(this ObjectPool<Stack<T>> pool)
@@ -131,17 +105,6 @@ namespace Microsoft.CodeAnalysis
             }
 
             pool.Free(sb);
-        }
-
-        public static void ClearAndFree(this ObjectPool<Stopwatch> pool, Stopwatch watch)
-        {
-            if (watch == null)
-            {
-                return;
-            }
-
-            watch.Reset();
-            pool.Free(watch);
         }
 
         public static void ClearAndFree<T>(this ObjectPool<HashSet<T>> pool, HashSet<T> set)

@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Linq;
 using System.Threading;
@@ -12,38 +14,15 @@ using Microsoft.CodeAnalysis.Shared.Extensions;
 #if CODE_STYLE
 using OptionSet = Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions;
 #else
-using Microsoft.CodeAnalysis.Options;
+using OptionSet = Microsoft.CodeAnalysis.Options.OptionSet;
 #endif
 
-#if CODE_STYLE
-namespace Microsoft.CodeAnalysis.CSharp.Internal.CodeStyle.TypeStyle
-#else
 namespace Microsoft.CodeAnalysis.CSharp.CodeStyle.TypeStyle
-#endif
 {
     internal static class TypeStyleHelper
     {
         public static bool IsBuiltInType(ITypeSymbol type)
             => type?.IsSpecialType() == true;
-
-        public static bool IsImplicitStylePreferred(
-            OptionSet optionSet, bool isBuiltInTypeContext, bool isTypeApparentContext)
-        {
-            return IsImplicitStylePreferred(
-                GetCurrentTypeStylePreferences(optionSet),
-                isBuiltInTypeContext,
-                isTypeApparentContext);
-        }
-
-        private static bool IsImplicitStylePreferred(
-            UseVarPreference stylePreferences, bool isBuiltInTypeContext, bool isTypeApparentContext)
-        {
-            return isBuiltInTypeContext
-                    ? stylePreferences.HasFlag(UseVarPreference.ForBuiltInTypes)
-                    : isTypeApparentContext
-                        ? stylePreferences.HasFlag(UseVarPreference.WhenTypeIsApparent)
-                        : stylePreferences.HasFlag(UseVarPreference.Elsewhere);
-        }
 
         /// <summary>
         /// Analyzes if type information is obvious to the reader by simply looking at the assignment expression.
@@ -156,7 +135,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeStyle.TypeStyle
             var containingType = semanticModel.GetTypeInfo(containingTypeName, cancellationToken).Type;
 
             return IsPossibleCreationMethod(methodSymbol, typeInDeclaration, containingType)
-                || IsPossibleConversionMethod(methodSymbol, typeInDeclaration, containingType, semanticModel);
+                || IsPossibleConversionMethod(methodSymbol);
         }
 
         /// <summary>
@@ -179,10 +158,7 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeStyle.TypeStyle
         /// If we have a method ToXXX and its return type is also XXX, then type name is apparent
         /// e.g: Convert.ToString.
         /// </summary>
-        private static bool IsPossibleConversionMethod(IMethodSymbol methodSymbol,
-            ITypeSymbol typeInDeclaration,
-            ITypeSymbol containingType,
-            SemanticModel semanticModel)
+        private static bool IsPossibleConversionMethod(IMethodSymbol methodSymbol)
         {
             var returnType = methodSymbol.ReturnType;
             var returnTypeName = returnType.IsNullable()
@@ -244,32 +220,6 @@ namespace Microsoft.CodeAnalysis.CSharp.CodeStyle.TypeStyle
             }
 
             return node;
-        }
-
-        private static UseVarPreference GetCurrentTypeStylePreferences(OptionSet optionSet)
-        {
-            var stylePreferences = UseVarPreference.None;
-
-            var styleForIntrinsicTypes = optionSet.GetOption(CSharpCodeStyleOptions.VarForBuiltInTypes);
-            var styleForApparent = optionSet.GetOption(CSharpCodeStyleOptions.VarWhenTypeIsApparent);
-            var styleForElsewhere = optionSet.GetOption(CSharpCodeStyleOptions.VarElsewhere);
-
-            if (styleForIntrinsicTypes.Value)
-            {
-                stylePreferences |= UseVarPreference.ForBuiltInTypes;
-            }
-
-            if (styleForApparent.Value)
-            {
-                stylePreferences |= UseVarPreference.WhenTypeIsApparent;
-            }
-
-            if (styleForElsewhere.Value)
-            {
-                stylePreferences |= UseVarPreference.Elsewhere;
-            }
-
-            return stylePreferences;
         }
 
         public static bool IsPredefinedType(TypeSyntax type)

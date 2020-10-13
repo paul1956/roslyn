@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Linq;
 using Microsoft.CodeAnalysis.Editor.Tagging;
 using Microsoft.CodeAnalysis.Text;
@@ -19,14 +21,10 @@ namespace Microsoft.CodeAnalysis.Editor.Shared.Tagging
             }
 
             protected override void ConnectToWorkspace(Workspace workspace)
-            {
-                workspace.WorkspaceChanged += OnWorkspaceChanged;
-            }
+                => workspace.WorkspaceChanged += OnWorkspaceChanged;
 
             protected override void DisconnectFromWorkspace(Workspace workspace)
-            {
-                workspace.WorkspaceChanged -= OnWorkspaceChanged;
-            }
+                => workspace.WorkspaceChanged -= OnWorkspaceChanged;
 
             private void OnWorkspaceChanged(object sender, WorkspaceChangeEventArgs e)
             {
@@ -38,11 +36,15 @@ namespace Microsoft.CodeAnalysis.Editor.Shared.Tagging
                     if (!object.Equals(oldProject.ParseOptions, newProject.ParseOptions))
                     {
                         var workspace = e.NewSolution.Workspace;
-                        var documentIds = workspace.GetRelatedDocumentIds(SubjectBuffer.AsTextContainer());
-
-                        if (documentIds.Any(d => d.ProjectId == e.ProjectId))
+                        var documentId = workspace.GetDocumentIdInCurrentContext(SubjectBuffer.AsTextContainer());
+                        if (documentId != null)
                         {
-                            this.RaiseChanged();
+                            var relatedDocumentIds = e.NewSolution.GetRelatedDocumentIds(documentId);
+
+                            if (relatedDocumentIds.Any(d => d.ProjectId == e.ProjectId))
+                            {
+                                RaiseChanged();
+                            }
                         }
                     }
                 }

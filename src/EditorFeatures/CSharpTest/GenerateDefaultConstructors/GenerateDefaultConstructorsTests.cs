@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CodeRefactorings;
 using Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.CodeRefactorings;
@@ -750,7 +752,7 @@ class Program : Exception
 index: 2);
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsGenerateDefaultConstructors), Test.Utilities.CompilerTrait(Test.Utilities.CompilerFeature.Tuples)]
+        [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsGenerateDefaultConstructors), CompilerTrait(CompilerFeature.Tuples)]
         public async Task Tuple()
         {
             await TestInRegularAndScriptAsync(
@@ -779,7 +781,7 @@ class B
 }");
         }
 
-        [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsGenerateDefaultConstructors), Test.Utilities.CompilerTrait(Test.Utilities.CompilerFeature.Tuples)]
+        [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsGenerateDefaultConstructors), CompilerTrait(CompilerFeature.Tuples)]
         public async Task TupleWithNames()
         {
             await TestInRegularAndScriptAsync(
@@ -938,9 +940,10 @@ abstract class B
 }");
         }
 
+        [WorkItem(35208, "https://github.com/dotnet/roslyn/issues/35208")]
         [WorkItem(25238, "https://github.com/dotnet/roslyn/issues/25238")]
         [Fact, Trait(Traits.Feature, Traits.Features.CodeActionsGenerateDefaultConstructors)]
-        public async Task TestGenerateConstructorFromPublicConstructor()
+        public async Task TestGenerateConstructorInAbstractClassFromPublicConstructor()
         {
             await TestInRegularAndScriptAsync(
 @"abstract class C : [||]B
@@ -955,7 +958,7 @@ abstract class B
 }",
 @"abstract class C : B
 {
-    public C(int x) : base(x)
+    protected C(int x) : base(x)
     {
     }
 }

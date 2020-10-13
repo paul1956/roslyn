@@ -2,7 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
+#nullable disable
+
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -23,14 +24,16 @@ namespace Microsoft.CodeAnalysis.FlowAnalysis.SymbolUsageAnalysis
         private sealed class Walker : OperationWalker
         {
             private AnalysisData _currentAnalysisData;
+            private ISymbol _currentContainingSymbol;
             private IOperation _currentRootOperation;
             private CancellationToken _cancellationToken;
             private PooledDictionary<IAssignmentOperation, PooledHashSet<(ISymbol, IOperation)>> _pendingWritesMap;
 
-            private static readonly ObjectPool<Walker> s_visitorPool = new ObjectPool<Walker>(() => new Walker());
+            private static readonly ObjectPool<Walker> s_visitorPool = new(() => new Walker());
             private Walker() { }
 
             public static void AnalyzeOperationsAndUpdateData(
+                ISymbol containingSymbol,
                 IEnumerable<IOperation> operations,
                 AnalysisData analysisData,
                 CancellationToken cancellationToken)
@@ -38,7 +41,7 @@ namespace Microsoft.CodeAnalysis.FlowAnalysis.SymbolUsageAnalysis
                 var visitor = s_visitorPool.Allocate();
                 try
                 {
-                    visitor.Visit(operations, analysisData, cancellationToken);
+                    visitor.Visit(containingSymbol, operations, analysisData, cancellationToken);
                 }
                 finally
                 {
@@ -46,8 +49,9 @@ namespace Microsoft.CodeAnalysis.FlowAnalysis.SymbolUsageAnalysis
                 }
             }
 
-            private void Visit(IEnumerable<IOperation> operations, AnalysisData analysisData, CancellationToken cancellationToken)
+            private void Visit(ISymbol containingSymbol, IEnumerable<IOperation> operations, AnalysisData analysisData, CancellationToken cancellationToken)
             {
+                Debug.Assert(_currentContainingSymbol == null);
                 Debug.Assert(_currentAnalysisData == null);
                 Debug.Assert(_currentRootOperation == null);
                 Debug.Assert(_pendingWritesMap == null);
@@ -55,6 +59,7 @@ namespace Microsoft.CodeAnalysis.FlowAnalysis.SymbolUsageAnalysis
                 _pendingWritesMap = PooledDictionary<IAssignmentOperation, PooledHashSet<(ISymbol, IOperation)>>.GetInstance();
                 try
                 {
+                    _currentContainingSymbol = containingSymbol;
                     _currentAnalysisData = analysisData;
                     _cancellationToken = cancellationToken;
 
@@ -68,6 +73,7 @@ namespace Microsoft.CodeAnalysis.FlowAnalysis.SymbolUsageAnalysis
                 }
                 finally
                 {
+                    _currentContainingSymbol = null;
                     _currentAnalysisData = null;
                     _currentRootOperation = null;
                     _cancellationToken = default;
@@ -102,7 +108,7 @@ namespace Microsoft.CodeAnalysis.FlowAnalysis.SymbolUsageAnalysis
             {
                 Debug.Assert(symbol != null);
 
-                var valueUsageInfo = operation.GetValueUsageInfo();
+                var valueUsageInfo = operation.GetValueUsageInfo(_currentContainingSymbol);
                 var isReadFrom = valueUsageInfo.IsReadFrom();
                 var isWrittenTo = valueUsageInfo.IsWrittenTo();
 
@@ -248,9 +254,7 @@ namespace Microsoft.CodeAnalysis.FlowAnalysis.SymbolUsageAnalysis
             }
 
             public override void VisitParameterReference(IParameterReferenceOperation operation)
-            {
-                OnReferenceFound(operation.Parameter, operation);
-            }
+                => OnReferenceFound(operation.Parameter, operation);
 
             public override void VisitVariableDeclarator(IVariableDeclaratorOperation operation)
             {

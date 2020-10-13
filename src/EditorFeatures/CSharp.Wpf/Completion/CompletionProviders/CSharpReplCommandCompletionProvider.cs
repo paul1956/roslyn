@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Immutable;
 using System.Composition;
@@ -13,6 +15,7 @@ using Microsoft.CodeAnalysis.CSharp.Completion.Providers;
 using Microsoft.CodeAnalysis.CSharp.Extensions.ContextQuery;
 using Microsoft.CodeAnalysis.Editor.Completion.CompletionProviders;
 using Microsoft.CodeAnalysis.Editor.CSharp.Completion.FileSystem;
+using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Text;
@@ -31,6 +34,7 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.Completion.CompletionProviders
     internal class CSharpReplCommandCompletionProvider : ReplCompletionProvider
     {
         [ImportingConstructor]
+        [Obsolete(MefConstruction.ImportingConstructorMessage, error: true)]
         public CSharpReplCommandCompletionProvider()
         {
         }
@@ -44,7 +48,7 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.Completion.CompletionProviders
         private static readonly Regex s_referenceRegex = new Regex(@"\s*#\s*r\s+", RegexOptions.Compiled);
         private static readonly Regex s_loadCommandRegex = new Regex(@"#load\s+", RegexOptions.Compiled);
 
-        private bool IsReplCommandLocation(SnapshotPoint characterPoint)
+        private static bool IsReplCommandLocation(SnapshotPoint characterPoint)
         {
             // TODO(cyrusn): We don't need to do this textually.  We could just defer this to
             // IsTriggerCharacter and just check the syntax tree.

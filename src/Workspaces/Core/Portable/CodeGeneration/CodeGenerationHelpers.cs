@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -100,9 +102,7 @@ namespace Microsoft.CodeAnalysis.CodeGeneration
         }
 
         public static bool IsSpecialType(ITypeSymbol type, SpecialType specialType)
-        {
-            return type != null && type.SpecialType == specialType;
-        }
+            => type != null && type.SpecialType == specialType;
 
         public static int GetPreferredIndex(int index, IList<bool> availableIndices, bool forward)
         {

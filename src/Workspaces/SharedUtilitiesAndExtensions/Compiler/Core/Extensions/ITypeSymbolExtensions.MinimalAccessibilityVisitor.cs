@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 
 namespace Microsoft.CodeAnalysis.Shared.Extensions
@@ -13,23 +15,36 @@ namespace Microsoft.CodeAnalysis.Shared.Extensions
             public static readonly SymbolVisitor<Accessibility> Instance = new MinimalAccessibilityVisitor();
 
             public override Accessibility DefaultVisit(ISymbol node)
-            {
-                throw new NotImplementedException();
-            }
+                => throw new NotImplementedException();
 
             public override Accessibility VisitAlias(IAliasSymbol symbol)
-            {
-                return symbol.Target.Accept(this);
-            }
+                => symbol.Target.Accept(this);
 
             public override Accessibility VisitArrayType(IArrayTypeSymbol symbol)
-            {
-                return symbol.ElementType.Accept(this);
-            }
+                => symbol.ElementType.Accept(this);
 
             public override Accessibility VisitDynamicType(IDynamicTypeSymbol symbol)
+                => Accessibility.Public;
+
+            public override Accessibility VisitFunctionPointerType(IFunctionPointerTypeSymbol symbol)
             {
-                return Accessibility.Public;
+                var accessibility = symbol.DeclaredAccessibility;
+
+                accessibility = AccessibilityUtilities.Minimum(accessibility, symbol.Signature.ReturnType.Accept(this));
+
+                foreach (var parameter in symbol.Signature.Parameters)
+                {
+                    accessibility = AccessibilityUtilities.Minimum(accessibility, parameter.Type.Accept(this));
+                }
+
+                // CallingConvention types are currently specced to always be public, but if that spec ever changes
+                // or the runtime creates special private types for it's own use, we'll be ready.
+                foreach (var callingConventionType in symbol.Signature.UnmanagedCallingConventionTypes)
+                {
+                    accessibility = AccessibilityUtilities.Minimum(accessibility, callingConventionType.Accept(this));
+                }
+
+                return accessibility;
             }
 
             public override Accessibility VisitNamedType(INamedTypeSymbol symbol)
@@ -50,9 +65,7 @@ namespace Microsoft.CodeAnalysis.Shared.Extensions
             }
 
             public override Accessibility VisitPointerType(IPointerTypeSymbol symbol)
-            {
-                return symbol.PointedAtType.Accept(this);
-            }
+                => symbol.PointedAtType.Accept(this);
 
             public override Accessibility VisitTypeParameter(ITypeParameterSymbol symbol)
             {

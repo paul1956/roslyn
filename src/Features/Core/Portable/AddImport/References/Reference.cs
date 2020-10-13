@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Immutable;
 using System.Linq;
@@ -32,7 +34,7 @@ namespace Microsoft.CodeAnalysis.AddImport
 
             public int CompareTo(Document document, Reference other)
             {
-                int diff = ComparerWithState.CompareTo(this, other, document, s_comparers);
+                var diff = ComparerWithState.CompareTo(this, other, document, s_comparers);
                 if (diff != 0)
                 {
                     return diff;
@@ -54,7 +56,7 @@ namespace Microsoft.CodeAnalysis.AddImport
                         placeSystemNamespaceFirst: true);
             }
 
-            private readonly static ImmutableArray<Func<Reference, Document, IComparable>> s_comparers
+            private static readonly ImmutableArray<Func<Reference, Document, IComparable>> s_comparers
                 = ImmutableArray.Create<Func<Reference, Document, IComparable>>(
                     // If references have different weights, order by the ones with lower weight (i.e.
                     // they are better matches).
@@ -63,9 +65,7 @@ namespace Microsoft.CodeAnalysis.AddImport
                     (r, d) => !r.SearchResult.DesiredNameMatchesSourceName(d));
 
             public override bool Equals(object obj)
-            {
-                return Equals(obj as Reference);
-            }
+                => Equals(obj as Reference);
 
             public bool Equals(Reference other)
             {
@@ -75,9 +75,7 @@ namespace Microsoft.CodeAnalysis.AddImport
             }
 
             public override int GetHashCode()
-            {
-                return Hash.CombineValues(SearchResult.NameParts);
-            }
+                => Hash.CombineValues(SearchResult.NameParts);
 
             protected async Task<(SyntaxNode, Document)> ReplaceNameNodeAsync(
                 SyntaxNode contextNode, Document document, CancellationToken cancellationToken)

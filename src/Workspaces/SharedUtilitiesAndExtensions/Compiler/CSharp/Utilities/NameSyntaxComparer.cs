@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
@@ -13,14 +15,10 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
         internal TypeSyntaxComparer TypeComparer;
 
         internal NameSyntaxComparer(IComparer<SyntaxToken> tokenComparer)
-        {
-            _tokenComparer = tokenComparer;
-        }
+            => _tokenComparer = tokenComparer;
 
         public static IComparer<NameSyntax> Create()
-        {
-            return Create(TokenComparer.NormalInstance);
-        }
+            => Create(TokenComparer.NormalInstance);
 
         public static IComparer<NameSyntax> Create(IComparer<SyntaxToken> tokenComparer)
         {

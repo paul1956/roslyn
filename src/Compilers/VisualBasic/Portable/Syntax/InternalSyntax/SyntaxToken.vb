@@ -511,7 +511,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         End Function
     End Class
 
-    Friend Partial Class XmlTextTokenSyntax
+    Partial Friend Class XmlTextTokenSyntax
         Friend NotOverridable Overrides ReadOnly Property ValueText As String
             Get
                 Return Me.Value
@@ -519,7 +519,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         End Property
     End Class
 
-    Friend Partial Class InterpolatedStringTextTokenSyntax
+    Partial Friend Class InterpolatedStringTextTokenSyntax
         Friend NotOverridable Overrides ReadOnly Property ValueText As String
             Get
                 Return Me.Value
@@ -527,7 +527,7 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Syntax.InternalSyntax
         End Property
     End Class
 
-    Friend Partial Class KeywordSyntax
+    Partial Friend Class KeywordSyntax
 
         Friend NotOverridable Overrides ReadOnly Property ObjectValue As Object
             Get

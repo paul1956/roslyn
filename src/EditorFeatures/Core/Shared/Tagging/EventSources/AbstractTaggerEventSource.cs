@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using Microsoft.CodeAnalysis.Editor.Tagging;
 
@@ -12,9 +14,7 @@ namespace Microsoft.CodeAnalysis.Editor.Shared.Tagging
         private readonly TaggerDelay _delay;
 
         protected AbstractTaggerEventSource(TaggerDelay delay)
-        {
-            _delay = delay;
-        }
+            => _delay = delay;
 
         public abstract void Connect();
         public abstract void Disconnect();
@@ -24,18 +24,12 @@ namespace Microsoft.CodeAnalysis.Editor.Shared.Tagging
         public event EventHandler UIUpdatesResumed;
 
         protected virtual void RaiseChanged()
-        {
-            this.Changed?.Invoke(this, new TaggerEventArgs(_delay));
-        }
+            => this.Changed?.Invoke(this, new TaggerEventArgs(_delay));
 
         protected virtual void RaiseUIUpdatesPaused()
-        {
-            this.UIUpdatesPaused?.Invoke(this, EventArgs.Empty);
-        }
+            => this.UIUpdatesPaused?.Invoke(this, EventArgs.Empty);
 
         protected virtual void RaiseUIUpdatesResumed()
-        {
-            this.UIUpdatesResumed?.Invoke(this, EventArgs.Empty);
-        }
+            => this.UIUpdatesResumed?.Invoke(this, EventArgs.Empty);
     }
 }

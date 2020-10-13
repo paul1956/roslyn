@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -14,8 +16,10 @@ using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Extensions.ContextQuery;
 using Microsoft.CodeAnalysis.CSharp.LanguageServices;
 using Microsoft.CodeAnalysis.ErrorReporting;
+using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.LanguageServices;
 using Microsoft.CodeAnalysis.Options;
+using Microsoft.CodeAnalysis.PooledObjects;
 using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Shared.Naming;
 using Microsoft.CodeAnalysis.Text;
@@ -29,14 +33,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Completion.Providers
     internal partial class DeclarationNameCompletionProvider : LSPCompletionProvider
     {
         [ImportingConstructor]
+        [Obsolete(MefConstruction.ImportingConstructorMessage, error: true)]
         public DeclarationNameCompletionProvider()
         {
         }
 
         internal override bool IsInsertionTrigger(SourceText text, int insertedCharacterPosition, OptionSet options)
-        {
-            return CompletionUtilities.IsTriggerAfterSpaceOrStartOfWordCharacter(text, insertedCharacterPosition, options);
-        }
+            => CompletionUtilities.IsTriggerAfterSpaceOrStartOfWordCharacter(text, insertedCharacterPosition, options);
 
         internal override ImmutableHashSet<char> TriggerCharacters { get; } = CompletionUtilities.SpaceTriggerCharacter;
 
@@ -47,7 +50,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Completion.Providers
                 var position = completionContext.Position;
                 var document = completionContext.Document;
                 var cancellationToken = completionContext.CancellationToken;
-                var semanticModel = await document.GetSemanticModelForSpanAsync(new Text.TextSpan(position, 0), cancellationToken).ConfigureAwait(false);
+                var semanticModel = await document.ReuseExistingSpeculativeModelAsync(position, cancellationToken).ConfigureAwait(false);
 
                 if (!completionContext.Options.GetOption(CompletionOptions.ShowNameSuggestions, LanguageNames.CSharp))
                 {
@@ -79,7 +82,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Completion.Providers
                 completionContext.SuggestionModeItem = CommonCompletionItem.Create(
                     CSharpFeaturesResources.Name, displayTextSuffix: "", CompletionItemRules.Default);
             }
-            catch (Exception e) when (FatalError.ReportWithoutCrashUnlessCanceled(e))
+            catch (Exception e) when (FatalError.ReportAndCatchUnlessCanceled(e))
             {
                 // nop
             }
@@ -103,7 +106,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Completion.Providers
             return baseNames;
         }
 
-        private bool IsValidType(ITypeSymbol type)
+        private static bool IsValidType(ITypeSymbol type)
         {
             if (type == null)
             {
@@ -123,7 +126,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Completion.Providers
             return !type.IsSpecialType();
         }
 
-        private Glyph GetGlyph(SymbolKind kind, Accessibility? declaredAccessibility)
+        private static Glyph GetGlyph(SymbolKind kind, Accessibility? declaredAccessibility)
         {
             var publicIcon = kind switch
             {
@@ -209,7 +212,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Completion.Providers
             return (type, wasPlural);
         }
 
-        private async Task<ImmutableArray<(string, SymbolKind)>> GetRecommendedNamesAsync(
+        private static async Task<ImmutableArray<(string name, SymbolKind kind)>> GetRecommendedNamesAsync(
             ImmutableArray<ImmutableArray<string>> baseNames,
             NameDeclarationInfo declarationInfo,
             CSharpSyntaxContext context,
@@ -217,8 +220,11 @@ namespace Microsoft.CodeAnalysis.CSharp.Completion.Providers
             CancellationToken cancellationToken)
         {
             var rules = await document.GetNamingRulesAsync(FallbackNamingRules.CompletionOfferingRules, cancellationToken).ConfigureAwait(false);
-            var result = new Dictionary<string, SymbolKind>();
             var semanticFactsService = context.GetLanguageService<ISemanticFactsService>();
+
+            using var _1 = PooledHashSet<string>.GetInstance(out var seenBaseNames);
+            using var _2 = PooledHashSet<string>.GetInstance(out var seenUniqueNames);
+            using var _3 = ArrayBuilder<(string name, SymbolKind kind)>.GetInstance(out var result);
 
             foreach (var kind in declarationInfo.PossibleSymbolKinds)
             {
@@ -239,39 +245,41 @@ namespace Microsoft.CodeAnalysis.CSharp.Completion.Providers
                             var name = rule.NamingStyle.CreateName(baseName).EscapeIdentifier(context.IsInQuery);
 
                             // Don't add multiple items for the same name and only add valid identifiers
-                            if (name.Length > 1 && CSharpSyntaxFacts.Instance.IsValidIdentifier(name) && !result.ContainsKey(name))
+                            if (name.Length > 1 &&
+                                CSharpSyntaxFacts.Instance.IsValidIdentifier(name) &&
+                                seenBaseNames.Add(name))
                             {
-                                var targetToken = context.TargetToken;
                                 var uniqueName = semanticFactsService.GenerateUniqueName(
                                     context.SemanticModel,
                                     context.TargetToken.Parent,
                                     containerOpt: null,
                                     baseName: name,
-                                    filter: IsRelevantSymbolKind,
+                                    filter: s => IsRelevantSymbolKind(s),
                                     usedNames: Enumerable.Empty<string>(),
                                     cancellationToken: cancellationToken);
-                                result.Add(uniqueName.Text, symbolKind);
+                                if (seenUniqueNames.Add(uniqueName.Text))
+                                    result.Add((uniqueName.Text, symbolKind));
                             }
                         }
                     }
                 }
             }
 
-            return result.Select(kvp => (kvp.Key, kvp.Value)).ToImmutableArray();
+            return result.ToImmutable();
         }
 
         /// <summary>
         /// Check if the symbol is a relevant kind.
         /// Only relevant if symbol could cause a conflict with a local variable.
         /// </summary>
-        private bool IsRelevantSymbolKind(ISymbol symbol)
+        private static bool IsRelevantSymbolKind(ISymbol symbol)
         {
             return symbol.Kind == SymbolKind.Local ||
                 symbol.Kind == SymbolKind.Parameter ||
                 symbol.Kind == SymbolKind.RangeVariable;
         }
 
-        CompletionItem CreateCompletionItem(string name, Glyph glyph, string sortText)
+        private static CompletionItem CreateCompletionItem(string name, Glyph glyph, string sortText)
         {
             return CommonCompletionItem.Create(
                 name,

@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -22,21 +24,21 @@ namespace Microsoft.CodeAnalysis
     public abstract partial class Workspace
     {
         // open documents
-        private readonly Dictionary<ProjectId, HashSet<DocumentId>> _projectToOpenDocumentsMap = new Dictionary<ProjectId, HashSet<DocumentId>>();
+        private readonly Dictionary<ProjectId, HashSet<DocumentId>> _projectToOpenDocumentsMap = new();
 
         // text buffer maps
         /// <summary>
         /// Tracks the document ID in the current context for a source text container for an opened text buffer.
         /// </summary>
         /// <remarks>For each entry in this map, there must be a corresponding entry in <see cref="_bufferToAssociatedDocumentsMap"/> where the document ID in current context is one of associated document IDs.</remarks>
-        private readonly Dictionary<SourceTextContainer, DocumentId> _bufferToDocumentInCurrentContextMap = new Dictionary<SourceTextContainer, DocumentId>();
+        private readonly Dictionary<SourceTextContainer, DocumentId> _bufferToDocumentInCurrentContextMap = new();
 
         /// <summary>
         /// Tracks all the associated document IDs for a source text container for an opened text buffer.
         /// </summary>
-        private readonly Dictionary<SourceTextContainer, OneOrMany<DocumentId>> _bufferToAssociatedDocumentsMap = new Dictionary<SourceTextContainer, OneOrMany<DocumentId>>();
+        private readonly Dictionary<SourceTextContainer, OneOrMany<DocumentId>> _bufferToAssociatedDocumentsMap = new();
 
-        private readonly Dictionary<DocumentId, TextTracker> _textTrackers = new Dictionary<DocumentId, TextTracker>();
+        private readonly Dictionary<DocumentId, TextTracker> _textTrackers = new();
 
         /// <summary>
         /// True if this workspace supports manually opening and closing documents.
@@ -105,57 +107,43 @@ namespace Microsoft.CodeAnalysis
 
         [Obsolete("The isSolutionClosing parameter is now obsolete. Please call the overload without that parameter.")]
         protected void ClearOpenDocument(DocumentId documentId, bool isSolutionClosing)
-        {
-            ClearOpenDocument(documentId);
-        }
+            => ClearOpenDocument(documentId);
 
         /// <summary>
         /// Open the specified document in the host environment.
         /// </summary>
         public virtual void OpenDocument(DocumentId documentId, bool activate = true)
-        {
-            this.CheckCanOpenDocuments();
-        }
+            => this.CheckCanOpenDocuments();
 
         /// <summary>
         /// Close the specified document in the host environment.
         /// </summary>
         public virtual void CloseDocument(DocumentId documentId)
-        {
-            this.CheckCanOpenDocuments();
-        }
+            => this.CheckCanOpenDocuments();
 
         /// <summary>
         /// Open the specified additional document in the host environment.
         /// </summary>
         public virtual void OpenAdditionalDocument(DocumentId documentId, bool activate = true)
-        {
-            this.CheckCanOpenDocuments();
-        }
+            => this.CheckCanOpenDocuments();
 
         /// <summary>
         /// Close the specified additional document in the host environment.
         /// </summary>
         public virtual void CloseAdditionalDocument(DocumentId documentId)
-        {
-            this.CheckCanOpenDocuments();
-        }
+            => this.CheckCanOpenDocuments();
 
         /// <summary>
         /// Open the specified analyzer config document in the host environment.
         /// </summary>
         public virtual void OpenAnalyzerConfigDocument(DocumentId documentId, bool activate = true)
-        {
-            this.CheckCanOpenDocuments();
-        }
+            => this.CheckCanOpenDocuments();
 
         /// <summary>
         /// Close the specified analyzer config document in the host environment.
         /// </summary>
         public virtual void CloseAnalyzerConfigDocument(DocumentId documentId)
-        {
-            this.CheckCanOpenDocuments();
-        }
+            => this.CheckCanOpenDocuments();
 
         protected void CheckCanOpenDocuments()
         {
@@ -218,9 +206,10 @@ namespace Microsoft.CodeAnalysis
                 return _projectToOpenDocumentsMap.SelectMany(kvp => kvp.Value).ToImmutableArray();
             }
         }
+#nullable enable
 
         /// <summary>
-        /// Gets the ids for documents associated with a text container.
+        /// Gets the ids for documents in the <see cref="CurrentSolution"/> snapshot associated with the given <paramref name="container"/>.
         /// Documents are normally associated with a text container when the documents are opened.
         /// </summary>
         public virtual IEnumerable<DocumentId> GetRelatedDocumentIds(SourceTextContainer container)
@@ -230,28 +219,20 @@ namespace Microsoft.CodeAnalysis
                 throw new ArgumentNullException(nameof(container));
             }
 
-            using (_stateLock.DisposableWait())
+            var documentId = GetDocumentIdInCurrentContext(container);
+            if (documentId == null)
             {
-                return GetRelatedDocumentIds_NoLock(container);
-            }
-        }
-
-        private ImmutableArray<DocumentId> GetRelatedDocumentIds_NoLock(SourceTextContainer container)
-        {
-            if (!_bufferToDocumentInCurrentContextMap.TryGetValue(container, out var documentId))
-            {
-                // it is not an opened file
                 return ImmutableArray<DocumentId>.Empty;
             }
 
-            return this.CurrentSolution.GetRelatedDocumentIds(documentId);
+            return CurrentSolution.GetRelatedDocumentIds(documentId);
         }
 
         /// <summary>
         /// Gets the id for the document associated with the given text container in its current context.
         /// Documents are normally associated with a text container when the documents are opened.
         /// </summary>
-        public virtual DocumentId GetDocumentIdInCurrentContext(SourceTextContainer container)
+        public virtual DocumentId? GetDocumentIdInCurrentContext(SourceTextContainer container)
         {
             if (container == null)
             {
@@ -263,6 +244,11 @@ namespace Microsoft.CodeAnalysis
                 return GetDocumentIdInCurrentContext_NoLock(container);
             }
         }
+
+        private DocumentId? GetDocumentIdInCurrentContext_NoLock(SourceTextContainer container)
+            => _bufferToDocumentInCurrentContextMap.TryGetValue(container, out var documentId) ? documentId : null;
+
+#nullable disable
 
         /// <summary>
         /// Finds the <see cref="DocumentId"/> related to the given <see cref="DocumentId"/> that
@@ -291,28 +277,12 @@ namespace Microsoft.CodeAnalysis
             return _bufferToAssociatedDocumentsMap.Where(kvp => kvp.Value.Contains(documentId)).Select(kvp => kvp.Key).FirstOrDefault();
         }
 
-        private DocumentId GetDocumentIdInCurrentContext_NoLock(SourceTextContainer container)
-        {
-            var foundValue = _bufferToDocumentInCurrentContextMap.TryGetValue(container, out var docId);
-
-            if (foundValue)
-            {
-                return docId;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
         /// <summary>
         /// Call this method to tell the host environment to change the current active context to this document. Only supported if
         /// <see cref="CanChangeActiveContextDocument"/> returns true.
         /// </summary>
         internal virtual void SetDocumentContext(DocumentId documentId)
-        {
-            throw new NotSupportedException();
-        }
+            => throw new NotSupportedException();
 
         /// <summary>
         /// Call this method when a document has been made the active context in the host environment.
@@ -555,7 +525,9 @@ namespace Microsoft.CodeAnalysis
             this.RegisterText(textContainer);
         }
 
+#pragma warning disable IDE0060 // Remove unused parameter 'updateActiveContext' - shipped public API.
         protected internal void OnDocumentClosed(DocumentId documentId, TextLoader reloader, bool updateActiveContext = false)
+#pragma warning restore IDE0060 // Remove unused parameter
         {
             // The try/catch here is to find additional telemetry for https://devdiv.visualstudio.com/DevDiv/_queries/query/71ee8553-7220-4b2a-98cf-20edab701fd1/,
             // where we have one theory that OnDocumentClosed is running but failing somewhere in the middle and thus failing to get to the RaiseDocumentClosedEventAsync() line. 
@@ -586,7 +558,7 @@ namespace Microsoft.CodeAnalysis
                     this.RaiseDocumentClosedEventAsync(newDoc); // don't wait for this
                 }
             }
-            catch (Exception e) when (FatalError.ReportWithoutCrashAndPropagate(e))
+            catch (Exception e) when (FatalError.ReportAndPropagate(e))
             {
                 throw ExceptionUtilities.Unreachable;
             }
@@ -741,23 +713,6 @@ namespace Microsoft.CodeAnalysis
             }
 
             return newSolution.GetProject(oldProject.Id);
-        }
-
-        /// <summary>
-        /// Update a project as a result of option changes.
-        /// 
-        /// this is a temporary workaround until editorconfig becomes real part of roslyn solution snapshot.
-        /// until then, this will explicitly move current solution forward when such event happened
-        /// </summary>
-        internal void OnProjectOptionsChanged(ProjectId projectId)
-        {
-            using (_serializationLock.DisposableWait())
-            {
-                var oldSolution = CurrentSolution;
-                var newSolution = this.SetCurrentSolution(oldSolution.WithProjectOptionsChanged(projectId));
-
-                RaiseWorkspaceChangedEventAsync(WorkspaceChangeKind.ProjectChanged, oldSolution, newSolution, projectId);
-            }
         }
 
         internal void RegisterDocumentOptionProviders(IEnumerable<Lazy<IDocumentOptionsProviderFactory, OrderableMetadata>> documentOptionsProviderFactories)

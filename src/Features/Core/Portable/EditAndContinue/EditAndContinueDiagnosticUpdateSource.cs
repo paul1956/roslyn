@@ -2,13 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
-
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -25,9 +22,7 @@ namespace Microsoft.CodeAnalysis.EditAndContinue
         [ImportingConstructor]
         [Obsolete(MefConstruction.ImportingConstructorMessage, error: true)]
         public EditAndContinueDiagnosticUpdateSource(IDiagnosticUpdateSourceRegistrationService registrationService)
-        {
-            registrationService.Register(this);
-        }
+            => registrationService.Register(this);
 
         // for testing
         [SuppressMessage("RoslynDiagnosticsReliability", "RS0034:Exported parts should have [ImportingConstructor]", Justification = "Used incorrectly by tests")]
@@ -57,7 +52,7 @@ namespace Microsoft.CodeAnalysis.EditAndContinue
         /// Reports given set of diagnostics. 
         /// Categorizes diagnostic into two groups - diagnostics associated with a document and diagnostics associated with a project or solution.
         /// </summary>
-        public void ReportDiagnostics(Solution solution, ProjectId? projectId, IEnumerable<Diagnostic> diagnostics)
+        public void ReportDiagnostics(Workspace workspace, Solution solution, ProjectId? projectId, IEnumerable<Diagnostic> diagnostics)
         {
             RoslynDebug.Assert(solution != null);
 
@@ -69,7 +64,6 @@ namespace Microsoft.CodeAnalysis.EditAndContinue
 
             using var _1 = ArrayBuilder<DiagnosticData>.GetInstance(out var documentDiagnosticData);
             using var _2 = ArrayBuilder<DiagnosticData>.GetInstance(out var nonDocumentDiagnosticData);
-            var workspace = solution.Workspace;
             var options = solution.Options;
             var project = (projectId != null) ? solution.GetProject(projectId) : null;
 

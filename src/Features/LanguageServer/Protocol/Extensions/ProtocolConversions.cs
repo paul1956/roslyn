@@ -4,20 +4,30 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.DocumentHighlighting;
+using Microsoft.CodeAnalysis.Editor.Shared.Extensions;
+using Microsoft.CodeAnalysis.Elfie.Diagnostics;
+using Microsoft.CodeAnalysis.Host;
+using Microsoft.CodeAnalysis.Internal.Log;
 using Microsoft.CodeAnalysis.NavigateTo;
 using Microsoft.CodeAnalysis.Tags;
 using Microsoft.CodeAnalysis.Text;
+using Microsoft.VisualStudio.LanguageServer.Protocol;
 using Microsoft.VisualStudio.Text.Adornments;
+using Microsoft.VisualStudio.Utilities;
 using Roslyn.Utilities;
+using Logger = Microsoft.CodeAnalysis.Internal.Log.Logger;
 using LSP = Microsoft.VisualStudio.LanguageServer.Protocol;
 
 namespace Microsoft.CodeAnalysis.LanguageServer
 {
     internal static class ProtocolConversions
     {
+        // NOTE: While the spec allows it, don't use Function and Method, as both VS and VS Code display them the same way
+        // which can confuse users
         public static readonly Dictionary<string, LSP.CompletionItemKind> RoslynTagToCompletionItemKind = new Dictionary<string, LSP.CompletionItemKind>()
         {
             { WellKnownTags.Public, LSP.CompletionItemKind.Keyword },
@@ -30,7 +40,7 @@ namespace Microsoft.CodeAnalysis.LanguageServer
             { WellKnownTags.Assembly, LSP.CompletionItemKind.File },
             { WellKnownTags.Class, LSP.CompletionItemKind.Class },
             { WellKnownTags.Constant, LSP.CompletionItemKind.Constant },
-            { WellKnownTags.Delegate, LSP.CompletionItemKind.Function },
+            { WellKnownTags.Delegate, LSP.CompletionItemKind.Method },
             { WellKnownTags.Enum, LSP.CompletionItemKind.Enum },
             { WellKnownTags.EnumMember, LSP.CompletionItemKind.EnumMember },
             { WellKnownTags.Event, LSP.CompletionItemKind.Event },
@@ -59,6 +69,42 @@ namespace Microsoft.CodeAnalysis.LanguageServer
             { WellKnownTags.NuGet, LSP.CompletionItemKind.Text }
         };
 
+        // TO-DO: More LSP.CompletionTriggerKind mappings are required to properly map to Roslyn CompletionTriggerKinds.
+        // https://dev.azure.com/devdiv/DevDiv/_workitems/edit/1178726
+        public static Completion.CompletionTrigger LSPToRoslynCompletionTrigger(LSP.CompletionContext? context)
+        {
+            if (context == null)
+            {
+                // Some LSP clients don't support sending extra context, so all we can do is invoke
+                return Completion.CompletionTrigger.Invoke;
+            }
+            else if (context.TriggerKind == LSP.CompletionTriggerKind.Invoked)
+            {
+                return Completion.CompletionTrigger.Invoke;
+            }
+            else if (context.TriggerKind == LSP.CompletionTriggerKind.TriggerCharacter)
+            {
+                Contract.ThrowIfNull(context.TriggerCharacter);
+                return Completion.CompletionTrigger.CreateInsertionTrigger(char.Parse(context.TriggerCharacter));
+            }
+            else
+            {
+                // LSP added a TriggerKind that we need to support.
+                Logger.Log(FunctionId.LSPCompletion_MissingLSPCompletionTriggerKind);
+                return Completion.CompletionTrigger.Invoke;
+            }
+        }
+
+        public static Uri GetUriFromFilePath(string? filePath)
+        {
+            if (filePath is null)
+            {
+                throw new ArgumentNullException(nameof(filePath));
+            }
+
+            return new Uri(filePath, UriKind.Absolute);
+        }
+
         public static LSP.TextDocumentPositionParams PositionToTextDocumentPositionParams(int position, SourceText text, Document document)
         {
             return new LSP.TextDocumentPositionParams()
@@ -69,19 +115,13 @@ namespace Microsoft.CodeAnalysis.LanguageServer
         }
 
         public static LSP.TextDocumentIdentifier DocumentToTextDocumentIdentifier(Document document)
-        {
-            return new LSP.TextDocumentIdentifier() { Uri = document.GetURI() };
-        }
+            => new LSP.TextDocumentIdentifier() { Uri = document.GetURI() };
 
         public static LinePosition PositionToLinePosition(LSP.Position position)
-        {
-            return new LinePosition(position.Line, position.Character);
-        }
+            => new LinePosition(position.Line, position.Character);
 
         public static LinePositionSpan RangeToLinePositionSpan(LSP.Range range)
-        {
-            return new LinePositionSpan(PositionToLinePosition(range.Start), PositionToLinePosition(range.End));
-        }
+            => new LinePositionSpan(PositionToLinePosition(range.Start), PositionToLinePosition(range.End));
 
         public static TextSpan RangeToTextSpan(LSP.Range range, SourceText text)
         {
@@ -91,6 +131,7 @@ namespace Microsoft.CodeAnalysis.LanguageServer
 
         public static LSP.TextEdit TextChangeToTextEdit(TextChange textChange, SourceText text)
         {
+            Contract.ThrowIfNull(textChange.NewText);
             return new LSP.TextEdit
             {
                 NewText = textChange.NewText,
@@ -99,14 +140,10 @@ namespace Microsoft.CodeAnalysis.LanguageServer
         }
 
         public static LSP.Position LinePositionToPosition(LinePosition linePosition)
-        {
-            return new LSP.Position { Line = linePosition.Line, Character = linePosition.Character };
-        }
+            => new LSP.Position { Line = linePosition.Line, Character = linePosition.Character };
 
         public static LSP.Range LinePositionToRange(LinePositionSpan linePositionSpan)
-        {
-            return new LSP.Range { Start = LinePositionToPosition(linePositionSpan.Start), End = LinePositionToPosition(linePositionSpan.End) };
-        }
+            => new LSP.Range { Start = LinePositionToPosition(linePositionSpan.Start), End = LinePositionToPosition(linePositionSpan.End) };
 
         public static LSP.Range TextSpanToRange(TextSpan textSpan, SourceText text)
         {
@@ -114,50 +151,74 @@ namespace Microsoft.CodeAnalysis.LanguageServer
             return LinePositionToRange(linePosSpan);
         }
 
-        public static Task<LSP.Location> DocumentSpanToLocationAsync(DocumentSpan documentSpan, CancellationToken cancellationToken)
-        {
-            return TextSpanToLocationAsync(documentSpan.Document, documentSpan.SourceSpan, cancellationToken);
-        }
+        public static Task<LSP.Location?> DocumentSpanToLocationAsync(DocumentSpan documentSpan, CancellationToken cancellationToken)
+            => TextSpanToLocationAsync(documentSpan.Document, documentSpan.SourceSpan, cancellationToken);
 
-        public static async Task<LSP.LocationWithText> DocumentSpanToLocationWithTextAsync(DocumentSpan documentSpan, ClassifiedTextElement text, CancellationToken cancellationToken)
+        public static async Task<LSP.LocationWithText?> DocumentSpanToLocationWithTextAsync(DocumentSpan documentSpan, ClassifiedTextElement text, CancellationToken cancellationToken)
         {
-            var sourceText = await documentSpan.Document.GetTextAsync(cancellationToken).ConfigureAwait(false);
+            var location = await TextSpanToLocationAsync(documentSpan.Document, documentSpan.SourceSpan, cancellationToken).ConfigureAwait(false);
 
-            var locationWithText = new LSP.LocationWithText
+            return location == null ? null : new LSP.LocationWithText
             {
-                Uri = documentSpan.Document.GetURI(),
-                Range = TextSpanToRange(documentSpan.SourceSpan, sourceText),
+                Uri = location.Uri,
+                Range = location.Range,
                 Text = text
             };
-
-            return locationWithText;
         }
 
-        public static LSP.Location RangeToLocation(LSP.Range range, string uriString)
+        public static async Task<LSP.Location?> TextSpanToLocationAsync(Document document, TextSpan textSpan, CancellationToken cancellationToken)
         {
-            return new LSP.Location()
+            var spanMappingService = document.Services.GetService<ISpanMappingService>();
+
+            if (spanMappingService == null)
             {
-                Range = range,
-                Uri = new Uri(uriString)
-            };
-        }
+                return await ConvertTextSpanToLocation(document, textSpan, cancellationToken).ConfigureAwait(false);
+            }
 
-        public static async Task<LSP.Location> TextSpanToLocationAsync(Document document, TextSpan span, CancellationToken cancellationToken)
-        {
-            var text = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
-
-            return TextSpanToLocation(span, text, document.GetURI());
-        }
-
-        public static LSP.Location TextSpanToLocation(TextSpan span, SourceText text, Uri documentUri)
-        {
-            var location = new LSP.Location
+            var mappedSpanResult = await spanMappingService.MapSpansAsync(document, SpecializedCollections.SingletonEnumerable(textSpan), cancellationToken).ConfigureAwait(false);
+            if (mappedSpanResult.IsDefaultOrEmpty)
             {
-                Uri = documentUri,
-                Range = TextSpanToRange(span, text),
+                return await ConvertTextSpanToLocation(document, textSpan, cancellationToken).ConfigureAwait(false);
+            }
+
+            var mappedSpan = mappedSpanResult.Single();
+            if (mappedSpan.IsDefault)
+            {
+                return null;
+            }
+
+            return new LSP.Location
+            {
+                Uri = GetUriFromFilePath(mappedSpan.FilePath),
+                Range = MappedSpanResultToRange(mappedSpan)
             };
 
-            return location;
+            static async Task<LSP.Location> ConvertTextSpanToLocation(Document document, TextSpan span, CancellationToken cancellationToken)
+            {
+                var text = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
+
+                return ConvertTextSpanWithTextToLocation(span, text, document.GetURI());
+            }
+
+            static LSP.Range MappedSpanResultToRange(MappedSpanResult mappedSpanResult)
+            {
+                return new LSP.Range
+                {
+                    Start = LinePositionToPosition(mappedSpanResult.LinePositionSpan.Start),
+                    End = LinePositionToPosition(mappedSpanResult.LinePositionSpan.End)
+                };
+            }
+
+            static LSP.Location ConvertTextSpanWithTextToLocation(TextSpan span, SourceText text, Uri documentUri)
+            {
+                var location = new LSP.Location
+                {
+                    Uri = documentUri,
+                    Range = TextSpanToRange(span, text),
+                };
+
+                return location;
+            }
         }
 
         public static LSP.DiagnosticSeverity DiagnosticSeverityToLspDiagnositcSeverity(DiagnosticSeverity severity)
@@ -296,7 +357,6 @@ namespace Microsoft.CodeAnalysis.LanguageServer
                 case Glyph.DelegateProtected:
                 case Glyph.DelegatePrivate:
                 case Glyph.DelegateInternal:
-                    return LSP.SymbolKind.Function;
                 case Glyph.ExtensionMethodPublic:
                 case Glyph.ExtensionMethodProtected:
                 case Glyph.ExtensionMethodPrivate:
@@ -325,9 +385,8 @@ namespace Microsoft.CodeAnalysis.LanguageServer
                     return Glyph.None;
                 case LSP.CompletionItemKind.Method:
                 case LSP.CompletionItemKind.Constructor:
+                case LSP.CompletionItemKind.Function:    // We don't use Function, but map it just in case. It has the same icon as Method in VS and VS Code
                     return Glyph.MethodPublic;
-                case LSP.CompletionItemKind.Function:
-                    return Glyph.DelegatePublic;
                 case LSP.CompletionItemKind.Field:
                     return Glyph.FieldPublic;
                 case LSP.CompletionItemKind.Variable:
@@ -371,6 +430,92 @@ namespace Microsoft.CodeAnalysis.LanguageServer
                 default:
                     return Glyph.None;
             }
+        }
+
+        // The mappings here are roughly based off of SymbolUsageInfoExtensions.ToSymbolReferenceKinds.
+        public static LSP.ReferenceKind[] SymbolUsageInfoToReferenceKinds(SymbolUsageInfo symbolUsageInfo)
+        {
+            var referenceKinds = ArrayBuilder<LSP.ReferenceKind>.GetInstance();
+            if (symbolUsageInfo.ValueUsageInfoOpt.HasValue)
+            {
+                var usageInfo = symbolUsageInfo.ValueUsageInfoOpt.Value;
+                if (usageInfo.IsReadFrom())
+                {
+                    referenceKinds.Add(LSP.ReferenceKind.Read);
+                }
+
+                if (usageInfo.IsWrittenTo())
+                {
+                    referenceKinds.Add(LSP.ReferenceKind.Write);
+                }
+
+                if (usageInfo.IsReference())
+                {
+                    referenceKinds.Add(LSP.ReferenceKind.Reference);
+                }
+
+                if (usageInfo.IsNameOnly())
+                {
+                    referenceKinds.Add(LSP.ReferenceKind.Name);
+                }
+            }
+
+            if (symbolUsageInfo.TypeOrNamespaceUsageInfoOpt.HasValue)
+            {
+                var usageInfo = symbolUsageInfo.TypeOrNamespaceUsageInfoOpt.Value;
+                if ((usageInfo & TypeOrNamespaceUsageInfo.Qualified) != 0)
+                {
+                    referenceKinds.Add(LSP.ReferenceKind.Qualified);
+                }
+
+                if ((usageInfo & TypeOrNamespaceUsageInfo.TypeArgument) != 0)
+                {
+                    referenceKinds.Add(LSP.ReferenceKind.TypeArgument);
+                }
+
+                if ((usageInfo & TypeOrNamespaceUsageInfo.TypeConstraint) != 0)
+                {
+                    referenceKinds.Add(LSP.ReferenceKind.TypeConstraint);
+                }
+
+                if ((usageInfo & TypeOrNamespaceUsageInfo.Base) != 0)
+                {
+                    referenceKinds.Add(LSP.ReferenceKind.BaseType);
+                }
+
+                // Preserving the same mapping logic that SymbolUsageInfoExtensions.ToSymbolReferenceKinds uses
+                if ((usageInfo & TypeOrNamespaceUsageInfo.ObjectCreation) != 0)
+                {
+                    referenceKinds.Add(LSP.ReferenceKind.Constructor);
+                }
+
+                if ((usageInfo & TypeOrNamespaceUsageInfo.Import) != 0)
+                {
+                    referenceKinds.Add(LSP.ReferenceKind.Import);
+                }
+
+                // Preserving the same mapping logic that SymbolUsageInfoExtensions.ToSymbolReferenceKinds uses
+                if ((usageInfo & TypeOrNamespaceUsageInfo.NamespaceDeclaration) != 0)
+                {
+                    referenceKinds.Add(LSP.ReferenceKind.Declaration);
+                }
+            }
+
+            return referenceKinds.ToArrayAndFree();
+        }
+
+        public static string ProjectIdToProjectContextId(ProjectId id)
+        {
+            return id.Id + "|" + id.DebugName;
+        }
+
+        public static ProjectId ProjectContextToProjectId(ProjectContext projectContext)
+        {
+            var delimiter = projectContext.Id.IndexOf('|');
+
+            return ProjectId.CreateFromSerialized(
+                Guid.Parse(projectContext.Id.Substring(0, delimiter)),
+                debugName: projectContext.Id.Substring(delimiter + 1));
         }
     }
 }

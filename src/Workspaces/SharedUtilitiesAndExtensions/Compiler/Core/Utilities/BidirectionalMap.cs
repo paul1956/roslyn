@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -30,24 +32,16 @@ namespace Roslyn.Utilities
         }
 
         public bool TryGetValue(TKey key, out TValue value)
-        {
-            return _forwardMap.TryGetValue(key, out value);
-        }
+            => _forwardMap.TryGetValue(key, out value);
 
         public bool TryGetKey(TValue value, out TKey key)
-        {
-            return _backwardMap.TryGetValue(value, out key);
-        }
+            => _backwardMap.TryGetValue(value, out key);
 
         public bool ContainsKey(TKey key)
-        {
-            return _forwardMap.ContainsKey(key);
-        }
+            => _forwardMap.ContainsKey(key);
 
         public bool ContainsValue(TValue value)
-        {
-            return _backwardMap.ContainsKey(value);
-        }
+            => _backwardMap.ContainsKey(value);
 
         public IBidirectionalMap<TKey, TValue> RemoveKey(TKey key)
         {

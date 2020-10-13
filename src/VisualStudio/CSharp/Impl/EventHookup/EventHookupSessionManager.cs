@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.ComponentModel.Composition;
 using System.Linq;
@@ -153,8 +155,6 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.EventHookup
         }
 
         internal bool IsTrackingSession()
-        {
-            return CurrentSession != null;
-        }
+            => CurrentSession != null;
     }
 }

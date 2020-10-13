@@ -2,12 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
-using Microsoft.CodeAnalysis.Diagnostics;
-using Roslyn.Test.Utilities;
 using Xunit;
 
 namespace Microsoft.CodeAnalysis.UnitTests
@@ -19,10 +18,10 @@ namespace Microsoft.CodeAnalysis.UnitTests
         {
             Assert.NotEqual<TValue>(default, validNonDefaultValue);
 
-
             var instanceWithValue = factory(instance, validNonDefaultValue);
             Assert.Equal(validNonDefaultValue, getter(instanceWithValue));
 
+            // the factory returns the unchanged instance if the value is unchanged:
             var instanceWithValue2 = factory(instanceWithValue, validNonDefaultValue);
             Assert.Same(instanceWithValue2, instanceWithValue);
 
@@ -36,7 +35,7 @@ namespace Microsoft.CodeAnalysis.UnitTests
             }
         }
 
-        public static void TestListProperty<T, TValue>(T instance, Func<T, IEnumerable<TValue>, T> factory, Func<T, IEnumerable<TValue>> getter, TValue item)
+        public static void TestListProperty<T, TValue>(T instance, Func<T, IEnumerable<TValue>, T> factory, Func<T, IEnumerable<TValue>> getter, TValue item, bool allowDuplicates)
             where T : class
         {
             var boxedItems = (IEnumerable<TValue>)ImmutableArray.Create(item);
@@ -60,7 +59,19 @@ namespace Microsoft.CodeAnalysis.UnitTests
             var items = getter(instanceWithMutableItems);
             Assert.NotSame(mutableItems, items);
 
+            // null item:
             Assert.Throws<ArgumentNullException>(() => factory(instanceWithNoItem, new TValue[] { item, default }));
+
+            // duplicate item:
+            if (allowDuplicates)
+            {
+                var boxedDupItems = (IEnumerable<TValue>)ImmutableArray.Create(item, item);
+                Assert.Same(boxedDupItems, getter(factory(instanceWithNoItem, boxedDupItems)));
+            }
+            else
+            {
+                Assert.Throws<ArgumentException>(() => factory(instanceWithNoItem, new TValue[] { item, item }));
+            }
         }
     }
 }

@@ -2,17 +2,16 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CodeStyle;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 using Microsoft.CodeAnalysis.Shared.Extensions;
-
-#if CODE_STYLE
-using Microsoft.CodeAnalysis.Internal.Options;
-#endif
 
 namespace Microsoft.CodeAnalysis.MakeFieldReadonly
 {
@@ -23,7 +22,7 @@ namespace Microsoft.CodeAnalysis.MakeFieldReadonly
         public MakeFieldReadonlyDiagnosticAnalyzer()
             : base(
                 IDEDiagnosticIds.MakeFieldReadonlyDiagnosticId,
-                CodeStyleOptions.PreferReadonly,
+                CodeStyleOptions2.PreferReadonly,
                 new LocalizableResourceString(nameof(AnalyzersResources.Add_readonly_modifier), AnalyzersResources.ResourceManager, typeof(AnalyzersResources)),
                 new LocalizableResourceString(nameof(AnalyzersResources.Make_field_readonly), AnalyzersResources.ResourceManager, typeof(AnalyzersResources)))
         {
@@ -39,6 +38,8 @@ namespace Microsoft.CodeAnalysis.MakeFieldReadonly
                 //  'isCandidate' : Indicates whether the field is a candidate to be made readonly based on it's options.
                 //  'written'     : Indicates if there are any writes to the field outside the constructor and field initializer.
                 var fieldStateMap = new ConcurrentDictionary<IFieldSymbol, (bool isCandidate, bool written)>();
+
+                var threadStaticAttribute = compilationStartContext.Compilation.ThreadStaticAttributeType();
 
                 // We register following actions in the compilation:
                 // 1. A symbol action for field symbols to ensure the field state is initialized for every field in
@@ -106,19 +107,22 @@ namespace Microsoft.CodeAnalysis.MakeFieldReadonly
                     }
                 }
 
-                static bool IsCandidateField(IFieldSymbol symbol) =>
+                static bool IsCandidateField(IFieldSymbol symbol, INamedTypeSymbol threadStaticAttribute) =>
                         symbol.DeclaredAccessibility == Accessibility.Private &&
                         !symbol.IsReadOnly &&
                         !symbol.IsConst &&
                         !symbol.IsImplicitlyDeclared &&
                         symbol.Locations.Length == 1 &&
                         symbol.Type.IsMutableValueType() == false &&
-                        !symbol.IsFixedSizeBuffer;
+                        !symbol.IsFixedSizeBuffer &&
+                        !symbol.GetAttributes().Any(
+                           static (a, threadStaticAttribute) => SymbolEqualityComparer.Default.Equals(a.AttributeClass, threadStaticAttribute),
+                           threadStaticAttribute);
 
                 // Method to update the field state for a candidate field written outside constructor and field initializer.
                 void UpdateFieldStateOnWrite(IFieldSymbol field)
                 {
-                    Debug.Assert(IsCandidateField(field));
+                    Debug.Assert(IsCandidateField(field, threadStaticAttribute));
                     Debug.Assert(fieldStateMap.ContainsKey(field));
 
                     fieldStateMap[field] = (isCandidate: true, written: true);
@@ -127,7 +131,7 @@ namespace Microsoft.CodeAnalysis.MakeFieldReadonly
                 // Method to get or initialize the field state.
                 (bool isCandidate, bool written) TryGetOrInitializeFieldState(IFieldSymbol fieldSymbol, AnalyzerOptions options, CancellationToken cancellationToken)
                 {
-                    if (!IsCandidateField(fieldSymbol))
+                    if (!IsCandidateField(fieldSymbol, threadStaticAttribute))
                     {
                         return default;
                     }
@@ -137,14 +141,14 @@ namespace Microsoft.CodeAnalysis.MakeFieldReadonly
                         return result;
                     }
 
-                    result = ComputeInitialFieldState(fieldSymbol, options, cancellationToken);
+                    result = ComputeInitialFieldState(fieldSymbol, options, threadStaticAttribute, cancellationToken);
                     return fieldStateMap.GetOrAdd(fieldSymbol, result);
                 }
 
                 // Method to compute the initial field state.
-                static (bool isCandidate, bool written) ComputeInitialFieldState(IFieldSymbol field, AnalyzerOptions options, CancellationToken cancellationToken)
+                static (bool isCandidate, bool written) ComputeInitialFieldState(IFieldSymbol field, AnalyzerOptions options, INamedTypeSymbol threadStaticAttribute, CancellationToken cancellationToken)
                 {
-                    Debug.Assert(IsCandidateField(field));
+                    Debug.Assert(IsCandidateField(field, threadStaticAttribute));
 
                     var option = GetCodeStyleOption(field, options, cancellationToken);
                     if (option == null || !option.Value)
@@ -160,7 +164,7 @@ namespace Microsoft.CodeAnalysis.MakeFieldReadonly
         private static bool IsFieldWrite(IFieldReferenceOperation fieldReference, ISymbol owningSymbol)
         {
             // Check if the underlying member is being written or a writable reference to the member is taken.
-            var valueUsageInfo = fieldReference.GetValueUsageInfo();
+            var valueUsageInfo = fieldReference.GetValueUsageInfo(owningSymbol);
             if (!valueUsageInfo.IsWrittenTo())
             {
                 return false;
@@ -188,7 +192,7 @@ namespace Microsoft.CodeAnalysis.MakeFieldReadonly
                 if (instanceFieldWrittenInCtor || staticFieldWrittenInStaticCtor)
                 {
                     // Finally, ensure that the write is not inside a lambda or local function.
-                    if (!IsInAnonymousFunctionOrLocalFunction(fieldReference))
+                    if (fieldReference.TryGetContainingAnonymousFunctionOrLocalFunction() is null)
                     {
                         // It is safe to ignore this write.
                         return false;
@@ -199,27 +203,7 @@ namespace Microsoft.CodeAnalysis.MakeFieldReadonly
             return true;
         }
 
-        private static bool IsInAnonymousFunctionOrLocalFunction(IOperation operation)
-        {
-            operation = operation.Parent;
-            while (operation != null)
-            {
-                switch (operation.Kind)
-                {
-                    case OperationKind.AnonymousFunction:
-                    case OperationKind.LocalFunction:
-                        return true;
-                }
-
-                operation = operation.Parent;
-            }
-
-            return false;
-        }
-
-        private static CodeStyleOption<bool> GetCodeStyleOption(IFieldSymbol field, AnalyzerOptions options, CancellationToken cancellationToken)
-        {
-            return options.GetOption(CodeStyleOptions.PreferReadonly, field.Language, field.Locations[0].SourceTree, cancellationToken);
-        }
+        private static CodeStyleOption2<bool> GetCodeStyleOption(IFieldSymbol field, AnalyzerOptions options, CancellationToken cancellationToken)
+            => options.GetOption(CodeStyleOptions2.PreferReadonly, field.Language, field.Locations[0].SourceTree, cancellationToken);
     }
 }

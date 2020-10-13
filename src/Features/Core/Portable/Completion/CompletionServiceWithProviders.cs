@@ -2,18 +2,23 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion.Providers;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.LanguageServices;
 using Microsoft.CodeAnalysis.Options;
+using Microsoft.CodeAnalysis.PooledObjects;
 using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Shared.Utilities;
 using Microsoft.CodeAnalysis.Text;
@@ -24,13 +29,21 @@ namespace Microsoft.CodeAnalysis.Completion
     /// <summary>
     /// A subtype of <see cref="CompletionService"/> that aggregates completions from one or more <see cref="CompletionProvider"/>s.
     /// </summary>
-    public abstract class CompletionServiceWithProviders : CompletionService, IEqualityComparer<ImmutableHashSet<string>>
+    public abstract partial class CompletionServiceWithProviders : CompletionService, IEqualityComparer<ImmutableHashSet<string>>
     {
         private static readonly Func<string, List<CompletionItem>> s_createList = _ => new List<CompletionItem>();
 
-        private readonly object _gate = new object();
+        private readonly object _gate = new();
 
-        private readonly Dictionary<string, CompletionProvider> _nameToProvider = new Dictionary<string, CompletionProvider>();
+        private readonly ConditionalWeakTable<IReadOnlyList<AnalyzerReference>, StrongBox<ImmutableArray<CompletionProvider>>> _projectCompletionProvidersMap
+             = new();
+
+        private readonly ConditionalWeakTable<AnalyzerReference, ProjectCompletionProvider> _analyzerReferenceToCompletionProvidersMap
+            = new();
+        private readonly ConditionalWeakTable<AnalyzerReference, ProjectCompletionProvider>.CreateValueCallback _createProjectCompletionProvidersProvider
+            = new(r => new ProjectCompletionProvider(r));
+
+        private readonly Dictionary<string, CompletionProvider> _nameToProvider = new();
         private readonly Dictionary<ImmutableHashSet<string>, ImmutableArray<CompletionProvider>> _rolesToProviders;
         private readonly Func<ImmutableHashSet<string>, ImmutableArray<CompletionProvider>> _createRoleProviders;
         private readonly Func<string, CompletionProvider> _getProviderByName;
@@ -48,9 +61,7 @@ namespace Microsoft.CodeAnalysis.Completion
         }
 
         public override CompletionRules GetRules()
-        {
-            return CompletionRules.Default;
-        }
+            => CompletionRules.Default;
 
         /// <summary>
         /// Returns the providers always available to the service.
@@ -58,9 +69,7 @@ namespace Microsoft.CodeAnalysis.Completion
         /// </summary>
         [Obsolete("Built-in providers will be ignored in a future release, please make them MEF exports instead.")]
         protected virtual ImmutableArray<CompletionProvider> GetBuiltInProviders()
-        {
-            return ImmutableArray<CompletionProvider>.Empty;
-        }
+            => ImmutableArray<CompletionProvider>.Empty;
 
         private IEnumerable<Lazy<CompletionProvider, CompletionProviderMetadata>> GetImportedProviders()
         {
@@ -79,8 +88,6 @@ namespace Microsoft.CodeAnalysis.Completion
 
             return _importedProviders;
         }
-
-        private ImmutableArray<CompletionProvider> _testProviders = ImmutableArray<CompletionProvider>.Empty;
 
         private ImmutableArray<CompletionProvider> CreateRoleProviders(ImmutableHashSet<string> roles)
         {
@@ -119,16 +126,60 @@ namespace Microsoft.CodeAnalysis.Completion
             }
         }
 
-        private ImmutableArray<CompletionProvider> GetFilteredProviders(
-            ImmutableHashSet<string> roles, CompletionTrigger trigger, OptionSet options)
+        private ConcatImmutableArray<CompletionProvider> GetFilteredProviders(
+            Project project, ImmutableHashSet<string> roles, CompletionTrigger trigger, OptionSet options)
         {
-            return FilterProviders(GetProviders(roles, trigger), trigger, options);
+            var allCompletionProviders = FilterProviders(GetProviders(roles, trigger), trigger, options);
+            var projectCompletionProviders = FilterProviders(GetProjectCompletionProviders(project), trigger, options);
+            return allCompletionProviders.ConcatFast(projectCompletionProviders);
         }
 
         protected virtual ImmutableArray<CompletionProvider> GetProviders(
             ImmutableHashSet<string> roles, CompletionTrigger trigger)
         {
             return GetProviders(roles);
+        }
+
+        private ImmutableArray<CompletionProvider> GetProjectCompletionProviders(Project project)
+        {
+            if (project is null)
+            {
+                return ImmutableArray<CompletionProvider>.Empty;
+            }
+
+            if (project is null || project.Solution.Workspace.Kind == WorkspaceKind.Interactive)
+            {
+                // TODO (https://github.com/dotnet/roslyn/issues/4932): Don't restrict completions in Interactive
+                return ImmutableArray<CompletionProvider>.Empty;
+            }
+
+            if (_projectCompletionProvidersMap.TryGetValue(project.AnalyzerReferences, out var completionProviders))
+            {
+                return completionProviders.Value;
+            }
+
+            return GetProjectCompletionProvidersSlow(project);
+
+            // Local functions
+            ImmutableArray<CompletionProvider> GetProjectCompletionProvidersSlow(Project project)
+            {
+                return _projectCompletionProvidersMap.GetValue(project.AnalyzerReferences, pId => new StrongBox<ImmutableArray<CompletionProvider>>(ComputeProjectCompletionProviders(project))).Value;
+            }
+
+            ImmutableArray<CompletionProvider> ComputeProjectCompletionProviders(Project project)
+            {
+                using var _ = ArrayBuilder<CompletionProvider>.GetInstance(out var builder);
+                foreach (var reference in project.AnalyzerReferences)
+                {
+                    var projectCompletionProvider = _analyzerReferenceToCompletionProvidersMap.GetValue(reference, _createProjectCompletionProvidersProvider);
+                    foreach (var completionProvider in projectCompletionProvider.GetExtensions(project.Language))
+                    {
+                        builder.Add(completionProvider);
+                    }
+                }
+
+                return builder.ToImmutable();
+            }
         }
 
         private ImmutableArray<CompletionProvider> FilterProviders(
@@ -173,7 +224,7 @@ namespace Microsoft.CodeAnalysis.Completion
             return ImmutableArray<CompletionProvider>.Empty;
         }
 
-        internal protected CompletionProvider GetProvider(CompletionItem item)
+        protected internal CompletionProvider GetProvider(CompletionItem item)
         {
             CompletionProvider provider = null;
 
@@ -218,7 +269,7 @@ namespace Microsoft.CodeAnalysis.Completion
             var defaultItemSpan = GetDefaultCompletionListSpan(text, caretPosition);
 
             options ??= await document.GetOptionsAsync(cancellationToken).ConfigureAwait(false);
-            var providers = GetFilteredProviders(roles, trigger, options);
+            var providers = GetFilteredProviders(document.Project, roles, trigger, options);
 
             var completionProviderToIndex = GetCompletionProviderToIndex(providers);
 
@@ -227,18 +278,18 @@ namespace Microsoft.CodeAnalysis.Completion
             {
                 case CompletionTriggerKind.Insertion:
                 case CompletionTriggerKind.Deletion:
-                    if (ShouldTriggerCompletion(text, caretPosition, trigger, roles, options))
+                    if (ShouldTriggerCompletion(document.Project, text, caretPosition, trigger, roles, options))
                     {
-                        triggeredProviders = providers.Where(p => p.ShouldTriggerCompletion(text, caretPosition, trigger, options)).ToImmutableArrayOrEmpty();
-                        Debug.Assert(ValidatePossibleTriggerCharacterSet(trigger.Kind, triggeredProviders, document, text, caretPosition));
+                        triggeredProviders = providers.Where(p => p.ShouldTriggerCompletion(document.Project.LanguageServices, text, caretPosition, trigger, options)).ToImmutableArrayOrEmpty();
+                        Debug.Assert(ValidatePossibleTriggerCharacterSet(trigger.Kind, triggeredProviders, document, text, caretPosition, options));
                         if (triggeredProviders.Length == 0)
                         {
-                            triggeredProviders = providers;
+                            triggeredProviders = providers.ToImmutableArray();
                         }
                     }
                     break;
                 default:
-                    triggeredProviders = providers;
+                    triggeredProviders = providers.ToImmutableArray();
                     break;
             }
 
@@ -314,8 +365,8 @@ namespace Microsoft.CodeAnalysis.Completion
                 (expandItemsAvailableFromTriggeredProviders || expandItemsAvailableFromAugmentingProviders));
         }
 
-        private bool ValidatePossibleTriggerCharacterSet(CompletionTriggerKind completionTriggerKind, IEnumerable<CompletionProvider> triggeredProviders,
-            Document document, SourceText text, int caretPosition)
+        private static bool ValidatePossibleTriggerCharacterSet(CompletionTriggerKind completionTriggerKind, IEnumerable<CompletionProvider> triggeredProviders,
+            Document document, SourceText text, int caretPosition, OptionSet optionSet)
         {
             // Only validate on insertion triggers.
             if (completionTriggerKind != CompletionTriggerKind.Insertion)
@@ -339,10 +390,13 @@ namespace Microsoft.CodeAnalysis.Completion
                 // Only verify against built in providers.  3rd party ones do not necessarily implement the possible trigger characters API.
                 foreach (var provider in triggeredProviders)
                 {
-                    if (provider is LSPCompletionProvider lspProvider)
+                    if (provider is LSPCompletionProvider lspProvider && lspProvider.IsInsertionTrigger(text, caretPosition - 1, optionSet))
                     {
-                        Debug.Assert(lspProvider.TriggerCharacters.Contains(character),
+                        if (!lspProvider.TriggerCharacters.Contains(character))
+                        {
+                            Debug.Assert(lspProvider.TriggerCharacters.Contains(character),
                             $"the character {character} is not a valid trigger character for {lspProvider.Name}");
+                        }
                     }
                 }
             }
@@ -351,9 +405,7 @@ namespace Microsoft.CodeAnalysis.Completion
         }
 
         private static bool HasAnyItems(CompletionContext cc)
-        {
-            return cc.Items.Count > 0 || cc.SuggestionModeItem != null;
-        }
+            => cc.Items.Count > 0 || cc.SuggestionModeItem != null;
 
         private async Task<(ImmutableArray<CompletionContext>, bool)> ComputeNonEmptyCompletionContextsAsync(
             Document document, int caretPosition, CompletionTrigger trigger,
@@ -462,7 +514,7 @@ namespace Microsoft.CodeAnalysis.Completion
             return item;
         }
 
-        private static Dictionary<CompletionProvider, int> GetCompletionProviderToIndex(ImmutableArray<CompletionProvider> completionProviders)
+        private static Dictionary<CompletionProvider, int> GetCompletionProviderToIndex(ConcatImmutableArray<CompletionProvider> completionProviders)
         {
             var result = new Dictionary<CompletionProvider, int>(completionProviders.Length);
 
@@ -506,8 +558,14 @@ namespace Microsoft.CodeAnalysis.Completion
                 : Task.FromResult(CompletionDescription.Empty);
         }
 
-        public override bool ShouldTriggerCompletion(
-            SourceText text, int caretPosition, CompletionTrigger trigger, ImmutableHashSet<string> roles = null, OptionSet options = null)
+        public override bool ShouldTriggerCompletion(SourceText text, int caretPosition, CompletionTrigger trigger, ImmutableHashSet<string> roles = null, OptionSet options = null)
+        {
+            var document = text.GetOpenDocumentInCurrentContextWithChanges();
+            return ShouldTriggerCompletion(document?.Project, text, caretPosition, trigger, roles, options);
+        }
+
+        internal override bool ShouldTriggerCompletion(
+            Project project, SourceText text, int caretPosition, CompletionTrigger trigger, ImmutableHashSet<string> roles = null, OptionSet options = null)
         {
             options ??= _workspace.Options;
             if (!options.GetOption(CompletionOptions.TriggerOnTyping, Language))
@@ -520,8 +578,8 @@ namespace Microsoft.CodeAnalysis.Completion
                 return Char.IsLetterOrDigit(trigger.Character) || trigger.Character == '.';
             }
 
-            var providers = GetFilteredProviders(roles, trigger, options);
-            return providers.Any(p => p.ShouldTriggerCompletion(text, caretPosition, trigger, options));
+            var providers = GetFilteredProviders(project, roles, trigger, options);
+            return providers.Any(p => p.ShouldTriggerCompletion(project?.LanguageServices, text, caretPosition, trigger, options));
         }
 
         internal virtual bool SupportsTriggerOnDeletion(OptionSet options)
@@ -545,12 +603,16 @@ namespace Microsoft.CodeAnalysis.Completion
         }
 
         internal override async Task<CompletionChange> GetChangeAsync(
-            Document document, CompletionItem item, TextSpan completionListSpan,
-            char? commitKey, CancellationToken cancellationToken)
+            Document document,
+            CompletionItem item,
+            TextSpan completionListSpan,
+            char? commitKey,
+            bool disallowAddingImports,
+            CancellationToken cancellationToken)
         {
             var provider = GetProvider(item);
             return provider != null
-                ? await provider.GetChangeAsync(document, item, completionListSpan, commitKey, cancellationToken).ConfigureAwait(false)
+                ? await provider.GetChangeAsync(document, item, completionListSpan, commitKey, disallowAddingImports, cancellationToken).ConfigureAwait(false)
                 : CompletionChange.Create(new TextChange(completionListSpan, item.DisplayText));
         }
 
@@ -589,16 +651,14 @@ namespace Microsoft.CodeAnalysis.Completion
         }
 
         internal TestAccessor GetTestAccessor()
-            => new TestAccessor(this);
+            => new(this);
 
         internal readonly struct TestAccessor
         {
             private readonly CompletionServiceWithProviders _completionServiceWithProviders;
 
             public TestAccessor(CompletionServiceWithProviders completionServiceWithProviders)
-            {
-                _completionServiceWithProviders = completionServiceWithProviders;
-            }
+                => _completionServiceWithProviders = completionServiceWithProviders;
 
             internal ImmutableArray<CompletionProvider> GetAllProviders(ImmutableHashSet<string> roles)
                 => _completionServiceWithProviders.GetAllProviders(roles);

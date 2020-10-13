@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis.Shared.Extensions;
@@ -60,14 +62,10 @@ namespace Microsoft.CodeAnalysis.Shared.Utilities
             }
 
             public bool Equals(IParameterSymbol x, IParameterSymbol y)
-            {
-                return this.Equals(x, y, null, false, false);
-            }
+                => this.Equals(x, y, null, false, false);
 
             public bool Equals(IParameterSymbol x, IParameterSymbol y, bool compareParameterName, bool isCaseSensitive)
-            {
-                return this.Equals(x, y, null, compareParameterName, isCaseSensitive);
-            }
+                => this.Equals(x, y, null, compareParameterName, isCaseSensitive);
 
             public int GetHashCode(IParameterSymbol x)
             {

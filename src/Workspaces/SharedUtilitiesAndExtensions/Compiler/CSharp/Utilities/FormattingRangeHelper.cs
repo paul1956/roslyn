@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using Microsoft.CodeAnalysis.CSharp.Formatting;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -38,8 +40,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
 
             while (currentToken.Kind() != SyntaxKind.CloseBraceToken && previousToken.Kind() == SyntaxKind.OpenBraceToken)
             {
-                var pair = previousToken.Parent.GetBracePair();
-                if (pair.Item2.Kind() == SyntaxKind.None || !AreTwoTokensOnSameLine(previousToken, pair.Item2))
+                var (_, closeBrace) = previousToken.Parent.GetBracePair();
+                if (closeBrace.Kind() == SyntaxKind.None || !AreTwoTokensOnSameLine(previousToken, closeBrace))
                 {
                     return ValueTuple.Create(currentToken, tokenRange.Value.Item2);
                 }
@@ -207,7 +209,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
 
                 // double initializer case such as
                 // { { }
-                if (parentOfParent is InitializerExpressionSyntax doubleInitializer)
+                if (parentOfParent is InitializerExpressionSyntax)
                 {
                     // if parent block has a missing brace, and current block is on same line, then
                     // don't try to indent inner block.
@@ -366,6 +368,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Utilities
                 node.Kind() == SyntaxKind.LabeledStatement ||
                 node.Kind() == SyntaxKind.LockStatement ||
                 node.Kind() == SyntaxKind.FixedStatement ||
+                node.Kind() == SyntaxKind.UncheckedStatement ||
+                node.Kind() == SyntaxKind.CheckedStatement ||
                 node.Kind() == SyntaxKind.GetAccessorDeclaration ||
                 node.Kind() == SyntaxKind.SetAccessorDeclaration ||
                 node.Kind() == SyntaxKind.AddAccessorDeclaration ||

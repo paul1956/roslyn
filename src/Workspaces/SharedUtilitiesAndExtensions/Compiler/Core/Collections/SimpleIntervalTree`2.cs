@@ -13,7 +13,7 @@ namespace Microsoft.CodeAnalysis.Shared.Collections
     {
         private readonly TIntrospector _introspector;
 
-        public SimpleIntervalTree(in TIntrospector introspector, IEnumerable<T> values)
+        public SimpleIntervalTree(in TIntrospector introspector, IEnumerable<T>? values)
         {
             _introspector = introspector;
 

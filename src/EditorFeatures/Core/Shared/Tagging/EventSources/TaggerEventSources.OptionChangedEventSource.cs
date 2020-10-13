@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using Microsoft.CodeAnalysis.Editor.Tagging;
 using Microsoft.CodeAnalysis.Options;
 using Microsoft.VisualStudio.Text;
@@ -16,9 +18,7 @@ namespace Microsoft.CodeAnalysis.Editor.Shared.Tagging
             private IOptionService _optionService;
 
             public OptionChangedEventSource(ITextBuffer subjectBuffer, IOption option, TaggerDelay delay) : base(subjectBuffer, delay)
-            {
-                _option = option;
-            }
+                => _option = option;
 
             protected override void ConnectToWorkspace(Workspace workspace)
             {

@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -59,8 +61,8 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
 
         public void VerifyIL(
             string expectedIL,
-            [CallerLineNumber]int callerLine = 0,
-            [CallerFilePath]string callerPath = null)
+            [CallerLineNumber] int callerLine = 0,
+            [CallerFilePath] string callerPath = null)
         {
             string actualIL = ILDelta.GetMethodIL();
             AssertEx.AssertEqualToleratingWhitespaceDifferences(expectedIL, actualIL, escapeQuotes: true, expectedValueSourcePath: callerPath, expectedValueSourceLine: callerLine);
@@ -69,8 +71,8 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
         public void VerifyLocalSignature(
             string qualifiedMethodName,
             string expectedSignature,
-            [CallerLineNumber]int callerLine = 0,
-            [CallerFilePath]string callerPath = null)
+            [CallerLineNumber] int callerLine = 0,
+            [CallerFilePath] string callerPath = null)
         {
             var ilBuilder = TestData.GetMethodData(qualifiedMethodName).ILBuilder;
             string actualSignature = ILBuilderVisualizer.LocalSignatureToString(ilBuilder, ToLocalInfo);
@@ -82,8 +84,8 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
             string expectedIL,
             Func<Cci.ILocalDefinition, ILVisualizer.LocalInfo> mapLocal = null,
             MethodDefinitionHandle methodToken = default,
-            [CallerFilePath]string callerPath = null,
-            [CallerLineNumber]int callerLine = 0)
+            [CallerFilePath] string callerPath = null,
+            [CallerLineNumber] int callerLine = 0)
         {
             var ilBuilder = TestData.GetMethodData(qualifiedMethodName).ILBuilder;
 

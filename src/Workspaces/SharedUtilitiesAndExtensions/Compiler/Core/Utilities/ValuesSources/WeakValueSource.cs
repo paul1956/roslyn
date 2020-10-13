@@ -2,10 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
-
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
@@ -21,9 +18,7 @@ namespace Roslyn.Utilities
         private readonly WeakReference<T> _weakValue;
 
         public WeakValueSource(T value)
-        {
-            _weakValue = new WeakReference<T>(value);
-        }
+            => _weakValue = new WeakReference<T>(value);
 
         public override bool TryGetValue(out Optional<T> value)
         {

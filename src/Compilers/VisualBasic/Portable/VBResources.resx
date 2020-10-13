@@ -4979,8 +4979,14 @@
   <data name="ThereAreNoPointerTypesInVB" xml:space="preserve">
     <value>There are no pointer types in VB.</value>
   </data>
+  <data name="ThereAreNoFunctionPointerTypesInVB" xml:space="preserve">
+    <value>There are no function pointer types in VB.</value>
+  </data>
   <data name="ThereIsNoDynamicTypeInVB" xml:space="preserve">
     <value>There is no dynamic type in VB.</value>
+  </data>
+  <data name="ThereAreNoNativeIntegerTypesInVB" xml:space="preserve">
+    <value>There are no native integer types in VB.</value>
   </data>
   <data name="VariableSyntaxNotWithinSyntaxTree" xml:space="preserve">
     <value>variableSyntax not within syntax tree</value>
@@ -5140,6 +5146,7 @@
                                   both mean SARIF version 2.1.0.
 -reportanalyzer                   Report additional analyzer information, such as
                                   execution time.
+-skipanalyzers[+|-]               Skip execution of diagnostic analyzers.
 
                                   - LANGUAGE -
 -define:&lt;symbol_list&gt;             Declare global conditional compilation

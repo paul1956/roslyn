@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -24,9 +26,7 @@ namespace Microsoft.CodeAnalysis.Editor.Shared.Extensions
         /// format given snapshot and apply text changes to buffer
         /// </summary>
         public static void FormatAndApplyToBuffer(this ITextSnapshot snapshot, TextSpan span, CancellationToken cancellationToken)
-        {
-            snapshot.FormatAndApplyToBuffer(span, rules: null, cancellationToken: cancellationToken);
-        }
+            => snapshot.FormatAndApplyToBuffer(span, rules: null, cancellationToken: cancellationToken);
 
         /// <summary>
         /// format given snapshot and apply text changes to buffer

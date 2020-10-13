@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
@@ -10,6 +12,7 @@ using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.ErrorReporting;
+using Microsoft.CodeAnalysis.Shared.TestHooks;
 
 #if DEBUG
 using System.Linq.Expressions;
@@ -21,7 +24,7 @@ namespace Roslyn.Utilities
     internal static partial class TaskExtensions
     {
 #if DEBUG
-        private static readonly Lazy<Func<Thread, bool>> s_isThreadPoolThread = new Lazy<Func<Thread, bool>>(
+        private static readonly Lazy<Func<Thread, bool>> s_isThreadPoolThread = new(
             () =>
             {
                 var property = typeof(Thread).GetTypeInfo().GetDeclaredProperty("IsThreadPoolThread");
@@ -202,7 +205,7 @@ namespace Roslyn.Utilities
                 {
                     return continuationFunction(t);
                 }
-                catch (Exception e) when (FatalError.ReportUnlessCanceled(e))
+                catch (Exception e) when (FatalError.ReportAndPropagateUnlessCanceled(e))
                 {
                     throw ExceptionUtilities.Unreachable;
                 }
@@ -368,7 +371,7 @@ namespace Roslyn.Utilities
             // This is the only place in the code where we're allowed to call ContinueWith.
             var nextTask = task.ContinueWith(continuationFunction, cancellationToken, continuationOptions | TaskContinuationOptions.LazyCancellation, scheduler).Unwrap();
 
-            nextTask.ContinueWith(ReportFatalError, continuationFunction,
+            nextTask.ContinueWith(ReportNonFatalError, continuationFunction,
                CancellationToken.None,
                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
                TaskScheduler.Default);
@@ -411,7 +414,7 @@ namespace Roslyn.Utilities
             // the behavior we want.
             // This is the only place in the code where we're allowed to call ContinueWith.
             var nextTask = task.ContinueWith(continuationFunction, cancellationToken, continuationOptions | TaskContinuationOptions.LazyCancellation, scheduler).Unwrap();
-            ReportFatalError(nextTask, continuationFunction);
+            ReportNonFatalError(nextTask, continuationFunction);
             return nextTask;
         }
 
@@ -450,7 +453,7 @@ namespace Roslyn.Utilities
             // the behavior we want.
             // This is the only place in the code where we're allowed to call ContinueWith.
             var nextTask = task.ContinueWith(continuationFunction, cancellationToken, continuationOptions | TaskContinuationOptions.LazyCancellation, scheduler).Unwrap();
-            ReportFatalError(nextTask, continuationFunction);
+            ReportNonFatalError(nextTask, continuationFunction);
             return nextTask;
         }
 
@@ -518,16 +521,33 @@ namespace Roslyn.Utilities
                 cancellationToken, taskContinuationOptions, scheduler).Unwrap();
         }
 
-        internal static void ReportFatalError(Task task, object continuationFunction)
+        public static Task ContinueWithAfterDelayFromAsync(
+            this Task task,
+            Func<Task, Task> continuationFunction,
+            CancellationToken cancellationToken,
+            int millisecondsDelay,
+            IExpeditableDelaySource delaySource,
+            TaskContinuationOptions taskContinuationOptions,
+            TaskScheduler scheduler)
         {
-            task.ContinueWith(ReportFatalErrorWorker, continuationFunction,
+            Contract.ThrowIfNull(continuationFunction, nameof(continuationFunction));
+
+            return task.SafeContinueWith(t =>
+                delaySource.Delay(TimeSpan.FromMilliseconds(millisecondsDelay), cancellationToken).SafeContinueWithFromAsync(
+                    _ => continuationFunction(t), cancellationToken, TaskContinuationOptions.None, scheduler),
+                cancellationToken, taskContinuationOptions, scheduler).Unwrap();
+        }
+
+        internal static void ReportNonFatalError(Task task, object continuationFunction)
+        {
+            task.ContinueWith(ReportNonFatalErrorWorker, continuationFunction,
                CancellationToken.None,
                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
                TaskScheduler.Default);
         }
 
         [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
-        private static void ReportFatalErrorWorker(Task task, object continuationFunction)
+        private static void ReportNonFatalErrorWorker(Task task, object continuationFunction)
         {
             var exception = task.Exception;
             var methodInfo = ((Delegate)continuationFunction).GetMethodInfo();
@@ -540,12 +560,12 @@ namespace Roslyn.Utilities
             //   ...
             // > ~67s     // switch to thread 67
             // > !dso     // dump stack objects
-            FatalError.Report(exception);
+            FatalError.ReportAndCatch(exception);
         }
 
         public static Task ReportNonFatalErrorAsync(this Task task)
         {
-            task.ContinueWith(p => FatalError.ReportWithoutCrashUnlessCanceled(p.Exception),
+            task.ContinueWith(p => FatalError.ReportAndCatchUnlessCanceled(p.Exception),
                 CancellationToken.None,
                 TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
                 TaskScheduler.Default);

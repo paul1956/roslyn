@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Immutable;
 using System.Composition;
@@ -9,7 +11,7 @@ using Microsoft.CodeAnalysis.Host.Mef;
 
 namespace Microsoft.CodeAnalysis.Editor.Test
 {
-    [ExportWorkspaceService(typeof(IDocumentTrackingService)), Shared]
+    [ExportWorkspaceService(typeof(IDocumentTrackingService), ServiceLayer.Test), Shared, PartNotDiscoverable]
     internal sealed class TestDocumentTrackingService : IDocumentTrackingService
     {
         private readonly object _gate = new object();
@@ -17,6 +19,7 @@ namespace Microsoft.CodeAnalysis.Editor.Test
         private DocumentId _activeDocumentId;
 
         [ImportingConstructor]
+        [Obsolete(MefConstruction.ImportingConstructorMessage, error: true)]
         public TestDocumentTrackingService()
         {
         }
@@ -53,13 +56,9 @@ namespace Microsoft.CodeAnalysis.Editor.Test
         }
 
         public DocumentId TryGetActiveDocument()
-        {
-            return _activeDocumentId;
-        }
+            => _activeDocumentId;
 
         public ImmutableArray<DocumentId> GetVisibleDocuments()
-        {
-            return _activeDocumentId != null ? ImmutableArray.Create(_activeDocumentId) : ImmutableArray<DocumentId>.Empty;
-        }
+            => _activeDocumentId != null ? ImmutableArray.Create(_activeDocumentId) : ImmutableArray<DocumentId>.Empty;
     }
 }

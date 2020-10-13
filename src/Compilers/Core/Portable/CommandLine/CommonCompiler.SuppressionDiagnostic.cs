@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -69,15 +71,15 @@ namespace Microsoft.CodeAnalysis
 
             public override bool Equals(Diagnostic obj)
             {
+                if (ReferenceEquals(this, obj))
+                {
+                    return true;
+                }
+
                 var other = obj as SuppressionDiagnostic;
                 if (other == null)
                 {
                     return false;
-                }
-
-                if (ReferenceEquals(this, other))
-                {
-                    return true;
                 }
 
                 return Equals(_originalDiagnostic, other._originalDiagnostic) &&

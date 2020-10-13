@@ -2,6 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
+using System;
 using System.Composition;
 using Microsoft.CodeAnalysis.Editor;
 using Microsoft.CodeAnalysis.Host;
@@ -17,17 +20,14 @@ namespace Microsoft.CodeAnalysis.Text.Implementation.TextBufferFactoryService
         private readonly ITextBufferCloneService _singleton;
 
         [ImportingConstructor]
-        public TextBufferCloneServiceFactory(
-            ITextBufferFactoryService textBufferFactoryService,
-            IContentTypeRegistryService contentTypeRegistryService)
+        [Obsolete(MefConstruction.ImportingConstructorMessage, error: true)]
+        public TextBufferCloneServiceFactory(ITextBufferCloneService textBufferCloneService)
         {
-            _singleton = new TextBufferCloneService((ITextBufferFactoryService3)textBufferFactoryService, contentTypeRegistryService);
+            _singleton = textBufferCloneService;
         }
 
         public IWorkspaceService CreateService(HostWorkspaceServices workspaceServices)
-        {
-            return _singleton;
-        }
+            => _singleton;
 
         [Export(typeof(ITextBufferCloneService)), Shared]
         private class TextBufferCloneService : ITextBufferCloneService
@@ -37,6 +37,7 @@ namespace Microsoft.CodeAnalysis.Text.Implementation.TextBufferFactoryService
             private readonly IContentType _unknownContentType;
 
             [ImportingConstructor]
+            [Obsolete(MefConstruction.ImportingConstructorMessage, error: true)]
             public TextBufferCloneService(ITextBufferFactoryService3 textBufferFactoryService, IContentTypeRegistryService contentTypeRegistryService)
             {
                 _textBufferFactoryService = textBufferFactoryService;

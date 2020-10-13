@@ -7,6 +7,7 @@ using System.Composition;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Host;
+using Microsoft.CodeAnalysis.Host.Mef;
 
 namespace Microsoft.CodeAnalysis.ExternalAccess.Razor
 {
@@ -22,6 +23,7 @@ namespace Microsoft.CodeAnalysis.ExternalAccess.Razor
         public event EventHandler<string>? Updated;
 
         [ImportingConstructor]
+        [Obsolete(MefConstruction.ImportingConstructorMessage, error: true)]
         public RazorDynamicFileInfoProviderWrapper(
             Lazy<IRazorDynamicFileInfoProvider> innerDynamicFileInfoProvider)
         {
@@ -39,7 +41,9 @@ namespace Microsoft.CodeAnalysis.ExternalAccess.Razor
 
             var result = await _innerDynamicFileInfoProvider.Value.GetDynamicFileInfoAsync(projectId, projectFilePath, filePath, cancellationToken).ConfigureAwait(false);
             var serviceProvider = new RazorDocumentServiceProviderWrapper(result.DocumentServiceProvider);
-            var dynamicFileInfo = new DynamicFileInfo(result.FilePath, result.SourceCodeKind, result.TextLoader, serviceProvider);
+            var razorDocumentPropertiesService = result.DocumentServiceProvider.GetService<IRazorDocumentPropertiesService>();
+            var designTimeOnly = razorDocumentPropertiesService?.DesignTimeOnly ?? false;
+            var dynamicFileInfo = new DynamicFileInfo(result.FilePath, result.SourceCodeKind, result.TextLoader, designTimeOnly, serviceProvider);
 
             return dynamicFileInfo;
         }

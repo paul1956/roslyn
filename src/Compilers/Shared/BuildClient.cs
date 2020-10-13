@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -71,15 +73,6 @@ namespace Microsoft.CodeAnalysis.CommandLine
             return RuntimeHostInfo.IsCoreClrRuntime
                 ? null
                 : RuntimeEnvironment.GetRuntimeDirectory();
-        }
-
-        public static IAnalyzerAssemblyLoader CreateAnalyzerAssemblyLoader()
-        {
-#if NET472
-            return new DesktopAnalyzerAssemblyLoader();
-#else
-            return new CoreClrAnalyzerAssemblyLoader();
-#endif
         }
 
         internal static int Run(IEnumerable<string> arguments, RequestLanguage language, CompileFunc compileFunc)
@@ -206,7 +199,7 @@ namespace Microsoft.CodeAnalysis.CommandLine
 
         private int RunLocalCompilation(string[] arguments, BuildPaths buildPaths, TextWriter textWriter)
         {
-            var loader = CreateAnalyzerAssemblyLoader();
+            var loader = new DefaultAnalyzerAssemblyLoader();
             return _compileFunc(arguments, buildPaths, textWriter, loader);
         }
 

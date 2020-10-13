@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.VisualStudio.Text;
 
@@ -18,13 +20,9 @@ namespace Microsoft.CodeAnalysis.Editor.Shared.Extensions
         /// <param name="span"></param>
         /// <returns></returns>
         public static TextSpan ToTextSpan(this Span span)
-        {
-            return new TextSpan(span.Start, span.Length);
-        }
+            => new(span.Start, span.Length);
 
         public static bool IntersectsWith(this Span span, int position)
-        {
-            return position >= span.Start && position <= span.End;
-        }
+            => position >= span.Start && position <= span.End;
     }
 }

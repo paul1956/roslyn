@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Host;
+using Microsoft.CodeAnalysis.PooledObjects;
 using Microsoft.CodeAnalysis.Shared.Extensions;
 using Microsoft.CodeAnalysis.Text;
 
@@ -28,28 +29,41 @@ namespace Microsoft.CodeAnalysis.TodoComments
             Position = position;
         }
 
-        internal TodoCommentData CreateSerializableData(
-            Document document, SourceText text, SyntaxTree tree)
+        private TodoCommentData CreateSerializableData(
+            Document document, SourceText text, SyntaxTree? tree)
         {
             // make sure given position is within valid text range.
-            var textSpan = new TextSpan(Math.Min(text.Length, Math.Max(0, this.Position)), 0);
+            var textSpan = new TextSpan(Math.Min(text.Length, Math.Max(0, Position)), 0);
 
-            var location = tree.GetLocation(textSpan);
+            var location = tree == null
+                ? Location.Create(document.FilePath!, textSpan, text.Lines.GetLinePositionSpan(textSpan))
+                : tree.GetLocation(textSpan);
             var originalLineInfo = location.GetLineSpan();
             var mappedLineInfo = location.GetMappedLineSpan();
 
-            return new TodoCommentData
-            {
-                Priority = this.Descriptor.Priority,
-                Message = this.Message,
-                DocumentId = document.Id,
-                OriginalLine = originalLineInfo.StartLinePosition.Line,
-                OriginalColumn = originalLineInfo.StartLinePosition.Character,
-                OriginalFilePath = document.FilePath,
-                MappedLine = mappedLineInfo.StartLinePosition.Line,
-                MappedColumn = mappedLineInfo.StartLinePosition.Character,
-                MappedFilePath = mappedLineInfo.GetMappedFilePathIfExist(),
-            };
+            return new(
+                priority: Descriptor.Priority,
+                message: Message,
+                documentId: document.Id,
+                originalLine: originalLineInfo.StartLinePosition.Line,
+                originalColumn: originalLineInfo.StartLinePosition.Character,
+                originalFilePath: document.FilePath,
+                mappedLine: mappedLineInfo.StartLinePosition.Line,
+                mappedColumn: mappedLineInfo.StartLinePosition.Character,
+                mappedFilePath: mappedLineInfo.GetMappedFilePathIfExist());
+        }
+
+        public static async Task ConvertAsync(
+            Document document,
+            ImmutableArray<TodoComment> todoComments,
+            ArrayBuilder<TodoCommentData> converted,
+            CancellationToken cancellationToken)
+        {
+            var sourceText = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
+            var syntaxTree = await document.GetSyntaxTreeAsync(cancellationToken).ConfigureAwait(false);
+
+            foreach (var comment in todoComments)
+                converted.Add(comment.CreateSerializableData(document, sourceText, syntaxTree));
         }
     }
 

@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -55,19 +57,6 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
             return new Roslyn.Test.Utilities.CoreClr.CoreCLRRuntimeEnvironmentFactory();
 #elif NETSTANDARD2_0
             throw new PlatformNotSupportedException();
-#else
-#error Unsupported configuration
-#endif
-        }
-
-        internal static AnalyzerAssemblyLoader CreateAnalyzerAssemblyLoader()
-        {
-#if NET472
-            return new DesktopAnalyzerAssemblyLoader();
-#elif NETCOREAPP
-            return new CoreClrAnalyzerAssemblyLoader();
-#elif NETSTANDARD2_0
-            return new ThrowingAnalyzerAssemblyLoader();
 #else
 #error Unsupported configuration
 #endif

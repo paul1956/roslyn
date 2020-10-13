@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using Microsoft.CodeAnalysis.Editor.Tagging;
 using Microsoft.VisualStudio.Text;
 
@@ -17,14 +19,10 @@ namespace Microsoft.CodeAnalysis.Editor.Shared.Tagging
             }
 
             protected override void ConnectToWorkspace(Workspace workspace)
-            {
-                this.RaiseChanged();
-            }
+                => this.RaiseChanged();
 
             protected override void DisconnectFromWorkspace(Workspace workspace)
-            {
-                this.RaiseChanged();
-            }
+                => this.RaiseChanged();
         }
     }
 }

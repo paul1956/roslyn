@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis.Editor.Implementation.RenameTracking;
 
@@ -10,9 +12,7 @@ namespace Microsoft.CodeAnalysis.Editor.Shared.Utilities
     internal static class RenameTrackingDismisser
     {
         internal static void DismissRenameTracking(Workspace workspace, DocumentId documentId)
-        {
-            RenameTrackingTaggerProvider.ResetRenameTrackingState(workspace, documentId);
-        }
+            => RenameTrackingTaggerProvider.ResetRenameTrackingState(workspace, documentId);
 
         internal static void DismissRenameTracking(Workspace workspace, IEnumerable<DocumentId> documentIds)
         {
@@ -23,8 +23,6 @@ namespace Microsoft.CodeAnalysis.Editor.Shared.Utilities
         }
 
         internal static bool DismissVisibleRenameTracking(Workspace workspace, DocumentId documentId)
-        {
-            return RenameTrackingTaggerProvider.ResetVisibleRenameTrackingState(workspace, documentId);
-        }
+            => RenameTrackingTaggerProvider.ResetVisibleRenameTrackingState(workspace, documentId);
     }
 }

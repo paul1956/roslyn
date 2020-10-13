@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
@@ -12,6 +14,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Editor;
 using Microsoft.CodeAnalysis.Editor.Shared.Utilities;
 using Microsoft.CodeAnalysis.Experiments;
+using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Internal.Log;
 using Microsoft.CodeAnalysis.Options;
@@ -33,7 +36,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.LanguageService
         private const string ServiceHubClientName = "ManagedLanguage.IDE.LanguageServer";
 
         private readonly IThreadingContext _threadingContext;
-        private readonly Workspace _workspace;
+        private readonly HostWorkspaceServices _services;
         private readonly IEnumerable<Lazy<IOptionPersister>> _lazyOptions;
 
         /// <summary>
@@ -68,16 +71,16 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.LanguageService
         public LanguageServerClient(
             IThreadingContext threadingContext,
             VisualStudioWorkspace workspace,
-            [ImportMany]IEnumerable<Lazy<IOptionPersister>> lazyOptions)
+            [ImportMany] IEnumerable<Lazy<IOptionPersister>> lazyOptions)
         {
             _threadingContext = threadingContext;
-            _workspace = workspace;
+            _services = workspace.Services;
             _lazyOptions = lazyOptions;
         }
 
         public async Task<Connection> ActivateAsync(CancellationToken cancellationToken)
         {
-            var client = await RemoteHostClient.TryGetClientAsync(_workspace, cancellationToken).ConfigureAwait(false);
+            var client = await RemoteHostClient.TryGetClientAsync(_services, cancellationToken).ConfigureAwait(false);
             if (client == null)
             {
                 // There is no OOP. either user turned it off, or process got killed.
@@ -87,14 +90,12 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.LanguageService
                 return null;
             }
 
-            var hostGroup = new HostGroup(client.ClientId);
             var hubClient = new HubClient(ServiceHubClientName);
 
             var stream = await ServiceHubRemoteHostClient.RequestServiceAsync(
-                _workspace,
+                _services,
                 hubClient,
-                WellKnownServiceHubServices.LanguageServer,
-                hostGroup,
+                WellKnownServiceHubService.LanguageServer,
                 cancellationToken).ConfigureAwait(false);
 
             return new Connection(stream, stream);
@@ -109,24 +110,6 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.LanguageService
         {
             // initialize things on UI thread
             await InitializeOnUIAsync().ConfigureAwait(false);
-
-            // this might get called before solution is fully loaded and before file is opened. 
-            // we delay our OOP start until then, but user might do vsstart before that. so we make sure we start OOP if 
-            // it is not running yet. multiple start is no-op
-            ((RemoteHostClientServiceFactory.RemoteHostClientService)_workspace.Services.GetService<IRemoteHostClientService>()).Enable();
-
-            // wait until remote host is available before let platform know that they can activate our LSP
-            var client = await RemoteHostClient.TryGetClientAsync(_workspace, CancellationToken.None).ConfigureAwait(false);
-            if (client == null)
-            {
-                // There is no OOP. either user turned it off, or process got killed.
-                // We should have already gotten a gold bar + nfw already if the OOP is missing.
-                // so just log telemetry here so we can connect the two with session explorer.
-                Logger.Log(FunctionId.LanguageServer_OnLoadedFailed, KeyValueLogMessage.NoProperty);
-                // don't ask platform to start LSP.
-                // we shouldn't throw as the LSP client does not expect exceptions here.
-                return;
-            }
 
             // let platform know that they can start us
             await StartAsync.InvokeAsync(this, EventArgs.Empty).ConfigureAwait(false);
@@ -146,7 +129,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.LanguageService
                 // experimentation service unfortunately uses JTF to jump to UI thread in certain cases
                 // which can cause deadlock if 2 parties try to enable OOP from BG and then FG before 
                 // experimentation service tries to jump to UI thread.
-                var experimentationService = _workspace.Services.GetService<IExperimentationService>();
+                var experimentationService = _services.GetService<IExperimentationService>();
             }
         }
 
@@ -154,16 +137,12 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.LanguageService
         /// Signals the extension that the language server has been successfully initialized.
         /// </summary>
         public Task OnServerInitializedAsync()
-        {
-            return Task.CompletedTask;
-        }
+            => Task.CompletedTask;
 
         /// <summary>
         /// Signals the extension that the language server failed to initialize.
         /// </summary>
         public Task OnServerInitializeFailedAsync(Exception e)
-        {
-            return Task.CompletedTask;
-        }
+            => Task.CompletedTask;
     }
 }

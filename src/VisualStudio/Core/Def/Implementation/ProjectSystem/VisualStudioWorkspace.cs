@@ -2,12 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
-
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.ErrorReporting;
 using Microsoft.CodeAnalysis.FindSymbols;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Shared.Extensions;
@@ -23,6 +22,11 @@ namespace Microsoft.VisualStudio.LanguageServices
     {
         private BackgroundCompiler? _backgroundCompiler;
         private readonly BackgroundParser _backgroundParser;
+
+        static VisualStudioWorkspace()
+        {
+            WatsonReporter.InitializeFatalErrorHandlers();
+        }
 
         internal VisualStudioWorkspace(HostServices hostServices)
             : base(hostServices, WorkspaceKind.Host)
@@ -61,14 +65,10 @@ namespace Microsoft.VisualStudio.LanguageServices
         }
 
         protected override void OnDocumentTextChanged(Document document)
-        {
-            _backgroundParser.Parse(document);
-        }
+            => _backgroundParser.Parse(document);
 
         protected override void OnDocumentClosing(DocumentId documentId)
-        {
-            _backgroundParser.CancelParse(documentId);
-        }
+            => _backgroundParser.CancelParse(documentId);
 
         internal override bool IgnoreUnchangeableDocumentsWhenApplyingChanges => true;
 
@@ -109,9 +109,7 @@ namespace Microsoft.VisualStudio.LanguageServices
         /// <param name="filePath">The file path of the assembly or module.</param>
         /// <param name="properties">The properties for the reference.</param>
         public PortableExecutableReference CreatePortableExecutableReference(string filePath, MetadataReferenceProperties properties)
-        {
-            return this.Services.GetRequiredService<IMetadataService>().GetReference(filePath, properties);
-        }
+            => this.Services.GetRequiredService<IMetadataService>().GetReference(filePath, properties);
 
         internal abstract string? TryGetRuleSetPathForProject(ProjectId projectId);
     }

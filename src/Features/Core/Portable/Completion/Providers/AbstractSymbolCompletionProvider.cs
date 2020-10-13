@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -31,9 +33,9 @@ namespace Microsoft.CodeAnalysis.Completion.Providers
         // PERF: Many CompletionProviders derive AbstractSymbolCompletionProvider and therefore
         // compute identical contexts. This actually shows up on the 2-core typing test.
         // Cache the most recent document/position/computed SyntaxContext to reduce repeat computation.
-        private static readonly ConditionalWeakTable<Document, AsyncLazy<SyntaxContext>> s_cachedDocuments = new ConditionalWeakTable<Document, AsyncLazy<SyntaxContext>>();
+        private static readonly ConditionalWeakTable<Document, AsyncLazy<SyntaxContext>> s_cachedDocuments = new();
         private static int s_cachedPosition;
-        private static readonly object s_cacheGate = new object();
+        private static readonly object s_cacheGate = new();
 
         private bool? _isTargetTypeCompletionFilterExperimentEnabled = null;
 
@@ -60,7 +62,7 @@ namespace Microsoft.CodeAnalysis.Completion.Providers
 
         /// <param name="typeConvertibilityCache">A cache to use for repeated lookups. This should be created with <see cref="SymbolEqualityComparer.Default"/>
         /// because we ignore nullability.</param>
-        private bool ShouldIncludeInTargetTypedCompletionList(
+        private static bool ShouldIncludeInTargetTypedCompletionList(
             ISymbol symbol,
             ImmutableArray<ITypeSymbol> inferredTypes,
             SemanticModel semanticModel,
@@ -105,7 +107,7 @@ namespace Microsoft.CodeAnalysis.Completion.Providers
             return typeConvertibilityCache[type];
         }
 
-        private bool IsTypeImplicitlyConvertible(Compilation compilation, ITypeSymbol sourceType, ImmutableArray<ITypeSymbol> targetTypes)
+        private static bool IsTypeImplicitlyConvertible(Compilation compilation, ITypeSymbol sourceType, ImmutableArray<ITypeSymbol> targetTypes)
         {
             foreach (var targetType in targetTypes)
             {
@@ -132,8 +134,12 @@ namespace Microsoft.CodeAnalysis.Completion.Providers
             Lazy<ImmutableArray<ITypeSymbol>> inferredTypes,
             TelemetryCounter telemetryCounter)
         {
+            // We might get symbol w/o name but CanBeReferencedByName is still set to true, 
+            // need to filter them out.
+            // https://github.com/dotnet/roslyn/issues/47690
             var symbolGroups = from symbol in symbols
                                let texts = GetDisplayAndSuffixAndInsertionText(symbol, contextLookup(symbol))
+                               where !string.IsNullOrWhiteSpace(texts.displayText)
                                group symbol by texts into g
                                select g;
 
@@ -143,7 +149,7 @@ namespace Microsoft.CodeAnalysis.Completion.Providers
             foreach (var symbolGroup in symbolGroups)
             {
                 var arbitraryFirstContext = contextLookup(symbolGroup.First());
-                var item = this.CreateItem(
+                var item = CreateItem(
                     completionContext, symbolGroup.Key.displayText, symbolGroup.Key.suffix, symbolGroup.Key.insertionText,
                     symbolGroup.ToList(), arbitraryFirstContext, invalidProjectMap, totalProjects, preselect);
 
@@ -238,9 +244,7 @@ namespace Microsoft.CodeAnalysis.Completion.Providers
         protected abstract Task<ImmutableArray<ISymbol>> GetSymbolsAsync(SyntaxContext context, int position, OptionSet options, CancellationToken cancellationToken);
 
         protected virtual Task<ImmutableArray<ISymbol>> GetPreselectedSymbolsAsync(SyntaxContext context, int position, OptionSet options, CancellationToken cancellationToken)
-        {
-            return SpecializedTasks.EmptyImmutableArray<ISymbol>();
-        }
+            => SpecializedTasks.EmptyImmutableArray<ISymbol>();
 
         protected override Task<CompletionDescription> GetDescriptionWorkerAsync(Document document, CompletionItem item, CancellationToken cancellationToken)
             => SymbolCompletionItem.GetDescriptionAsync(item, document, cancellationToken);
@@ -289,7 +293,7 @@ namespace Microsoft.CodeAnalysis.Completion.Providers
                     }
                 }
             }
-            catch (Exception e) when (FatalError.ReportWithoutCrashUnlessCanceled(e))
+            catch (Exception e) when (FatalError.ReportAndCatchUnlessCanceled(e))
             {
                 // nop
             }
@@ -348,14 +352,10 @@ namespace Microsoft.CodeAnalysis.Completion.Providers
         }
 
         protected virtual bool IsExclusive()
-        {
-            return false;
-        }
+            => false;
 
         protected virtual Task<bool> IsSemanticTriggerCharacterAsync(Document document, int characterPosition, CancellationToken cancellationToken)
-        {
-            return SpecializedTasks.True;
-        }
+            => SpecializedTasks.True;
 
         private Task<ImmutableArray<ISymbol>> GetSymbolsAsync(int position, bool preselect, SyntaxContext context, OptionSet options, CancellationToken cancellationToken)
         {
@@ -365,13 +365,13 @@ namespace Microsoft.CodeAnalysis.Completion.Providers
                     ? GetPreselectedSymbolsAsync(context, position, options, cancellationToken)
                     : GetSymbolsAsync(context, position, options, cancellationToken);
             }
-            catch (Exception e) when (FatalError.ReportUnlessCanceled(e))
+            catch (Exception e) when (FatalError.ReportAndPropagateUnlessCanceled(e))
             {
                 throw ExceptionUtilities.Unreachable;
             }
         }
 
-        private Dictionary<ISymbol, SyntaxContext> UnionSymbols(
+        private static Dictionary<ISymbol, SyntaxContext> UnionSymbols(
             ImmutableArray<(DocumentId documentId, SyntaxContext syntaxContext, ImmutableArray<ISymbol> symbols)> linkedContextSymbolLists)
         {
             // To correctly map symbols back to their SyntaxContext, we do care about assembly identity.
@@ -413,13 +413,13 @@ namespace Microsoft.CodeAnalysis.Completion.Providers
             return perContextSymbols.ToImmutableAndFree();
         }
 
-        private bool IsCandidateProject(SyntaxContext context, CancellationToken cancellationToken)
+        private static bool IsCandidateProject(SyntaxContext context, CancellationToken cancellationToken)
         {
             var syntaxFacts = context.GetLanguageService<ISyntaxFactsService>();
             return !syntaxFacts.IsInInactiveRegion(context.SyntaxTree, context.Position, cancellationToken);
         }
 
-        protected OptionSet GetUpdatedRecommendationOptions(OptionSet options, string language)
+        protected static OptionSet GetUpdatedRecommendationOptions(OptionSet options, string language)
         {
             var filterOutOfScopeLocals = options.GetOption(CompletionControllerOptions.FilterOutOfScopeLocals);
             var hideAdvancedMembers = options.GetOption(CompletionOptions.HideAdvancedMembers, language);
@@ -446,7 +446,7 @@ namespace Microsoft.CodeAnalysis.Completion.Providers
         /// <param name="symbolToContext">The symbols recommended in the active context.</param>
         /// <param name="linkedContextSymbolLists">The symbols recommended in linked documents</param>
         /// <returns>The list of projects each recommended symbol did NOT appear in.</returns>
-        protected Dictionary<ISymbol, List<ProjectId>> FindSymbolsMissingInLinkedContexts(
+        protected static Dictionary<ISymbol, List<ProjectId>> FindSymbolsMissingInLinkedContexts(
             Dictionary<ISymbol, SyntaxContext> symbolToContext,
             ImmutableArray<(DocumentId documentId, SyntaxContext syntaxContext, ImmutableArray<ISymbol> symbols)> linkedContextSymbolLists)
         {
@@ -482,9 +482,7 @@ namespace Microsoft.CodeAnalysis.Completion.Providers
         /// Override this if you want to provide customized insertion based on the character typed.
         /// </summary>
         protected virtual string GetInsertionText(CompletionItem item, char ch)
-        {
-            return SymbolCompletionItem.GetInsertionText(item);
-        }
+            => SymbolCompletionItem.GetInsertionText(item);
 
         // This is used to decide which provider we'd collect target type completion telemetry from.
         protected virtual bool ShouldCollectTelemetryForTargetTypeCompletion => false;
@@ -495,14 +493,10 @@ namespace Microsoft.CodeAnalysis.Completion.Providers
             private int _tick;
 
             public TelemetryCounter(bool shouldReport)
-            {
-                _shouldReport = shouldReport;
-            }
+                => _shouldReport = shouldReport;
 
             public void AddTick(int tick)
-            {
-                _tick += tick;
-            }
+                => _tick += tick;
 
             public void Dispose()
             {

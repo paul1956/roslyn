@@ -2,9 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
-
-using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
@@ -61,32 +58,7 @@ namespace Roslyn.Utilities
             return ImmutableArray.CreateRange(items);
         }
 
-        /// <summary>
-        /// Use to validate public API input for properties that are exposed as <see cref="IReadOnlyList{T}"/>.
-        /// 
-        /// Pattern:
-        /// <code>
-        /// argument.AsBoxedImmutableArrayWithNonNullItems() ?? throw new ArgumentNullException(nameof(argument)),
-        /// </code>
-        /// </summary>
-        internal static IReadOnlyList<T>? AsBoxedImmutableArrayWithNonNullItems<T>(this IEnumerable<T>? sequence) where T : class
-        {
-            var list = sequence.ToBoxedImmutableArray();
-
-            foreach (var item in list)
-            {
-                if (item is null)
-                {
-                    return null;
-                }
-            }
-
-            return list;
-        }
-
         internal static ConcatImmutableArray<T> ConcatFast<T>(this ImmutableArray<T> first, ImmutableArray<T> second)
-        {
-            return new ConcatImmutableArray<T>(first, second);
-        }
+            => new(first, second);
     }
 }

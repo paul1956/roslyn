@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -25,7 +27,7 @@ namespace Roslyn.Utilities
     /// </summary>
     internal partial class BKTree
     {
-        public static readonly BKTree Empty = new BKTree(
+        public static readonly BKTree Empty = new(
             Array.Empty<char>(),
             ImmutableArray<Node>.Empty,
             ImmutableArray<Edge>.Empty);
@@ -63,14 +65,10 @@ namespace Roslyn.Utilities
         }
 
         public static BKTree Create(params string[] values)
-        {
-            return Create(values.Select(v => new StringSlice(v)));
-        }
+            => Create(values.Select(v => new StringSlice(v)));
 
         public static BKTree Create(IEnumerable<StringSlice> values)
-        {
-            return new Builder(values).Create();
-        }
+            => new Builder(values).Create();
 
         public IList<string> Find(string value, int? threshold = null)
         {

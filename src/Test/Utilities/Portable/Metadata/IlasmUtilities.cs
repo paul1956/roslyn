@@ -2,9 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.IO;
-using System.Reflection;
 using Roslyn.Test.Utilities;
 using Roslyn.Utilities;
 using Xunit;
@@ -15,7 +16,7 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
     {
         public static DisposableFile CreateTempAssembly(string declarations, bool prependDefaultHeader = true)
         {
-            IlasmTempAssembly(declarations, prependDefaultHeader, includePdb: false, assemblyPath: out var assemblyPath, pdbPath: out var pdbPath);
+            IlasmTempAssembly(declarations, prependDefaultHeader, includePdb: false, autoInherit: true, assemblyPath: out var assemblyPath, pdbPath: out var pdbPath);
             Assert.NotNull(assemblyPath);
             Assert.Null(pdbPath);
             return new DisposableFile(assemblyPath);
@@ -57,9 +58,10 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
 
         private static readonly string IlasmPath = GetIlasmPath();
 
-        public static void IlasmTempAssembly(string declarations, bool appendDefaultHeader, bool includePdb, out string assemblyPath, out string pdbPath)
+        public static void IlasmTempAssembly(string declarations, bool appendDefaultHeader, bool includePdb, bool autoInherit, out string assemblyPath, out string pdbPath)
         {
-            if (declarations == null) throw new ArgumentNullException(nameof(declarations));
+            if (declarations == null)
+                throw new ArgumentNullException(nameof(declarations));
 
             using (var sourceFile = new DisposableFile(extension: ".il"))
             {
@@ -94,7 +96,7 @@ $@".assembly '{sourceFileName}' {{}}
 
                 sourceFile.WriteAllText(completeIL);
 
-                var arguments = $"\"{sourceFile.Path}\" -DLL -out=\"{assemblyPath}\"";
+                var arguments = $"\"{sourceFile.Path}\" -DLL {(autoInherit ? "" : "-noautoinherit")} -out=\"{assemblyPath}\"";
 
                 if (includePdb && !MonoHelpers.IsRunningOnMono())
                 {

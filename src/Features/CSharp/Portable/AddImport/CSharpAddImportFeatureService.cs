@@ -2,6 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
@@ -12,7 +15,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.AddImport;
 using Microsoft.CodeAnalysis.AddImports;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
-using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Editing;
@@ -30,6 +32,7 @@ namespace Microsoft.CodeAnalysis.CSharp.AddImport
     internal class CSharpAddImportFeatureService : AbstractAddImportFeatureService<SimpleNameSyntax>
     {
         [ImportingConstructor]
+        [Obsolete(MefConstruction.ImportingConstructorMessage, error: true)]
         public CSharpAddImportFeatureService()
         {
         }
@@ -128,7 +131,8 @@ namespace Microsoft.CodeAnalysis.CSharp.AddImport
                 return false;
             }
 
-            if (!syntaxFacts.IsNameOfMemberAccessExpression(node))
+            if (!syntaxFacts.IsNameOfSimpleMemberAccessExpression(node) &&
+                !syntaxFacts.IsNameOfMemberBindingExpression(node))
             {
                 return false;
             }
@@ -144,6 +148,12 @@ namespace Microsoft.CodeAnalysis.CSharp.AddImport
                 diagnosticId == CS4036 || // WinRT async interfaces
                 diagnosticId == CS1929) && // An extension `GetAwaiter()` is in scope, but for another type
                 AncestorOrSelfIsAwaitExpression(syntaxFactsService, node);
+
+        protected override bool CanAddImportForGetEnumerator(string diagnosticId, ISyntaxFacts syntaxFactsService, SyntaxNode node)
+            => diagnosticId == CS1579 || diagnosticId == CS8414;
+
+        protected override bool CanAddImportForGetAsyncEnumerator(string diagnosticId, ISyntaxFacts syntaxFactsService, SyntaxNode node)
+            => diagnosticId == CS8411 || diagnosticId == CS8415;
 
         protected override bool CanAddImportForNamespace(string diagnosticId, SyntaxNode node, out SimpleNameSyntax nameNode)
         {
@@ -229,7 +239,7 @@ namespace Microsoft.CodeAnalysis.CSharp.AddImport
         protected override ITypeSymbol GetDeconstructInfo(
             SemanticModel semanticModel, SyntaxNode node, CancellationToken cancellationToken)
         {
-            return semanticModel.GetTypeInfo(node).Type;
+            return semanticModel.GetTypeInfo(node, cancellationToken).Type;
         }
 
         protected override ITypeSymbol GetQueryClauseInfo(
@@ -261,15 +271,11 @@ namespace Microsoft.CodeAnalysis.CSharp.AddImport
             return semanticModel.GetTypeInfo(fromClause.Expression, cancellationToken).Type;
         }
 
-        private bool InfoBoundSuccessfully(SymbolInfo symbolInfo)
-        {
-            return InfoBoundSuccessfully(symbolInfo.Symbol);
-        }
+        private static bool InfoBoundSuccessfully(SymbolInfo symbolInfo)
+            => InfoBoundSuccessfully(symbolInfo.Symbol);
 
-        private bool InfoBoundSuccessfully(QueryClauseInfo semanticInfo)
-        {
-            return InfoBoundSuccessfully(semanticInfo.OperationInfo);
-        }
+        private static bool InfoBoundSuccessfully(QueryClauseInfo semanticInfo)
+            => InfoBoundSuccessfully(semanticInfo.OperationInfo);
 
         private static bool InfoBoundSuccessfully(ISymbol operation)
         {
@@ -278,9 +284,7 @@ namespace Microsoft.CodeAnalysis.CSharp.AddImport
         }
 
         protected override string GetDescription(IReadOnlyList<string> nameParts)
-        {
-            return $"using { string.Join(".", nameParts) };";
-        }
+            => $"using { string.Join(".", nameParts) };";
 
         protected override (string description, bool hasExistingImport) GetDescription(
             Document document,
@@ -323,7 +327,7 @@ namespace Microsoft.CodeAnalysis.CSharp.AddImport
                 : (usingDirectiveString, hasExistingUsing);
         }
 
-        private string GetUsingDirectiveString(INamespaceOrTypeSymbol namespaceOrTypeSymbol)
+        private static string GetUsingDirectiveString(INamespaceOrTypeSymbol namespaceOrTypeSymbol)
         {
             var displayString = namespaceOrTypeSymbol.ToDisplayString();
             return namespaceOrTypeSymbol.IsKind(SymbolKind.Namespace)
@@ -485,7 +489,7 @@ namespace Microsoft.CodeAnalysis.CSharp.AddImport
             return (usingDirective, addImportService.HasExistingImport(semanticModel.Compilation, root, contextNode, usingDirective, generator));
         }
 
-        private NameSyntax RemoveGlobalAliasIfUnnecessary(
+        private static NameSyntax RemoveGlobalAliasIfUnnecessary(
             SemanticModel semanticModel,
             NameSyntax nameSyntax,
             NamespaceDeclarationSyntax namespaceToAddTo)
@@ -506,7 +510,7 @@ namespace Microsoft.CodeAnalysis.CSharp.AddImport
             return nameSyntax;
         }
 
-        private bool ConflictsWithExistingMember(
+        private static bool ConflictsWithExistingMember(
             SemanticModel semanticModel,
             NamespaceDeclarationSyntax namespaceToAddTo,
             string rightOfAliasName)

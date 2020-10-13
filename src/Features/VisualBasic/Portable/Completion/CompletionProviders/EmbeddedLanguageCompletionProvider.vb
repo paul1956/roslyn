@@ -5,6 +5,8 @@
 Imports System.Composition
 Imports Microsoft.CodeAnalysis.Completion
 Imports Microsoft.CodeAnalysis.Completion.Providers
+Imports Microsoft.CodeAnalysis.Host
+Imports Microsoft.CodeAnalysis.Host.Mef
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.Completion.Providers
     <ExportCompletionProvider(NameOf(EmbeddedLanguageCompletionProvider), LanguageNames.VisualBasic)>
@@ -14,7 +16,9 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.Completion.Providers
         Inherits AbstractEmbeddedLanguageCompletionProvider
 
         <ImportingConstructor>
-        Public Sub New()
+        <Obsolete(MefConstruction.ImportingConstructorMessage, True)>
+        Public Sub New(<ImportMany> languageServices As IEnumerable(Of Lazy(Of ILanguageService, LanguageServiceMetadata)))
+            MyBase.New(languageServices, LanguageNames.VisualBasic)
         End Sub
     End Class
 End Namespace

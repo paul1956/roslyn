@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis.Text;
@@ -76,7 +78,8 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
             Assert.False(string.IsNullOrWhiteSpace(fullyQualifiedTypeName), "'fullyQualifiedTypeName' can't be null or empty");
             Assert.False(string.IsNullOrWhiteSpace(memberName), "'memberName' can't be null or empty");
 
-            var retVal = true; actualSignatures = new List<string>();
+            var retVal = true;
+            actualSignatures = new List<string>();
             var signatures = appDomainHost.GetMemberSignaturesFromMetadata(fullyQualifiedTypeName, memberName);
             var signatureAssertText = "Signature(\"" + fullyQualifiedTypeName + "\", \"" + memberName + "\", \"{0}\"),";
 
@@ -98,7 +101,8 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
                     {
                         actualSignatures.Clear();
                         actualSignatures.Add(actualSignature);
-                        found = true; break;
+                        found = true;
+                        break;
                     }
                     else
                     {

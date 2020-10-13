@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
-
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -180,7 +178,8 @@ namespace Microsoft.CodeAnalysis.CSharp
             }
             Debug.Assert(!node.HasErrors, "nodes with errors should not be lowered");
 
-            return VisitExpressionImpl(node);
+            // https://github.com/dotnet/roslyn/issues/47682
+            return VisitExpressionImpl(node)!;
         }
 
         private BoundStatement? VisitStatement(BoundStatement? node)
@@ -270,24 +269,33 @@ namespace Microsoft.CodeAnalysis.CSharp
             var localFunction = node.Symbol;
             CheckRefReadOnlySymbols(localFunction);
 
-            var typeParameters = localFunction.TypeParameters;
-            if (typeParameters.Any(typeParameter => typeParameter.HasUnmanagedTypeConstraint))
+            if (_factory.CompilationState.ModuleBuilderOpt is { } moduleBuilder)
             {
-                _factory.CompilationState.ModuleBuilderOpt?.EnsureIsUnmanagedAttributeExists();
-            }
-
-            if (_factory.CompilationState.Compilation.ShouldEmitNullableAttributes(localFunction))
-            {
-                bool constraintsNeedNullableAttribute = typeParameters.Any(
-                   typeParameter => ((SourceTypeParameterSymbolBase)typeParameter).ConstraintsNeedNullableAttribute());
-
-                bool returnTypeNeedsNullableAttribute = localFunction.ReturnTypeWithAnnotations.NeedsNullableAttribute();
-                bool parametersNeedNullableAttribute = localFunction.ParameterTypesWithAnnotations.Any(parameter => parameter.NeedsNullableAttribute());
-
-                if (constraintsNeedNullableAttribute || returnTypeNeedsNullableAttribute || parametersNeedNullableAttribute)
+                var typeParameters = localFunction.TypeParameters;
+                if (typeParameters.Any(typeParameter => typeParameter.HasUnmanagedTypeConstraint))
                 {
-                    _factory.CompilationState.ModuleBuilderOpt?.EnsureNullableAttributeExists();
+                    moduleBuilder.EnsureIsUnmanagedAttributeExists();
                 }
+
+                if (hasReturnTypeOrParameter(localFunction, t => t.ContainsNativeInteger()) ||
+                    typeParameters.Any(t => t.ConstraintTypesNoUseSiteDiagnostics.Any(t => t.ContainsNativeInteger())))
+                {
+                    moduleBuilder.EnsureNativeIntegerAttributeExists();
+                }
+
+                if (_factory.CompilationState.Compilation.ShouldEmitNullableAttributes(localFunction))
+                {
+                    bool constraintsNeedNullableAttribute = typeParameters.Any(
+                       typeParameter => ((SourceTypeParameterSymbolBase)typeParameter).ConstraintsNeedNullableAttribute());
+
+                    if (constraintsNeedNullableAttribute || hasReturnTypeOrParameter(localFunction, t => t.NeedsNullableAttribute()))
+                    {
+                        moduleBuilder.EnsureNullableAttributeExists();
+                    }
+                }
+
+                static bool hasReturnTypeOrParameter(LocalFunctionSymbol localFunction, Func<TypeWithAnnotations, bool> predicate) =>
+                    predicate(localFunction.ReturnTypeWithAnnotations) || localFunction.ParameterTypesWithAnnotations.Any(predicate);
             }
 
             var oldContainingSymbol = _factory.CurrentFunction;
@@ -340,6 +348,11 @@ namespace Microsoft.CodeAnalysis.CSharp
         }
 
         public override BoundNode VisitDefaultLiteral(BoundDefaultLiteral node)
+        {
+            throw ExceptionUtilities.Unreachable;
+        }
+
+        public override BoundNode VisitUnconvertedObjectCreationExpression(BoundUnconvertedObjectCreationExpression node)
         {
             throw ExceptionUtilities.Unreachable;
         }
@@ -408,7 +421,7 @@ namespace Microsoft.CodeAnalysis.CSharp
             Debug.Assert(removed);
         }
 
-        public override sealed BoundNode VisitOutDeconstructVarPendingInference(OutDeconstructVarPendingInference node)
+        public sealed override BoundNode VisitOutDeconstructVarPendingInference(OutDeconstructVarPendingInference node)
         {
             // OutDeconstructVarPendingInference nodes are only used within initial binding, but don't survive past that stage
             throw ExceptionUtilities.Unreachable;
@@ -687,6 +700,13 @@ namespace Microsoft.CodeAnalysis.CSharp
         internal static bool IsFieldOrPropertyInitializer(BoundStatement initializer)
         {
             var syntax = initializer.Syntax;
+
+            if (syntax.IsKind(SyntaxKind.Parameter))
+            {
+                // This is an initialization of a generated property based on record parameter.
+                return true;
+            }
+
             if (syntax is ExpressionSyntax { Parent: { } parent } && parent.Kind() == SyntaxKind.EqualsValueClause) // Should be the initial value.
             {
                 Debug.Assert(parent.Parent is { });

@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -378,9 +380,7 @@ namespace Microsoft.CodeAnalysis.Shared
         /// <param name="right">The second set.</param>
         /// <returns><c>true</c> if the two sets are not equivalent, otherwise <c>false</c>.</returns>
         public static bool operator !=(NormalizedTextSpanCollection left, NormalizedTextSpanCollection right)
-        {
-            return !(left == right);
-        }
+            => !(left == right);
 
         /// <summary>
         /// Determines whether this span set overlaps with another span set.

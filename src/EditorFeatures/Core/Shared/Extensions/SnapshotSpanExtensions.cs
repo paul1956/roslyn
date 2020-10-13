@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.CodeAnalysis.Text.Shared.Extensions;
 using Microsoft.VisualStudio.Text;
@@ -11,9 +13,7 @@ namespace Microsoft.CodeAnalysis.Editor.Shared.Extensions
     internal static class SnapshotSpanExtensions
     {
         public static ITrackingSpan CreateTrackingSpan(this SnapshotSpan snapshotSpan, SpanTrackingMode trackingMode)
-        {
-            return snapshotSpan.Snapshot.CreateTrackingSpan(snapshotSpan.Span, trackingMode);
-        }
+            => snapshotSpan.Snapshot.CreateTrackingSpan(snapshotSpan.Span, trackingMode);
 
         public static void GetLinesAndCharacters(
             this SnapshotSpan snapshotSpan,
@@ -33,13 +33,9 @@ namespace Microsoft.CodeAnalysis.Editor.Shared.Extensions
         }
 
         public static bool IntersectsWith(this SnapshotSpan snapshotSpan, TextSpan textSpan)
-        {
-            return snapshotSpan.IntersectsWith(textSpan.ToSpan());
-        }
+            => snapshotSpan.IntersectsWith(textSpan.ToSpan());
 
         public static bool IntersectsWith(this SnapshotSpan snapshotSpan, int position)
-        {
-            return snapshotSpan.Span.IntersectsWith(position);
-        }
+            => snapshotSpan.Span.IntersectsWith(position);
     }
 }

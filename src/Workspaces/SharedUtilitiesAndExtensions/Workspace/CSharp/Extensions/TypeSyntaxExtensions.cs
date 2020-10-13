@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Linq;
 using System.Threading;
 using Microsoft.CodeAnalysis.CSharp.Symbols;
@@ -40,7 +42,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
 
             var nameToken = nameSyntax.GetNameToken();
 
-            var symbols = semanticModelOpt.LookupName(nameToken, namespacesAndTypesOnly: true, cancellationToken);
+            var symbols = semanticModelOpt.LookupName(nameToken, cancellationToken);
             var firstSymbol = symbols.FirstOrDefault();
 
             var typeSymbol = firstSymbol != null && firstSymbol.Kind == SymbolKind.Alias

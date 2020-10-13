@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
-
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Editing;
@@ -56,7 +54,7 @@ namespace Microsoft.CodeAnalysis.PopulateSwitch
             // Otherwise, we just get inserted at the end.
 
             var arms = switchExpression.Arms;
-            return arms.Length > 0 && PopulateSwitchExpressionHelpers.IsDefault(arms[arms.Length - 1])
+            return arms.Length > 0 && PopulateSwitchExpressionHelpers.IsDefault(arms[^1])
                 ? arms.Length - 1
                 : arms.Length;
         }

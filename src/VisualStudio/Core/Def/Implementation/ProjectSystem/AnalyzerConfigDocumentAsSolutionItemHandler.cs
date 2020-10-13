@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
-
 using System;
 using System.Collections.Generic;
 using System.Composition;
@@ -27,7 +25,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.ProjectSystem
     internal partial class AnalyzerConfigDocumentAsSolutionItemHandler : IDisposable
     {
         private static readonly string LocalRegistryPath = $@"Roslyn\Internal\{nameof(AnalyzerConfigDocumentAsSolutionItemHandler)}\";
-        private static readonly Option<bool> NeverShowAgain = new Option<bool>(nameof(AnalyzerConfigDocumentAsSolutionItemHandler), nameof(NeverShowAgain),
+        private static readonly Option<bool> NeverShowAgain = new(nameof(AnalyzerConfigDocumentAsSolutionItemHandler), nameof(NeverShowAgain),
             defaultValue: false, storageLocations: new LocalUserProfileStorageLocation(LocalRegistryPath + nameof(NeverShowAgain)));
 
         private readonly VisualStudioWorkspace _workspace;
@@ -49,14 +47,10 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.ProjectSystem
         }
 
         public void Initialize(IServiceProvider serviceProvider)
-        {
-            _dte = (DTE)serviceProvider.GetService(typeof(DTE));
-        }
+            => _dte = (DTE)serviceProvider.GetService(typeof(DTE));
 
         void IDisposable.Dispose()
-        {
-            _workspace.WorkspaceChanged -= OnWorkspaceChanged;
-        }
+            => _workspace.WorkspaceChanged -= OnWorkspaceChanged;
 
         private void OnWorkspaceChanged(object sender, WorkspaceChangeEventArgs e)
         {

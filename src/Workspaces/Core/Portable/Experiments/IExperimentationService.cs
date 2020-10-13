@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Composition;
 using Microsoft.CodeAnalysis.Host;
 using Microsoft.CodeAnalysis.Host.Mef;
@@ -19,6 +20,7 @@ namespace Microsoft.CodeAnalysis.Experiments
         public bool ReturnValue = false;
 
         [ImportingConstructor]
+        [Obsolete(MefConstruction.ImportingConstructorMessage, error: true)]
         public DefaultExperimentationService()
         {
         }
@@ -28,15 +30,10 @@ namespace Microsoft.CodeAnalysis.Experiments
 
     internal static class WellKnownExperimentNames
     {
-        public const string RoslynOOP64bit = nameof(RoslynOOP64bit);
         public const string PartialLoadMode = "Roslyn.PartialLoadMode";
         public const string TypeImportCompletion = "Roslyn.TypeImportCompletion";
         public const string TargetTypedCompletionFilter = "Roslyn.TargetTypedCompletionFilter";
-        public const string NativeEditorConfigSupport = "Roslyn.NativeEditorConfigSupport";
         public const string TriggerCompletionInArgumentLists = "Roslyn.TriggerCompletionInArgumentLists";
-
-        // Syntactic LSP experiment treatments.
-        public const string SyntacticExp_LiveShareTagger_Remote = "Roslyn.LspTagger";
-        public const string SyntacticExp_LiveShareTagger_TextMate = "Roslyn.TextMateTagger";
+        public const string SQLiteInMemoryWriteCache = "Roslyn.SQLiteInMemoryWriteCache";
     }
 }

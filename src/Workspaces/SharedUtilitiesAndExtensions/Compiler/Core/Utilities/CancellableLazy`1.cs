@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Threading;
 
@@ -20,15 +22,13 @@ namespace Roslyn.Utilities
         }
 
         public CancellableLazy(T value)
-        {
-            _value = value;
-        }
+            => _value = value;
 
         public bool HasValue
         {
             get
             {
-                return this.TryGetValue(out var tmp);
+                return this.TryGetValue(out _);
             }
         }
 

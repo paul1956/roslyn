@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
-
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -143,9 +141,7 @@ namespace Microsoft.CodeAnalysis.Shared.Utilities
             }
 
             private CommentBuilder(string xml)
-            {
-                _comment = new DocumentationComment(xml);
-            }
+                => _comment = new DocumentationComment(xml);
 
             private DocumentationComment ParseInternal(string xml)
             {
@@ -167,14 +163,10 @@ namespace Microsoft.CodeAnalysis.Shared.Utilities
             }
 
             private static void ParseCallback(XmlReader reader, CommentBuilder builder)
-            {
-                builder.ParseCallback(reader);
-            }
+                => builder.ParseCallback(reader);
 
-            private string TrimEachLine(string text)
-            {
-                return string.Join(Environment.NewLine, text.Split(s_NewLineAsStringArray, StringSplitOptions.RemoveEmptyEntries).Select(i => i.Trim()));
-            }
+            private static string TrimEachLine(string text)
+                => string.Join(Environment.NewLine, text.Split(s_NewLineAsStringArray, StringSplitOptions.RemoveEmptyEntries).Select(i => i.Trim()));
 
             private void ParseCallback(XmlReader reader)
             {
@@ -264,9 +256,9 @@ namespace Microsoft.CodeAnalysis.Shared.Utilities
             }
         }
 
-        private readonly Dictionary<string, string> _parameterTexts = new Dictionary<string, string>();
-        private readonly Dictionary<string, string> _typeParameterTexts = new Dictionary<string, string>();
-        private readonly Dictionary<string, ImmutableArray<string>> _exceptionTexts = new Dictionary<string, ImmutableArray<string>>();
+        private readonly Dictionary<string, string> _parameterTexts = new();
+        private readonly Dictionary<string, string> _typeParameterTexts = new();
+        private readonly Dictionary<string, ImmutableArray<string>> _exceptionTexts = new();
 
         /// <summary>
         /// Returns the text for a given parameter, or null if no documentation was given for the parameter.
@@ -306,6 +298,6 @@ namespace Microsoft.CodeAnalysis.Shared.Utilities
         /// <summary>
         /// An empty comment.
         /// </summary>
-        public static readonly DocumentationComment Empty = new DocumentationComment(string.Empty);
+        public static readonly DocumentationComment Empty = new(string.Empty);
     }
 }

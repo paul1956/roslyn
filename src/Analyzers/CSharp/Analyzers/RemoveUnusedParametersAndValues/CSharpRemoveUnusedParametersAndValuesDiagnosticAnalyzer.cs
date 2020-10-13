@@ -2,16 +2,13 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
+using Microsoft.CodeAnalysis.CSharp.CodeStyle;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Operations;
 using Microsoft.CodeAnalysis.RemoveUnusedParametersAndValues;
-
-#if CODE_STYLE
-using Microsoft.CodeAnalysis.CSharp.Internal.CodeStyle;
-#else
-using Microsoft.CodeAnalysis.CSharp.CodeStyle;
-#endif
 
 namespace Microsoft.CodeAnalysis.CSharp.RemoveUnusedParametersAndValues
 {
@@ -24,6 +21,9 @@ namespace Microsoft.CodeAnalysis.CSharp.RemoveUnusedParametersAndValues
                    LanguageNames.CSharp)
         {
         }
+
+        protected override bool IsRecordDeclaration(SyntaxNode node)
+            => node is RecordDeclarationSyntax;
 
         protected override bool SupportsDiscard(SyntaxTree tree)
             => ((CSharpParseOptions)tree.Options).LanguageVersion >= LanguageVersion.CSharp7;

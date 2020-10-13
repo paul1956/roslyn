@@ -2,10 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
 #pragma warning disable CS0618 // Type or member is obsolete
 
 using System;
+using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.LanguageServices.Implementation.ProjectSystem;
 using Microsoft.VisualStudio.LanguageServices.Implementation.Venus;
@@ -40,11 +40,32 @@ namespace Microsoft.VisualStudio.LanguageServices.ExternalAccess.VSTypeScript.Ap
                 vbHelperFormattingRule: null);
         }
 
+        public VSTypeScriptContainedLanguageWrapper(
+            IVsTextBufferCoordinator bufferCoordinator,
+            IComponentModel componentModel,
+            Workspace workspace,
+            IVsHierarchy hierarchy,
+            uint itemid,
+            Guid languageServiceGuid)
+        {
+            var filePath = ContainedLanguage.GetFilePathFromHierarchyAndItemId(hierarchy, itemid);
+            var projectId = ProjectId.CreateNewId($"Project for {filePath}");
+            workspace.OnProjectAdded(ProjectInfo.Create(projectId, VersionStamp.Default, filePath, string.Empty, "TypeScript"));
+
+            _underlyingObject = new ContainedLanguage(
+                bufferCoordinator,
+                componentModel,
+                workspace,
+                projectId,
+                null,
+                filePath,
+                languageServiceGuid,
+                vbHelperFormattingRule: null);
+        }
+
         public bool IsDefault => _underlyingObject == null;
 
         public void DisconnectHost()
-        {
-            _underlyingObject.SetHost(null);
-        }
+            => _underlyingObject.SetHost(null);
     }
 }

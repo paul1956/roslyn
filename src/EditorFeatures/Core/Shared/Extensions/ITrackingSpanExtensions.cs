@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using Microsoft.VisualStudio.Text;
 
 namespace Microsoft.CodeAnalysis.Editor.Shared.Extensions
@@ -9,8 +11,6 @@ namespace Microsoft.CodeAnalysis.Editor.Shared.Extensions
     internal static class ITrackingSpanExtensions
     {
         public static ITrackingPoint GetStartTrackingPoint(this ITrackingSpan span, PointTrackingMode mode)
-        {
-            return span.GetStartPoint(span.TextBuffer.CurrentSnapshot).CreateTrackingPoint(mode);
-        }
+            => span.GetStartPoint(span.TextBuffer.CurrentSnapshot).CreateTrackingPoint(mode);
     }
 }

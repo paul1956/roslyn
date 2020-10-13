@@ -2,16 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
-
 using System.IO;
 using Microsoft.CodeAnalysis.CodeStyle;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Roslyn.Utilities;
-
-#if CODE_STYLE
-using Microsoft.CodeAnalysis.Internal.Options;
-#endif
 
 namespace Microsoft.CodeAnalysis.FileHeaders
 {
@@ -20,7 +14,7 @@ namespace Microsoft.CodeAnalysis.FileHeaders
         protected AbstractFileHeaderDiagnosticAnalyzer(string language)
             : base(
                 IDEDiagnosticIds.FileHeaderMismatch,
-                CodeStyleOptions.FileHeaderTemplate,
+                CodeStyleOptions2.FileHeaderTemplate,
                 language,
                 new LocalizableResourceString(nameof(AnalyzersResources.The_file_header_is_missing_or_not_located_at_the_top_of_the_file), AnalyzersResources.ResourceManager, typeof(AnalyzersResources)),
                 new LocalizableResourceString(nameof(AnalyzersResources.A_source_file_is_missing_a_required_header), AnalyzersResources.ResourceManager, typeof(AnalyzersResources)))
@@ -55,7 +49,7 @@ namespace Microsoft.CodeAnalysis.FileHeaders
                 return;
             }
 
-            if (!context.Options.TryGetEditorConfigOption(CodeStyleOptions.FileHeaderTemplate, tree, out string fileHeaderTemplate)
+            if (!context.Options.TryGetEditorConfigOption(CodeStyleOptions2.FileHeaderTemplate, tree, out string fileHeaderTemplate)
                 || string.IsNullOrEmpty(fileHeaderTemplate))
             {
                 return;

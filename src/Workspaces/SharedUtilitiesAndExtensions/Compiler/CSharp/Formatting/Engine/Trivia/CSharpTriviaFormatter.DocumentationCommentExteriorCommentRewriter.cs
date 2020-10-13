@@ -46,8 +46,8 @@ namespace Microsoft.CodeAnalysis.CSharp.Formatting
                                                 _forceIndentation,
                                                 _indentation,
                                                 _indentationDelta,
-                                                _options.GetOption(FormattingOptions.UseTabs),
-                                                _options.GetOption(FormattingOptions.TabSize));
+                                                _options.GetOption(FormattingOptions2.UseTabs),
+                                                _options.GetOption(FormattingOptions2.TabSize));
 
                         if (triviaText == newTriviaText)
                         {
@@ -63,7 +63,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Formatting
                 return base.VisitTrivia(trivia);
             }
 
-            private bool IsBeginningOrEndOfDocumentComment(SyntaxTrivia trivia)
+            private static bool IsBeginningOrEndOfDocumentComment(SyntaxTrivia trivia)
             {
                 var currentParent = trivia.Token.Parent;
 

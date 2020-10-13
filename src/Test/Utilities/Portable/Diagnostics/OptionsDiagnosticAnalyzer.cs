@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -22,11 +24,11 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
             Debug.Assert(expectedOptions.AnalyzerConfigOptionsProvider.GetType() == typeof(CompilerAnalyzerConfigOptionsProvider));
         }
 
-        protected override void OnAbstractMember(string AbstractMemberName, SyntaxNode node = null, ISymbol symbol = null, [CallerMemberName]string callerName = null)
+        protected override void OnAbstractMember(string AbstractMemberName, SyntaxNode node = null, ISymbol symbol = null, [CallerMemberName] string callerName = null)
         {
         }
 
-        protected override void OnOptions(AnalyzerOptions options, [CallerMemberName]string callerName = null)
+        protected override void OnOptions(AnalyzerOptions options, [CallerMemberName] string callerName = null)
         {
             if (AreEqual(options, _expectedOptions))
             {

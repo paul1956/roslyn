@@ -2,9 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CodeActions;
@@ -37,28 +40,20 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.RenameTracking
     internal sealed partial class RenameTrackingTaggerProvider : ITaggerProvider
     {
         private readonly IThreadingContext _threadingContext;
-        private readonly ITextUndoHistoryRegistry _undoHistoryRegistry;
         private readonly IAsynchronousOperationListener _asyncListener;
-        private readonly IWaitIndicator _waitIndicator;
         private readonly IInlineRenameService _inlineRenameService;
-        private readonly IEnumerable<IRefactorNotifyService> _refactorNotifyServices;
         private readonly IDiagnosticAnalyzerService _diagnosticAnalyzerService;
 
         [ImportingConstructor]
+        [SuppressMessage("RoslynDiagnosticsReliability", "RS0033:Importing constructor should be [Obsolete]", Justification = "Used in test code: https://github.com/dotnet/roslyn/issues/42814")]
         public RenameTrackingTaggerProvider(
             IThreadingContext threadingContext,
-            ITextUndoHistoryRegistry undoHistoryRegistry,
-            IWaitIndicator waitIndicator,
             IInlineRenameService inlineRenameService,
             IDiagnosticAnalyzerService diagnosticAnalyzerService,
-            [ImportMany] IEnumerable<IRefactorNotifyService> refactorNotifyServices,
             IAsynchronousOperationListenerProvider listenerProvider)
         {
             _threadingContext = threadingContext;
-            _undoHistoryRegistry = undoHistoryRegistry;
-            _waitIndicator = waitIndicator;
             _inlineRenameService = inlineRenameService;
-            _refactorNotifyServices = refactorNotifyServices;
             _diagnosticAnalyzerService = diagnosticAnalyzerService;
             _asyncListener = listenerProvider.GetListener(FeatureAttribute.RenameTracking);
         }
@@ -66,18 +61,14 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.RenameTracking
         public ITagger<T> CreateTagger<T>(ITextBuffer buffer) where T : ITag
         {
             var stateMachine = buffer.Properties.GetOrCreateSingletonProperty(() => new StateMachine(_threadingContext, buffer, _inlineRenameService, _asyncListener, _diagnosticAnalyzerService));
-            return new Tagger(stateMachine, _undoHistoryRegistry, _waitIndicator, _refactorNotifyServices) as ITagger<T>;
+            return new Tagger(stateMachine) as ITagger<T>;
         }
 
         internal static void ResetRenameTrackingState(Workspace workspace, DocumentId documentId)
-        {
-            ResetRenameTrackingStateWorker(workspace, documentId, visible: false);
-        }
+            => ResetRenameTrackingStateWorker(workspace, documentId, visible: false);
 
         internal static bool ResetVisibleRenameTrackingState(Workspace workspace, DocumentId documentId)
-        {
-            return ResetRenameTrackingStateWorker(workspace, documentId, visible: true);
-        }
+            => ResetRenameTrackingStateWorker(workspace, documentId, visible: true);
 
         internal static bool ResetRenameTrackingStateWorker(Workspace workspace, DocumentId documentId, bool visible)
         {
@@ -91,7 +82,7 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.RenameTracking
                     textBuffer = text.Container.TryGetTextBuffer();
                     if (textBuffer == null)
                     {
-                        Environment.FailFast(string.Format("document with name {0} is open but textBuffer is null. Textcontainer is of type {1}. SourceText is: {2}",
+                        FailFast.Fail(string.Format("document with name {0} is open but textBuffer is null. Textcontainer is of type {1}. SourceText is: {2}",
                                                             document.Name, text.Container.GetType().FullName, text.ToString()));
                     }
 
@@ -112,7 +103,7 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.RenameTracking
             return false;
         }
 
-        public static CodeAction TryGetCodeAction(
+        public static (CodeAction action, TextSpan renameSpan) TryGetCodeAction(
             Document document, TextSpan textSpan,
                 IEnumerable<IRefactorNotifyService> refactorNotifyServices,
                 ITextUndoHistoryRegistry undoHistoryRegistry,
@@ -125,16 +116,16 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.RenameTracking
                     var textBuffer = text.Container.TryGetTextBuffer();
                     if (textBuffer != null &&
                         textBuffer.Properties.TryGetProperty(typeof(StateMachine), out StateMachine stateMachine) &&
-                        stateMachine.CanInvokeRename(out _))
+                        stateMachine.CanInvokeRename(out _, cancellationToken: cancellationToken))
                     {
                         return stateMachine.TryGetCodeAction(
                             document, text, textSpan, refactorNotifyServices, undoHistoryRegistry, cancellationToken);
                     }
                 }
 
-                return null;
+                return default;
             }
-            catch (Exception e) when (FatalError.ReportUnlessCanceled(e))
+            catch (Exception e) when (FatalError.ReportAndPropagateUnlessCanceled(e))
             {
                 throw ExceptionUtilities.Unreachable;
             }

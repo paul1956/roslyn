@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -120,7 +122,11 @@ namespace Roslyn.Test.Utilities
 
         public static (StringHandle Namespace, StringHandle Name)[] GetTypeDefFullNames(this MetadataReader reader)
         {
-            return reader.TypeDefinitions.Select(handle => { var td = reader.GetTypeDefinition(handle); return (td.Namespace, td.Name); }).ToArray();
+            return reader.TypeDefinitions.Select(handle =>
+            {
+                var td = reader.GetTypeDefinition(handle);
+                return (td.Namespace, td.Name);
+            }).ToArray();
         }
 
         public static StringHandle[] GetTypeRefNames(this MetadataReader reader)
@@ -191,6 +197,11 @@ namespace Roslyn.Test.Utilities
         public static ImmutableArray<byte> ReadByteArray(this MetadataReader reader, BlobHandle blobHandle)
         {
             return ReadArray(reader, blobHandle, (ref BlobReader blobReader) => blobReader.ReadByte());
+        }
+
+        public static ImmutableArray<bool> ReadBoolArray(this MetadataReader reader, BlobHandle blobHandle)
+        {
+            return ReadArray(reader, blobHandle, (ref BlobReader blobReader) => blobReader.ReadBoolean());
         }
 
         public static IEnumerable<CustomAttributeRow> GetCustomAttributeRows(this MetadataReader reader)

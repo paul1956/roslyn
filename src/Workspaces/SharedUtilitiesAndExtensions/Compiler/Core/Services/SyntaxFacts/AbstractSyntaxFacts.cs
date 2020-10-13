@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -24,7 +26,7 @@ namespace Microsoft.CodeAnalysis.LanguageServices
 {
     internal abstract class AbstractSyntaxFacts
     {
-        private readonly static ObjectPool<Stack<(SyntaxNodeOrToken nodeOrToken, bool leading, bool trailing)>> s_stackPool
+        private static readonly ObjectPool<Stack<(SyntaxNodeOrToken nodeOrToken, bool leading, bool trailing)>> s_stackPool
             = SharedPools.Default<Stack<(SyntaxNodeOrToken nodeOrToken, bool leading, bool trailing)>>();
 
         public abstract ISyntaxKinds SyntaxKinds { get; }
@@ -215,7 +217,7 @@ namespace Microsoft.CodeAnalysis.LanguageServices
             return true;
         }
 
-        private bool IsOnSingleLine(string value)
+        private static bool IsOnSingleLine(string value)
             => value.GetNumberOfLineBreaks() == 0;
 
         public ImmutableArray<SyntaxTrivia> GetLeadingBlankLines(SyntaxNode node)
@@ -231,7 +233,7 @@ namespace Microsoft.CodeAnalysis.LanguageServices
         public TSyntaxNode GetNodeWithoutLeadingBlankLines<TSyntaxNode>(TSyntaxNode node)
             where TSyntaxNode : SyntaxNode
         {
-            return GetNodeWithoutLeadingBlankLines(node, out var blankLines);
+            return GetNodeWithoutLeadingBlankLines(node, out _);
         }
 
         public TSyntaxNode GetNodeWithoutLeadingBlankLines<TSyntaxNode>(
@@ -259,7 +261,7 @@ namespace Microsoft.CodeAnalysis.LanguageServices
             TSyntaxNode node)
             where TSyntaxNode : SyntaxNode
         {
-            return GetNodeWithoutLeadingBannerAndPreprocessorDirectives(node, out var strippedTrivia);
+            return GetNodeWithoutLeadingBannerAndPreprocessorDirectives(node, out _);
         }
 
         public TSyntaxNode GetNodeWithoutLeadingBannerAndPreprocessorDirectives<TSyntaxNode>(
@@ -507,6 +509,10 @@ namespace Microsoft.CodeAnalysis.LanguageServices
         }
 
         public abstract SyntaxList<SyntaxNode> GetAttributeLists(SyntaxNode node);
+
+        public abstract bool IsParameterNameXmlElementSyntax(SyntaxNode node);
+
+        public abstract SyntaxList<SyntaxNode> GetContentFromDocumentationCommentTriviaSyntax(SyntaxTrivia trivia);
 
         public bool HasIncompleteParentMember(SyntaxNode node)
             => node?.Parent?.RawKind == SyntaxKinds.IncompleteMember;

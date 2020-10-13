@@ -2,7 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.ComponentModel.Composition;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
@@ -25,6 +28,7 @@ namespace Microsoft.VisualStudio.LanguageServices.LiveShare.Client
         private bool _workspaceDiagnosticsPresent = false;
 
         [ImportingConstructor]
+        [SuppressMessage("RoslynDiagnosticsReliability", "RS0033:Importing constructor should be [Obsolete]", Justification = "Incorrectly used in production code: https://github.com/dotnet/roslyn/issues/42839")]
         public RemoteDiagnosticListTable(
             SVsServiceProvider serviceProvider, RemoteLanguageServiceWorkspace workspace, IDiagnosticService diagnosticService, ITableManagerProvider provider) :
             base(workspace, provider)
@@ -36,9 +40,7 @@ namespace Microsoft.VisualStudio.LanguageServices.LiveShare.Client
         }
 
         public void UpdateWorkspaceDiagnosticsPresent(bool diagnosticsPresent)
-        {
-            _workspaceDiagnosticsPresent = diagnosticsPresent;
-        }
+            => _workspaceDiagnosticsPresent = diagnosticsPresent;
 
         protected override void AddTableSourceIfNecessary(Solution solution)
         {
@@ -66,8 +68,6 @@ namespace Microsoft.VisualStudio.LanguageServices.LiveShare.Client
         }
 
         protected override void ShutdownSource()
-        {
-            _source.Shutdown();
-        }
+            => _source.Shutdown();
     }
 }

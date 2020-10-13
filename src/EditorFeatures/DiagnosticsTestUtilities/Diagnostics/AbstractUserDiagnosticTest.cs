@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -20,24 +22,26 @@ using Microsoft.CodeAnalysis.UnitTests.Diagnostics;
 using Roslyn.Test.Utilities;
 using Roslyn.Utilities;
 using Xunit;
-
-#if CODE_STYLE
-using Microsoft.CodeAnalysis.Internal.Options;
-#else
-using Microsoft.CodeAnalysis.Options;
-#endif
+using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Remote.Testing;
+using Xunit.Abstractions;
 
 namespace Microsoft.CodeAnalysis.Editor.UnitTests.Diagnostics
 {
     public abstract partial class AbstractUserDiagnosticTest : AbstractCodeActionOrUserDiagnosticTest
     {
+        public AbstractUserDiagnosticTest(ITestOutputHelper logger)
+           : base(logger)
+        {
+        }
+
         internal abstract Task<(ImmutableArray<Diagnostic>, ImmutableArray<CodeAction>, CodeAction actionToInvoke)> GetDiagnosticAndFixesAsync(
             TestWorkspace workspace, TestParameters parameters);
 
         internal abstract Task<IEnumerable<Diagnostic>> GetDiagnosticsAsync(
             TestWorkspace workspace, TestParameters parameters);
 
-        protected async Task TestDiagnosticsAsync(
+        private protected async Task TestDiagnosticsAsync(
             string initialMarkup, TestParameters parameters = default, params DiagnosticDescription[] expected)
         {
             using var workspace = CreateWorkspaceFromOptions(initialMarkup, parameters);
@@ -80,14 +84,36 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Diagnostics
             return dxs;
         }
 
-        protected Document GetDocumentAndSelectSpan(TestWorkspace workspace, out TextSpan span)
+        protected static void AddAnalyzerToWorkspace(Workspace workspace, DiagnosticAnalyzer analyzer, TestParameters parameters)
+        {
+            AnalyzerReference[] analyzeReferences;
+            if (analyzer != null)
+            {
+                Contract.ThrowIfTrue(parameters.testHost == TestHost.OutOfProcess, $"Out-of-proc testing is not supported since {analyzer} can't be serialized.");
+
+                analyzeReferences = new[] { new AnalyzerImageReference(ImmutableArray.Create(analyzer)) };
+            }
+            else
+            {
+                // create a serializable analyzer reference:
+                analyzeReferences = new[]
+                {
+                    new AnalyzerFileReference(DiagnosticExtensions.GetCompilerDiagnosticAnalyzer(LanguageNames.CSharp).GetType().Assembly.Location, TestAnalyzerAssemblyLoader.LoadFromFile),
+                    new AnalyzerFileReference(DiagnosticExtensions.GetCompilerDiagnosticAnalyzer(LanguageNames.VisualBasic).GetType().Assembly.Location, TestAnalyzerAssemblyLoader.LoadFromFile)
+                };
+            }
+
+            workspace.TryApplyChanges(workspace.CurrentSolution.WithAnalyzerReferences(analyzeReferences));
+        }
+
+        protected static Document GetDocumentAndSelectSpan(TestWorkspace workspace, out TextSpan span)
         {
             var hostDocument = workspace.Documents.Single(d => d.SelectedSpans.Any());
             span = hostDocument.SelectedSpans.Single();
             return workspace.CurrentSolution.GetDocument(hostDocument.Id);
         }
 
-        protected bool TryGetDocumentAndSelectSpan(TestWorkspace workspace, out Document document, out TextSpan span)
+        protected static bool TryGetDocumentAndSelectSpan(TestWorkspace workspace, out Document document, out TextSpan span)
         {
             var hostDocument = workspace.Documents.FirstOrDefault(d => d.SelectedSpans.Any());
             if (hostDocument == null)
@@ -112,7 +138,7 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Diagnostics
             return true;
         }
 
-        protected Document GetDocumentAndAnnotatedSpan(TestWorkspace workspace, out string annotation, out TextSpan span)
+        protected static Document GetDocumentAndAnnotatedSpan(TestWorkspace workspace, out string annotation, out TextSpan span)
         {
             var annotatedDocuments = workspace.Documents.Where(d => d.AnnotatedSpans.Any());
             Debug.Assert(!annotatedDocuments.IsEmpty(), "No annotated span found");
@@ -123,7 +149,7 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Diagnostics
             return workspace.CurrentSolution.GetDocument(hostDocument.Id);
         }
 
-        protected FixAllScope? GetFixAllScope(string annotation)
+        protected static FixAllScope? GetFixAllScope(string annotation)
         {
             if (annotation == null)
             {
@@ -185,6 +211,8 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Diagnostics
                 await fixer.RegisterCodeFixesAsync(context);
             }
 
+            VerifyCodeActionsRegisteredByProvider(fixer, fixes);
+
             var actions = fixes.SelectAsArray(f => f.Action);
 
             actions = MassageActions(actions);
@@ -242,12 +270,12 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Diagnostics
                 : new FixAllState(fixAllProvider, document.Project, fixer, scope, equivalenceKey, diagnosticIds, fixAllDiagnosticProvider);
         }
 
-        protected Task TestActionCountInAllFixesAsync(
+        private protected Task TestActionCountInAllFixesAsync(
             string initialMarkup,
             int count,
             ParseOptions parseOptions = null,
             CompilationOptions compilationOptions = null,
-            IDictionary<OptionKey, object> options = null,
+            OptionsCollection options = null,
             object fixProviderData = null)
         {
             return TestActionCountInAllFixesAsync(
@@ -269,7 +297,6 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Diagnostics
 
         internal async Task TestSpansAsync(
             string initialMarkup,
-            int index = 0,
             string diagnosticId = null,
             TestParameters parameters = default)
         {

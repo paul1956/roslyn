@@ -2,7 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
+using Microsoft.CodeAnalysis.CodeStyle;
 using Roslyn.Utilities;
 
 namespace Microsoft.CodeAnalysis.Diagnostics
@@ -78,6 +81,31 @@ namespace Microsoft.CodeAnalysis.Diagnostics
                 ReportDiagnostic.Error => EditorConfigSeverityStrings.Error,
                 _ => throw ExceptionUtilities.UnexpectedValue(reportDiagnostic)
             };
+        }
+
+        public static NotificationOption2 ToNotificationOption(this ReportDiagnostic reportDiagnostic, DiagnosticSeverity defaultSeverity)
+        {
+            switch (reportDiagnostic.WithDefaultSeverity(defaultSeverity))
+            {
+                case ReportDiagnostic.Error:
+                    return NotificationOption2.Error;
+
+                case ReportDiagnostic.Warn:
+                    return NotificationOption2.Warning;
+
+                case ReportDiagnostic.Info:
+                    return NotificationOption2.Suggestion;
+
+                case ReportDiagnostic.Hidden:
+                    return NotificationOption2.Silent;
+
+                case ReportDiagnostic.Suppress:
+                    return NotificationOption2.None;
+
+                case ReportDiagnostic.Default:
+                default:
+                    throw ExceptionUtilities.UnexpectedValue(reportDiagnostic);
+            }
         }
     }
 }

@@ -2,27 +2,29 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CodeFixes;
+using Microsoft.CodeAnalysis.CodeStyle;
+using Microsoft.CodeAnalysis.CSharp.CodeStyle;
 using Microsoft.CodeAnalysis.CSharp.Diagnostics.AddBraces;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Diagnostics;
 using Microsoft.CodeAnalysis.Test.Utilities;
 using Roslyn.Test.Utilities;
 using Xunit;
-
-#if CODE_STYLE
-using Microsoft.CodeAnalysis.CSharp.Internal.CodeStyle;
-using Microsoft.CodeAnalysis.Internal.Options;
-#else
-using Microsoft.CodeAnalysis.CodeStyle;
-using Microsoft.CodeAnalysis.CSharp.CodeStyle;
-#endif
+using Xunit.Abstractions;
 
 namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.AddBraces
 {
     public partial class AddBracesTests : AbstractCSharpDiagnosticProviderBasedUserDiagnosticTest
     {
+        public AddBracesTests(ITestOutputHelper logger)
+           : base(logger)
+        {
+        }
+
         internal override (DiagnosticAnalyzer, CodeFixProvider) CreateDiagnosticProviderAndFixer(Workspace workspace)
             => (new CSharpAddBracesDiagnosticAnalyzer(), new CSharpAddBracesCodeFixProvider());
 
@@ -43,7 +45,7 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.AddBraces
         }
     }
 }",
-                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption.Silent)));
+                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption2.Silent)));
         }
 
         [Theory, Trait(Traits.Feature, Traits.Features.CodeActionsAddBraces)]
@@ -67,7 +69,7 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.AddBraces
         }
     }
 }",
-                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption.Silent)));
+                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption2.Silent)));
         }
 
         [Theory, Trait(Traits.Feature, Traits.Features.CodeActionsAddBraces)]
@@ -87,7 +89,7 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.AddBraces
             return;
     }
 }",
-                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption.Silent)));
+                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption2.Silent)));
         }
 
         [Theory, Trait(Traits.Feature, Traits.Features.CodeActionsAddBraces)]
@@ -107,7 +109,7 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.AddBraces
         }
     }
 }",
-                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption.Silent)));
+                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption2.Silent)));
         }
 
         [Theory, Trait(Traits.Feature, Traits.Features.CodeActionsAddBraces)]
@@ -127,7 +129,7 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.AddBraces
         }
     }
 }",
-                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption.Silent)));
+                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption2.Silent)));
         }
 
         [Theory, Trait(Traits.Feature, Traits.Features.CodeActionsAddBraces)]
@@ -147,7 +149,7 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.AddBraces
         }
     }
 }",
-                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption.Silent)));
+                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption2.Silent)));
         }
 
         [Theory, Trait(Traits.Feature, Traits.Features.CodeActionsAddBraces)]
@@ -168,7 +170,7 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.AddBraces
         while (true);
     }
 }",
-                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption.Silent)));
+                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption2.Silent)));
         }
 
         [Theory, Trait(Traits.Feature, Traits.Features.CodeActionsAddBraces)]
@@ -196,7 +198,7 @@ class Fizz : IDisposable
         throw new NotImplementedException();
     }
 }",
-                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption.Silent)));
+                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption2.Silent)));
         }
 
         [Theory, Trait(Traits.Feature, Traits.Features.CodeActionsAddBraces)]
@@ -231,7 +233,7 @@ class Buzz : IDisposable
         throw new NotImplementedException();
     }
 }",
-                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption.Silent)));
+                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption2.Silent)));
         }
 
         [Theory, Trait(Traits.Feature, Traits.Features.CodeActionsAddBraces)]
@@ -252,7 +254,7 @@ class Buzz : IDisposable
         }
     }
 }",
-                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption.Silent)));
+                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption2.Silent)));
         }
 
         [Theory, Trait(Traits.Feature, Traits.Features.CodeActionsAddBraces)]
@@ -273,7 +275,7 @@ class Buzz : IDisposable
                 return;
     }
 }",
-                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption.Silent)));
+                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption2.Silent)));
         }
 
         [Theory, Trait(Traits.Feature, Traits.Features.CodeActionsAddBraces)]
@@ -293,7 +295,7 @@ class Buzz : IDisposable
         }
     }
 }",
-                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption.Silent)));
+                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption2.Silent)));
         }
 
         [Theory, Trait(Traits.Feature, Traits.Features.CodeActionsAddBraces)]
@@ -662,12 +664,14 @@ class Program
                 expectDiagnostic);
         }
 
+#pragma warning disable CA1200 // Avoid using cref tags with a prefix - Remove the suppression when https://github.com/dotnet/roslyn/issues/42611 is fixed.
         /// <summary>
         /// Verifies that the use of braces in a construct nested within the true portion of an <c>if</c> statement does
         /// not trigger the multiline behavior the <c>else</c> clause of a containing stetemnet for
-        /// <see cref="PreferBracesPreference.WhenMultiline"/>. The <c>else</c> clause would only need braces if the true
+        /// <see cref="F:Microsoft.CodeAnalysis.CodeStyle.PreferBracesPreference.WhenMultiline"/>. The <c>else</c> clause would only need braces if the true
         /// portion also used braces (which would be required if the true portion was considered multiline.
         /// </summary>
+#pragma warning restore CA1200 // Avoid using cref tags with a prefix
         [Theory, Trait(Traits.Feature, Traits.Features.CodeActionsAddBraces)]
         [InlineData((int)PreferBracesPreference.None, false)]
         [InlineData((int)PreferBracesPreference.WhenMultiline, false)]
@@ -1351,7 +1355,7 @@ class Program
             return;
     }
 }",
-                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption.Silent)));
+                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption2.Silent)));
         }
 
         [Theory, Trait(Traits.Feature, Traits.Features.CodeActionsAddBraces)]
@@ -1374,7 +1378,7 @@ class Program
 #endif
     }
 }",
-                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption.Silent)));
+                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption2.Silent)));
         }
 
         [Theory, Trait(Traits.Feature, Traits.Features.CodeActionsAddBraces)]
@@ -1399,7 +1403,7 @@ class Program
             return;
     }
 }",
-                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption.Silent)));
+                new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, (PreferBracesPreference)bracesPreference, NotificationOption2.Silent)));
         }
 
         [Theory, Trait(Traits.Feature, Traits.Features.CodeActionsAddBraces)]
@@ -1832,11 +1836,11 @@ class Program
         {
             if (expectDiagnostic)
             {
-                await TestInRegularAndScriptAsync(initialMarkup, expectedMarkup, options: Option(CSharpCodeStyleOptions.PreferBraces, bracesPreference, NotificationOption.Silent));
+                await TestInRegularAndScriptAsync(initialMarkup, expectedMarkup, options: Option(CSharpCodeStyleOptions.PreferBraces, bracesPreference, NotificationOption2.Silent));
             }
             else
             {
-                await TestMissingInRegularAndScriptAsync(initialMarkup, new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, bracesPreference, NotificationOption.Silent)));
+                await TestMissingInRegularAndScriptAsync(initialMarkup, new TestParameters(options: Option(CSharpCodeStyleOptions.PreferBraces, bracesPreference, NotificationOption2.Silent)));
             }
         }
     }

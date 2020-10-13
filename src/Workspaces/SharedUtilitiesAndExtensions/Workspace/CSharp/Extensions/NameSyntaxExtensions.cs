@@ -2,24 +2,21 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Symbols;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp.Utilities;
 using Microsoft.CodeAnalysis.Shared.Extensions;
-using Microsoft.CodeAnalysis.Text;
 
 namespace Microsoft.CodeAnalysis.CSharp.Extensions
 {
     internal static class NameSyntaxExtensions
     {
         public static IList<NameSyntax> GetNameParts(this NameSyntax nameSyntax)
-        {
-            return new NameSyntaxIterator(nameSyntax).ToList();
-        }
+            => new NameSyntaxIterator(nameSyntax).ToList();
 
         public static NameSyntax GetLastDottedName(this NameSyntax nameSyntax)
         {

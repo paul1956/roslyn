@@ -5,13 +5,8 @@
 Imports Microsoft.CodeAnalysis.Diagnostics
 Imports Microsoft.CodeAnalysis.Operations
 Imports Microsoft.CodeAnalysis.RemoveUnusedParametersAndValues
-Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
-
-#If CODE_STYLE Then
-Imports Microsoft.CodeAnalysis.VisualBasic.Internal.CodeStyle
-#Else
 Imports Microsoft.CodeAnalysis.VisualBasic.CodeStyle
-#End If
+Imports Microsoft.CodeAnalysis.VisualBasic.Syntax
 
 Namespace Microsoft.CodeAnalysis.VisualBasic.RemoveUnusedParametersAndValues
 
@@ -24,6 +19,10 @@ Namespace Microsoft.CodeAnalysis.VisualBasic.RemoveUnusedParametersAndValues
                        unusedValueAssignmentOption:=VisualBasicCodeStyleOptions.UnusedValueAssignment,
                        LanguageNames.VisualBasic)
         End Sub
+
+        Protected Overrides Function IsRecordDeclaration(node As SyntaxNode) As Boolean
+            Return False
+        End Function
 
         Protected Overrides Function SupportsDiscard(tree As SyntaxTree) As Boolean
             Return False

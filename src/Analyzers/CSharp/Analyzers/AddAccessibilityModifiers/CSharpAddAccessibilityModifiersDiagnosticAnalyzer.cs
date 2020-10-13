@@ -2,18 +2,16 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Collections.Immutable;
 using Microsoft.CodeAnalysis.AddAccessibilityModifiers;
+using Microsoft.CodeAnalysis.CodeStyle;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
+using Microsoft.CodeAnalysis.CSharp.Formatting;
 using Microsoft.CodeAnalysis.CSharp.LanguageServices;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-
-#if CODE_STYLE
-using Microsoft.CodeAnalysis.Internal.Options;
-#else
-using Microsoft.CodeAnalysis.CodeStyle;
-#endif
 
 namespace Microsoft.CodeAnalysis.CSharp.AddAccessibilityModifiers
 {
@@ -25,18 +23,18 @@ namespace Microsoft.CodeAnalysis.CSharp.AddAccessibilityModifiers
         {
         }
 
-        private CSharpSyntaxFacts SyntaxFacts => CSharpSyntaxFacts.Instance;
+        private static CSharpSyntaxFacts SyntaxFacts => CSharpSyntaxFacts.Instance;
 
         protected override void ProcessCompilationUnit(
             SyntaxTreeAnalysisContext context,
-            CodeStyleOption<AccessibilityModifiersRequired> option, CompilationUnitSyntax compilationUnit)
+            CodeStyleOption2<AccessibilityModifiersRequired> option, CompilationUnitSyntax compilationUnit)
         {
             ProcessMembers(context, option, compilationUnit.Members);
         }
 
         private void ProcessMembers(
             SyntaxTreeAnalysisContext context,
-            CodeStyleOption<AccessibilityModifiersRequired> option,
+            CodeStyleOption2<AccessibilityModifiersRequired> option,
             SyntaxList<MemberDeclarationSyntax> members)
         {
             foreach (var memberDeclaration in members)
@@ -47,7 +45,7 @@ namespace Microsoft.CodeAnalysis.CSharp.AddAccessibilityModifiers
 
         private void ProcessMemberDeclaration(
             SyntaxTreeAnalysisContext context,
-            CodeStyleOption<AccessibilityModifiersRequired> option, MemberDeclarationSyntax member)
+            CodeStyleOption2<AccessibilityModifiersRequired> option, MemberDeclarationSyntax member)
         {
             if (member.IsKind(SyntaxKind.NamespaceDeclaration, out NamespaceDeclarationSyntax namespaceDeclaration))
             {
@@ -56,7 +54,8 @@ namespace Microsoft.CodeAnalysis.CSharp.AddAccessibilityModifiers
 
             // If we have a class or struct, recurse inwards.
             if (member.IsKind(SyntaxKind.ClassDeclaration, out TypeDeclarationSyntax typeDeclaration) ||
-                member.IsKind(SyntaxKind.StructDeclaration, out typeDeclaration))
+                member.IsKind(SyntaxKind.StructDeclaration, out typeDeclaration) ||
+                member.IsKind(SyntaxKind.RecordDeclaration, out typeDeclaration))
             {
                 ProcessMembers(context, option, typeDeclaration.Members);
             }
@@ -115,6 +114,7 @@ namespace Microsoft.CodeAnalysis.CSharp.AddAccessibilityModifiers
                         break;
 
                     case SyntaxKind.ClassDeclaration:
+                    case SyntaxKind.RecordDeclaration:
                     case SyntaxKind.StructDeclaration:
                         {
                             // Inside a type, default is private

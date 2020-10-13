@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -36,7 +38,17 @@ namespace Microsoft.CodeAnalysis.UnitTests.WorkspaceServices
             return (T)_optionsByOption[option];
         }
 
+        public T GetOption<T>(Option2<T> option)
+        {
+            return (T)_optionsByOption[option];
+        }
+
         public T GetOption<T>(PerLanguageOption<T> option, string languageName)
+        {
+            throw new NotImplementedException();
+        }
+
+        public T GetOption<T>(PerLanguageOption2<T> option, string languageName)
         {
             throw new NotImplementedException();
         }

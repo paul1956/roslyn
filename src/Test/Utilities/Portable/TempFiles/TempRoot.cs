@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Concurrent;
 using System.IO;
@@ -56,7 +58,7 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
             return dir;
         }
 
-        public TempFile CreateFile(string prefix = null, string extension = null, string directory = null, [CallerFilePath]string callerSourcePath = null, [CallerLineNumber]int callerLineNumber = 0)
+        public TempFile CreateFile(string prefix = null, string extension = null, string directory = null, [CallerFilePath] string callerSourcePath = null, [CallerLineNumber] int callerLineNumber = 0)
         {
             CheckDisposed();
             return AddFile(new DisposableFile(prefix, extension, directory, callerSourcePath, callerLineNumber));
@@ -71,7 +73,9 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
 
         internal static void CreateStream(string fullPath, FileMode mode)
         {
-            using (var file = new FileStream(fullPath, mode)) { }
+            using (var file = new FileStream(fullPath, mode))
+            {
+            }
         }
     }
 }

@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -30,9 +32,7 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.Debugging
         }
 
         private void ClearTable()
-        {
-            _snapshotToExpressions = new ConditionalWeakTable<ITextSnapshot, IDictionary<string, LinkedList<IList<string>>>>();
-        }
+            => _snapshotToExpressions = new ConditionalWeakTable<ITextSnapshot, IDictionary<string, LinkedList<IList<string>>>>();
 
         public async Task<IList<string>> DoAsync(
             Document document,

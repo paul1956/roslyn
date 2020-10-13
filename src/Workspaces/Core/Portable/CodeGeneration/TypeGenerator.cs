@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using Microsoft.CodeAnalysis.Shared.Extensions;
 
 namespace Microsoft.CodeAnalysis.CodeGeneration
@@ -13,18 +15,12 @@ namespace Microsoft.CodeAnalysis.CodeGeneration
         }
 
         public ITypeSymbol CreateArrayTypeSymbol(ITypeSymbol elementType, int rank)
-        {
-            return CodeGenerationSymbolFactory.CreateArrayTypeSymbol(elementType, rank);
-        }
+            => CodeGenerationSymbolFactory.CreateArrayTypeSymbol(elementType, rank);
 
         public ITypeSymbol CreatePointerTypeSymbol(ITypeSymbol pointedAtType)
-        {
-            return CodeGenerationSymbolFactory.CreatePointerTypeSymbol(pointedAtType);
-        }
+            => CodeGenerationSymbolFactory.CreatePointerTypeSymbol(pointedAtType);
 
         public ITypeSymbol Construct(INamedTypeSymbol namedType, ITypeSymbol[] typeArguments)
-        {
-            return namedType.ToCodeGenerationSymbol().Construct(typeArguments);
-        }
+            => namedType.ToCodeGenerationSymbol().Construct(typeArguments);
     }
 }

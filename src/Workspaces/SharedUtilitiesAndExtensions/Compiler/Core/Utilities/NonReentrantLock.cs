@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -58,9 +60,7 @@ namespace Roslyn.Utilities
         /// Monitor.Enter/Exit or in a "lock" statement.
         /// </param>
         public NonReentrantLock(bool useThisInstanceForSynchronization = false)
-        {
-            _syncLock = useThisInstanceForSynchronization ? this : new object();
-        }
+            => _syncLock = useThisInstanceForSynchronization ? this : new object();
 
         /// <summary>
         /// Shared factory for use in lazy initialization.
@@ -164,18 +164,14 @@ namespace Roslyn.Utilities
         /// </summary>
         /// <returns>True if the lock is currently held by the calling thread.</returns>
         public bool LockHeldByMe()
-        {
-            return this.IsOwnedByMe;
-        }
+            => this.IsOwnedByMe;
 
         /// <summary>
         /// Throw an exception if the lock is not held by the calling thread.
         /// </summary>
         /// <exception cref="InvalidOperationException">The lock is not currently held by the calling thread.</exception>
         public void AssertHasLock()
-        {
-            Contract.ThrowIfFalse(LockHeldByMe());
-        }
+            => Contract.ThrowIfFalse(LockHeldByMe());
 
         /// <summary>
         /// Checks if the lock is currently held.
@@ -250,14 +246,10 @@ namespace Roslyn.Utilities
             private readonly NonReentrantLock _semaphore;
 
             public SemaphoreDisposer(NonReentrantLock semaphore)
-            {
-                _semaphore = semaphore;
-            }
+                => _semaphore = semaphore;
 
             public void Dispose()
-            {
-                _semaphore.Release();
-            }
+                => _semaphore.Release();
         }
     }
 }

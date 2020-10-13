@@ -2,9 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
-using Microsoft.CodeAnalysis.Editing;
 using Microsoft.CodeAnalysis.Options;
 using Microsoft.CodeAnalysis.Simplification;
 using Roslyn.Utilities;
@@ -16,7 +17,7 @@ namespace Microsoft.CodeAnalysis.CodeGeneration
     /// </summary>
     internal class CodeGenerationOptions
     {
-        public static readonly CodeGenerationOptions Default = new CodeGenerationOptions();
+        public static readonly CodeGenerationOptions Default = new();
 
         /// <summary>
         /// A location used to determine the best place to generate a member.  This is only used for
@@ -182,7 +183,7 @@ namespace Microsoft.CodeAnalysis.CodeGeneration
             this.ParseOptions = parseOptions ?? this.BestLocation?.SourceTree.Options;
         }
 
-        private void CheckLocation(Location location, string name)
+        private static void CheckLocation(Location location, string name)
         {
             if (location != null && !location.IsInSource)
             {
@@ -191,16 +192,7 @@ namespace Microsoft.CodeAnalysis.CodeGeneration
         }
 
         internal Location BestLocation
-        {
-            get
-            {
-                return this.AfterThisLocation != null
-                    ? this.AfterThisLocation
-                    : this.BeforeThisLocation != null
-                        ? this.BeforeThisLocation
-                        : this.ContextLocation;
-            }
-        }
+            => this.AfterThisLocation ?? this.BeforeThisLocation ?? this.ContextLocation;
 
         public CodeGenerationOptions With(
             Optional<Location> contextLocation = default,

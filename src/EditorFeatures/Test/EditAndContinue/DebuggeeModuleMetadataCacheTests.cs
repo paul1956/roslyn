@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using Roslyn.Test.Utilities;
 using Xunit;
@@ -16,7 +18,11 @@ namespace Microsoft.CodeAnalysis.EditAndContinue.UnitTests
             var cache = new DebuggeeModuleInfoCache();
             var mvid = Guid.NewGuid();
 
-            Assert.Null(cache.GetOrAdd(mvid, m => { Assert.Equal(mvid, m); return null; }));
+            Assert.Null(cache.GetOrAdd(mvid, m =>
+            {
+                Assert.Equal(mvid, m);
+                return null;
+            }));
         }
 
         [Fact]

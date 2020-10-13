@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,17 +13,10 @@ namespace Microsoft.CodeAnalysis.Shared.Extensions
     internal static class SyntaxTokenExtensions
     {
         public static SyntaxNode? GetAncestor(this SyntaxToken token, Func<SyntaxNode, bool>? predicate)
-        {
-            return token.GetAncestor<SyntaxNode>(predicate);
-        }
+            => token.GetAncestor<SyntaxNode>(predicate);
 
-        public static T? GetAncestor<T>(this SyntaxToken token, Func<T, bool>? predicate = null)
-            where T : SyntaxNode
-        {
-            return token.Parent != null
-                ? token.Parent.FirstAncestorOrSelf(predicate)
-                : null;
-        }
+        public static T? GetAncestor<T>(this SyntaxToken token, Func<T, bool>? predicate = null) where T : SyntaxNode
+            => token.Parent?.FirstAncestorOrSelf(predicate);
 
         public static IEnumerable<T> GetAncestors<T>(this SyntaxToken token)
             where T : SyntaxNode
@@ -67,14 +58,10 @@ namespace Microsoft.CodeAnalysis.Shared.Extensions
         }
 
         public static int Width(this SyntaxToken token)
-        {
-            return token.Span.Length;
-        }
+            => token.Span.Length;
 
         public static int FullWidth(this SyntaxToken token)
-        {
-            return token.FullSpan.Length;
-        }
+            => token.FullSpan.Length;
 
         public static SyntaxToken FindTokenFromEnd(this SyntaxNode root, int position, bool includeZeroWidth = true, bool findInsideTrivia = false)
         {
@@ -118,9 +105,7 @@ namespace Microsoft.CodeAnalysis.Shared.Extensions
         }
 
         public static SyntaxToken With(this SyntaxToken token, SyntaxTriviaList leading, SyntaxTriviaList trailing)
-        {
-            return token.WithLeadingTrivia(leading).WithTrailingTrivia(trailing);
-        }
+            => token.WithLeadingTrivia(leading).WithTrailingTrivia(trailing);
 
         public static SyntaxToken WithPrependedLeadingTrivia(
             this SyntaxToken token,
@@ -172,5 +157,8 @@ namespace Microsoft.CodeAnalysis.Shared.Extensions
 
         public static SyntaxTrivia[] GetTrivia(this IEnumerable<SyntaxToken> tokens)
             => tokens.SelectMany(token => SyntaxNodeOrTokenExtensions.GetTrivia(token)).ToArray();
+
+        public static SyntaxNode GetRequiredParent(this SyntaxToken token)
+            => token.Parent ?? throw new InvalidOperationException("Token's parent was null");
     }
 }

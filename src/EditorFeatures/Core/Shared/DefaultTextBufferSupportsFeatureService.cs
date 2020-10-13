@@ -2,6 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
+using System;
 using System.Composition;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.VisualStudio.Text;
@@ -12,28 +15,21 @@ namespace Microsoft.CodeAnalysis.Editor.Shared
     internal sealed class DefaultTextBufferSupportsFeatureService : ITextBufferSupportsFeatureService
     {
         [ImportingConstructor]
+        [Obsolete(MefConstruction.ImportingConstructorMessage, error: true)]
         public DefaultTextBufferSupportsFeatureService()
         {
         }
 
         public bool SupportsCodeFixes(ITextBuffer textBuffer)
-        {
-            return true;
-        }
+            => true;
 
         public bool SupportsRefactorings(ITextBuffer textBuffer)
-        {
-            return true;
-        }
+            => true;
 
         public bool SupportsRename(ITextBuffer textBuffer)
-        {
-            return true;
-        }
+            => true;
 
         public bool SupportsNavigationToAnyPosition(ITextBuffer textBuffer)
-        {
-            return true;
-        }
+            => true;
     }
 }

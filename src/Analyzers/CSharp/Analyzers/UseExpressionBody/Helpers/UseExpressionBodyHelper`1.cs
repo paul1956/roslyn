@@ -2,20 +2,19 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Immutable;
 using System.Linq;
+using Microsoft.CodeAnalysis.CodeStyle;
 using Microsoft.CodeAnalysis.CSharp.Extensions;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.Options;
 
 #if CODE_STYLE
 using OptionSet = Microsoft.CodeAnalysis.Diagnostics.AnalyzerConfigOptions;
-using Microsoft.CodeAnalysis.Internal.Options;
-#else
-using Microsoft.CodeAnalysis.CodeStyle;
-using Microsoft.CodeAnalysis.CSharp.CodeStyle;
-using Microsoft.CodeAnalysis.Options;
 #endif
 
 namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
@@ -28,7 +27,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
     internal abstract class UseExpressionBodyHelper<TDeclaration> : UseExpressionBodyHelper
         where TDeclaration : SyntaxNode
     {
-        public override Option<CodeStyleOption<ExpressionBodyPreference>> Option { get; }
+        public override Option2<CodeStyleOption2<ExpressionBodyPreference>> Option { get; }
         public override LocalizableString UseExpressionBodyTitle { get; }
         public override LocalizableString UseBlockBodyTitle { get; }
         public override string DiagnosticId { get; }
@@ -38,7 +37,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
             string diagnosticId,
             LocalizableString useExpressionBodyTitle,
             LocalizableString useBlockBodyTitle,
-            Option<CodeStyleOption<ExpressionBodyPreference>> option,
+            Option2<CodeStyleOption2<ExpressionBodyPreference>> option,
             ImmutableArray<SyntaxKind> syntaxKinds)
         {
             DiagnosticId = diagnosticId;
@@ -60,7 +59,6 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
 
             return null;
         }
-
 
         protected static BlockSyntax GetBodyFromSingleGetAccessor(AccessorListSyntax accessorList)
             => GetSingleGetAccessor(accessorList)?.Body;
@@ -84,7 +82,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
             => GetDiagnosticLocation((TDeclaration)declaration);
 
         protected virtual Location GetDiagnosticLocation(TDeclaration declaration)
-            => this.GetBody(declaration).Statements[0].GetLocation();
+            => GetBody(declaration).Statements[0].GetLocation();
 
         public bool CanOfferUseExpressionBody(
             OptionSet optionSet, TDeclaration declaration, bool forAnalyzer)
@@ -99,7 +97,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
             // If the analyzer is disabled completely, the refactoring is enabled in both directions.
             if (userPrefersExpressionBodies == forAnalyzer || (!forAnalyzer && analyzerDisabled))
             {
-                var expressionBody = this.GetExpressionBody(declaration);
+                var expressionBody = GetExpressionBody(declaration);
                 if (expressionBody == null)
                 {
                     // They don't have an expression body.  See if we could convert the block they
@@ -131,7 +129,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
             SyntaxNode declaration, ParseOptions options, ExpressionBodyPreference conversionPreference,
             out ArrowExpressionClauseSyntax expressionWhenOnSingleLine, out SyntaxToken semicolonWhenOnSingleLine)
         {
-            var body = this.GetBody(declaration);
+            var body = GetBody(declaration);
 
             return body.TryConvertToArrowExpressionBody(
                 declaration.Kind(), options, conversionPreference,
@@ -144,7 +142,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
             out ArrowExpressionClauseSyntax arrowExpression,
             out SyntaxToken semicolonToken)
         {
-            if (this.TryConvertToExpressionBodyWorker(
+            if (TryConvertToExpressionBodyWorker(
                     declaration, options, conversionPreference,
                     out arrowExpression, out semicolonToken))
             {
@@ -171,7 +169,7 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
             var userPrefersBlockBodies = preference == ExpressionBodyPreference.Never;
             var analyzerDisabled = currentOptionValue.Notification.Severity == ReportDiagnostic.Suppress;
 
-            var expressionBodyOpt = this.GetExpressionBody(declaration);
+            var expressionBodyOpt = GetExpressionBody(declaration);
             var canOffer = expressionBodyOpt?.TryConvertToBlock(
                 SyntaxFactory.Token(SyntaxKind.SemicolonToken), false, block: out _) == true;
             if (!canOffer)
@@ -299,8 +297,6 @@ namespace Microsoft.CodeAnalysis.CSharp.UseExpressionBody
         }
 
         protected virtual TDeclaration WithAccessorList(TDeclaration declaration, AccessorListSyntax accessorListSyntax)
-        {
-            throw new NotImplementedException();
-        }
+            => throw new NotImplementedException();
     }
 }

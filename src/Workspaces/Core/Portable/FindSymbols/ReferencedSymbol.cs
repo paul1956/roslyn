@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -23,9 +25,7 @@ namespace Microsoft.CodeAnalysis.FindSymbols
         /// <summary>
         /// The symbol definition that these are references to.
         /// </summary>
-        public ISymbol Definition => DefinitionAndProjectId.Symbol;
-
-        internal SymbolAndProjectId DefinitionAndProjectId { get; }
+        public ISymbol Definition { get; }
 
         /// <summary>
         /// The set of reference locations in the solution.
@@ -33,10 +33,10 @@ namespace Microsoft.CodeAnalysis.FindSymbols
         public IEnumerable<ReferenceLocation> Locations { get; }
 
         internal ReferencedSymbol(
-            SymbolAndProjectId definitionAndProjectId,
+            ISymbol definition,
             IEnumerable<ReferenceLocation> locations)
         {
-            this.DefinitionAndProjectId = definitionAndProjectId;
+            this.Definition = definition;
             this.Locations = (locations ?? SpecializedCollections.EmptyEnumerable<ReferenceLocation>()).ToReadOnlyCollection();
         }
 
@@ -47,16 +47,14 @@ namespace Microsoft.CodeAnalysis.FindSymbols
         }
 
         internal TestAccessor GetTestAccessor()
-            => new TestAccessor(this);
+            => new(this);
 
         internal readonly struct TestAccessor
         {
             private readonly ReferencedSymbol _referencedSymbol;
 
             public TestAccessor(ReferencedSymbol referencedSymbol)
-            {
-                _referencedSymbol = referencedSymbol;
-            }
+                => _referencedSymbol = referencedSymbol;
 
             internal string GetDebuggerDisplay()
                 => _referencedSymbol.GetDebuggerDisplay();

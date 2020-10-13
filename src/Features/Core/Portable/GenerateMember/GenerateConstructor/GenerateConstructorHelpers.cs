@@ -2,10 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.CodeAnalysis.LanguageServices;
-using Microsoft.CodeAnalysis.Shared.Extensions;
 
 namespace Microsoft.CodeAnalysis.GenerateMember.GenerateConstructor
 {
@@ -64,7 +64,6 @@ namespace Microsoft.CodeAnalysis.GenerateMember.GenerateConstructor
             }
 
             var compilation = semanticDocument.SemanticModel.Compilation;
-            var semanticFactsService = semanticDocument.Document.GetLanguageService<ISemanticFactsService>();
 
             for (var i = 0; i < parameterTypes.Count; i++)
             {

@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
-
 using System;
 using System.Runtime.CompilerServices;
 
@@ -128,14 +126,10 @@ namespace Roslyn.Utilities
         /// has not yet been disposed; otherwise, <see langword="null"/> if this reference to the underlying object
         /// has already been disposed.</returns>
         public ReferenceCountedDisposable<T>? TryAddReference()
-        {
-            return TryAddReferenceImpl(_instance, _boxedReferenceCount);
-        }
+            => TryAddReferenceImpl(_instance, _boxedReferenceCount);
 
         IReferenceCountedDisposable<T>? IReferenceCountedDisposable<T>.TryAddReference()
-        {
-            return TryAddReference();
-        }
+            => TryAddReference();
 
         /// <summary>
         /// Provides the implementation for <see cref="TryAddReference"/> and

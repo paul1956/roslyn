@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -47,34 +49,19 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.Venus
                     return excerpter;
                 }
 
-                if (DesignTimeOnlyDocumentPropertiesService.Instance is TService documentPropertiesService)
-                {
-                    return documentPropertiesService;
-                }
-
                 // ask the default document service provider
                 return DefaultTextDocumentServiceProvider.Instance.GetService<TService>();
             }
 
             private static ITextSnapshot GetRoslynSnapshot(SourceText sourceText)
-            {
-                return sourceText.FindCorrespondingEditorTextSnapshot();
-            }
-
-            private sealed class DesignTimeOnlyDocumentPropertiesService : DocumentPropertiesService
-            {
-                public static readonly DesignTimeOnlyDocumentPropertiesService Instance = new DesignTimeOnlyDocumentPropertiesService();
-                public override bool DesignTimeOnly => true;
-            }
+                => sourceText.FindCorrespondingEditorTextSnapshot();
 
             private class SpanMapper : ISpanMappingService
             {
                 private readonly ITextBuffer _primaryBuffer;
 
                 public SpanMapper(ITextBuffer primaryBuffer)
-                {
-                    _primaryBuffer = primaryBuffer;
-                }
+                    => _primaryBuffer = primaryBuffer;
 
                 public async Task<ImmutableArray<MappedSpanResult>> MapSpansAsync(Document document, IEnumerable<TextSpan> spans, CancellationToken cancellationToken)
                 {
@@ -123,9 +110,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.Venus
                 private readonly ITextBuffer _primaryBuffer;
 
                 public DocumentExcerpter(ITextBuffer primaryBuffer)
-                {
-                    _primaryBuffer = primaryBuffer;
-                }
+                    => _primaryBuffer = primaryBuffer;
 
                 public async Task<ExcerptResult?> TryExcerptAsync(Document document, TextSpan span, ExcerptMode mode, CancellationToken cancellationToken)
                 {
@@ -310,9 +295,7 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation.Venus
                 }
 
                 private static TextSpan GetSpanOnContent(TextSpan targetSpan, TextSpan excerptSpan)
-                {
-                    return new TextSpan(targetSpan.Start - excerptSpan.Start, targetSpan.Length);
-                }
+                    => new(targetSpan.Start - excerptSpan.Start, targetSpan.Length);
             }
         }
     }

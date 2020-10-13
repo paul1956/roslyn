@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
-
 using System.Collections.Generic;
 #if DEBUG
 using System.Diagnostics;
@@ -27,9 +25,10 @@ namespace Microsoft.CodeAnalysis.Editor.Tagging
     /// </summary>
     internal abstract partial class AbstractAsynchronousTaggerProvider<TTag> : ForegroundThreadAffinitizedObject where TTag : ITag
     {
-        private readonly object _uniqueKey = new object();
-        private readonly IAsynchronousOperationListener _asyncListener;
+        private readonly object _uniqueKey = new();
         private readonly IForegroundNotificationService _notificationService;
+
+        protected readonly IAsynchronousOperationListener AsyncListener;
 
         /// <summary>
         /// The behavior the tagger engine will have when text changes happen to the subject buffer
@@ -71,8 +70,8 @@ namespace Microsoft.CodeAnalysis.Editor.Tagging
         /// An empty enumerable, or null, can be returned to indicate that this tagger should 
         /// run unconditionally.
         /// </summary>
-        protected virtual IEnumerable<Option<bool>> Options => SpecializedCollections.EmptyEnumerable<Option<bool>>();
-        protected virtual IEnumerable<PerLanguageOption<bool>> PerLanguageOptions => SpecializedCollections.EmptyEnumerable<PerLanguageOption<bool>>();
+        protected virtual IEnumerable<Option2<bool>> Options => SpecializedCollections.EmptyEnumerable<Option2<bool>>();
+        protected virtual IEnumerable<PerLanguageOption2<bool>> PerLanguageOptions => SpecializedCollections.EmptyEnumerable<PerLanguageOption2<bool>>();
 
         /// <summary>
         /// This controls what delay tagger will use to let editor know about newly inserted tags
@@ -94,7 +93,7 @@ namespace Microsoft.CodeAnalysis.Editor.Tagging
             IForegroundNotificationService notificationService)
             : base(threadingContext)
         {
-            _asyncListener = asyncListener;
+            AsyncListener = asyncListener;
             _notificationService = notificationService;
 
 #if DEBUG
@@ -110,14 +109,14 @@ namespace Microsoft.CodeAnalysis.Editor.Tagging
             }
 
             var tagSource = GetOrCreateTagSource(textViewOpt, subjectBuffer);
-            return new Tagger(ThreadingContext, _asyncListener, _notificationService, tagSource, subjectBuffer) as IAccurateTagger<T>;
+            return new Tagger(ThreadingContext, AsyncListener, _notificationService, tagSource, subjectBuffer) as IAccurateTagger<T>;
         }
 
         private TagSource GetOrCreateTagSource(ITextView textViewOpt, ITextBuffer subjectBuffer)
         {
             if (!this.TryRetrieveTagSource(textViewOpt, subjectBuffer, out var tagSource))
             {
-                tagSource = new TagSource(textViewOpt, subjectBuffer, this, _asyncListener, _notificationService);
+                tagSource = new TagSource(textViewOpt, subjectBuffer, this, AsyncListener, _notificationService);
 
                 this.StoreTagSource(textViewOpt, subjectBuffer, tagSource);
                 tagSource.Disposed += (s, e) => this.RemoveTagSource(textViewOpt, subjectBuffer);
@@ -164,9 +163,7 @@ namespace Microsoft.CodeAnalysis.Editor.Tagging
         /// <see cref="ProduceTagsAsync(TaggerContext{TTag})"/>.
         /// </summary>
         protected virtual SnapshotPoint? GetCaretPoint(ITextView textViewOpt, ITextBuffer subjectBuffer)
-        {
-            return textViewOpt?.GetCaretPoint(subjectBuffer);
-        }
+            => textViewOpt?.GetCaretPoint(subjectBuffer);
 
         /// <summary>
         /// Called by the <see cref="AbstractAsynchronousTaggerProvider{TTag}"/> infrastructure to determine
@@ -226,9 +223,7 @@ namespace Microsoft.CodeAnalysis.Editor.Tagging
         }
 
         protected virtual Task ProduceTagsAsync(TaggerContext<TTag> context, DocumentSnapshotSpan spanToTag, int? caretPosition)
-        {
-            return Task.CompletedTask;
-        }
+            => Task.CompletedTask;
 
         protected virtual void ProduceTagsSynchronously(TaggerContext<TTag> context, DocumentSnapshotSpan spanToTag, int? caretPosition)
         {
@@ -246,7 +241,7 @@ namespace Microsoft.CodeAnalysis.Editor.Tagging
         }
 
         internal TestAccessor GetTestAccessor()
-            => new TestAccessor(this);
+            => new(this);
 
         private struct DiffResult
         {
@@ -272,9 +267,7 @@ namespace Microsoft.CodeAnalysis.Editor.Tagging
             private readonly AbstractAsynchronousTaggerProvider<TTag> _provider;
 
             public TestAccessor(AbstractAsynchronousTaggerProvider<TTag> provider)
-            {
-                _provider = provider;
-            }
+                => _provider = provider;
 
             internal Task ProduceTagsAsync(TaggerContext<TTag> context)
                 => _provider.ProduceTagsAsync(context);

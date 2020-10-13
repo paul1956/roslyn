@@ -2,8 +2,6 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
-
 using Microsoft.CodeAnalysis.Options;
 
 namespace Microsoft.CodeAnalysis.ImplementType
@@ -22,16 +20,16 @@ namespace Microsoft.CodeAnalysis.ImplementType
 
     internal static class ImplementTypeOptions
     {
-        public static readonly PerLanguageOption<ImplementTypeInsertionBehavior> InsertionBehavior =
-            new PerLanguageOption<ImplementTypeInsertionBehavior>(
+        public static readonly PerLanguageOption2<ImplementTypeInsertionBehavior> InsertionBehavior =
+            new(
                 nameof(ImplementTypeOptions),
                 nameof(InsertionBehavior),
                 defaultValue: ImplementTypeInsertionBehavior.WithOtherMembersOfTheSameKind,
                 storageLocations: new RoamingProfileStorageLocation(
                     $"TextEditor.%LANGUAGE%.{nameof(ImplementTypeOptions)}.{nameof(InsertionBehavior)}"));
 
-        public static readonly PerLanguageOption<ImplementTypePropertyGenerationBehavior> PropertyGenerationBehavior =
-            new PerLanguageOption<ImplementTypePropertyGenerationBehavior>(
+        public static readonly PerLanguageOption2<ImplementTypePropertyGenerationBehavior> PropertyGenerationBehavior =
+            new(
                 nameof(ImplementTypeOptions),
                 nameof(PropertyGenerationBehavior),
                 defaultValue: ImplementTypePropertyGenerationBehavior.PreferThrowingProperties,

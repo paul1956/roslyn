@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -192,8 +194,10 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.InlineRename
         // Used to aid the investigation of https://github.com/dotnet/roslyn/issues/7364
         private class NullTextBufferException : Exception
         {
+#pragma warning disable IDE0052 // Remove unread private members
             private readonly Document _document;
             private readonly SourceText _text;
+#pragma warning restore IDE0052 // Remove unread private members
 
             public NullTextBufferException(Document document, SourceText text)
                 : base("Cannot retrieve textbuffer from document.")
@@ -222,7 +226,7 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.InlineRename
                     var textSnapshot = text.FindCorrespondingEditorTextSnapshot();
                     if (textSnapshot == null)
                     {
-                        FatalError.ReportWithoutCrash(new NullTextBufferException(document, text));
+                        FatalError.ReportAndCatch(new NullTextBufferException(document, text));
                         continue;
                     }
                     Contract.ThrowIfNull(textSnapshot.TextBuffer);
@@ -309,7 +313,6 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.InlineRename
                 // follow the originally-intended design.
                 // https://github.com/dotnet/roslyn/issues/40890
                 await ThreadingContext.JoinableTaskFactory.SwitchToMainThreadAsync(alwaysYield: true, _cancellationTokenSource.Token);
-                _cancellationTokenSource.Token.ThrowIfCancellationRequested();
 
                 RaiseSessionSpansUpdated(inlineRenameLocations.Locations.ToImmutableArray());
 
@@ -334,14 +337,10 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.InlineRename
         public event EventHandler ReplacementTextChanged;
 
         internal OpenTextBufferManager GetBufferManager(ITextBuffer buffer)
-        {
-            return _openTextBuffers[buffer];
-        }
+            => _openTextBuffers[buffer];
 
         internal bool TryGetBufferManager(ITextBuffer buffer, out OpenTextBufferManager bufferManager)
-        {
-            return _openTextBuffers.TryGetValue(buffer, out bufferManager);
-        }
+            => _openTextBuffers.TryGetValue(buffer, out bufferManager);
 
         public void RefreshRenameSessionWithOptionsChanged(Option<bool> renameOption, bool newValue)
         {
@@ -587,7 +586,6 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.InlineRename
                     async t =>
                     {
                         await ThreadingContext.JoinableTaskFactory.SwitchToMainThreadAsync(alwaysYield: true, _conflictResolutionTaskCancellationSource.Token);
-                        _conflictResolutionTaskCancellationSource.Token.ThrowIfCancellationRequested();
 
                         ApplyReplacements(t.Result.replacementInfo, t.Result.mergeResult, _conflictResolutionTaskCancellationSource.Token);
                     },
@@ -665,9 +663,7 @@ namespace Microsoft.CodeAnalysis.Editor.Implementation.InlineRename
         }
 
         public void Cancel()
-        {
-            Cancel(rollbackTemporaryEdits: true);
-        }
+            => Cancel(rollbackTemporaryEdits: true);
 
         private void Cancel(bool rollbackTemporaryEdits)
         {

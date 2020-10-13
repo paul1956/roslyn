@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -22,9 +24,7 @@ namespace Microsoft.CodeAnalysis.Editor.UnitTests.Utilities
             private readonly List<Task> _tasks = new List<Task>();
 
             public SleepHelper()
-            {
-                _tokenSource = new CancellationTokenSource();
-            }
+                => _tokenSource = new CancellationTokenSource();
 
             public void Dispose()
             {

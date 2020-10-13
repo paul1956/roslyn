@@ -2,24 +2,21 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Linq;
+using Microsoft.CodeAnalysis.CodeStyle;
 using Microsoft.CodeAnalysis.CSharp.LanguageServices;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Shared.Extensions;
 using Roslyn.Utilities;
-
-#if CODE_STYLE
-using Microsoft.CodeAnalysis.Internal.Options;
-#else
-using Microsoft.CodeAnalysis.CodeStyle;
-#endif
 
 namespace Microsoft.CodeAnalysis.CSharp.Extensions
 {
     internal static class BlockSyntaxExtensions
     {
         public static bool TryConvertToExpressionBody(
-            this BlockSyntax block, SyntaxKind declarationKind,
+            this BlockSyntax block,
             ParseOptions options, ExpressionBodyPreference preference,
             out ExpressionSyntax expression,
             out SyntaxToken semicolonToken)
@@ -63,7 +60,7 @@ namespace Microsoft.CodeAnalysis.CSharp.Extensions
 
             if (!acceptableVersion ||
                 !block.TryConvertToExpressionBody(
-                    declarationKind, options, preference,
+                    options, preference,
                     out var expression, out semicolonToken))
             {
                 arrowExpression = null;

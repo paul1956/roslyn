@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -59,22 +61,8 @@ namespace Microsoft.CodeAnalysis.UnitTests
             }
         }
 
-        private static void VerifyInnerExceptionArgumentNull(AggregateException ex, string argName)
-        {
-            var exception = ex.InnerException as ArgumentNullException;
-            Assert.True(exception != null, string.Format("Expected InnerException to be 'System.ArgumentNullException' was '{0}'", ex.InnerException.ToString()));
-            Assert.True(exception.ParamName.Contains(argName), string.Format("Expected InnerException ParamName to contain '{0}', actual ParamName is: '{1}'", argName, exception.ParamName));
-        }
-
-        private static void VerifyInnerExceptionIsType<T>(Exception ex) where T : Exception
-        {
-            Assert.True(ex.InnerException is T, string.Format("Expected InnerException to be '{0}' was '{1}'", typeof(T).Name, ex.InnerException.ToString()));
-        }
-
         private static Solution CreateSolution()
-        {
-            return new AdhocWorkspace().CurrentSolution;
-        }
+            => new AdhocWorkspace().CurrentSolution;
 
         private static Solution GetSingleProjectSolution(params string[] sourceTexts)
         {
@@ -123,9 +111,7 @@ namespace Microsoft.CodeAnalysis.UnitTests
             };
 
         private static Project GetProject(WorkspaceKind workspaceKind)
-        {
-            return GetSolution(workspaceKind).Projects.First();
-        }
+            => GetSolution(workspaceKind).Projects.First();
 
         public enum WorkspaceKind
         {

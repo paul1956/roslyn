@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -19,21 +21,13 @@ using Xunit;
 namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Completion.CompletionProviders
 {
     [Trait(Traits.Feature, Traits.Features.Completion)]
-    public class ReferenceDirectiveCompletionProviderTests : AbstractCSharpCompletionProviderTests
+    public class ReferenceDirectiveCompletionProviderTests : AbstractInteractiveCSharpCompletionProviderTests
     {
-        public ReferenceDirectiveCompletionProviderTests(CSharpTestWorkspaceFixture workspaceFixture) : base(workspaceFixture)
-        {
-        }
-
         internal override Type GetCompletionProviderType()
-        {
-            return typeof(ReferenceDirectiveCompletionProvider);
-        }
+            => typeof(ReferenceDirectiveCompletionProvider);
 
         protected override IEqualityComparer<string> GetStringComparer()
-        {
-            return StringComparer.OrdinalIgnoreCase;
-        }
+            => StringComparer.OrdinalIgnoreCase;
 
         private protected override Task VerifyWorkerAsync(
             string code, int position, string expectedItemOrNull, string expectedDescriptionOrNull,
@@ -63,24 +57,18 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Completion.CompletionPr
         [InlineData("#r \"$$!")]
         [InlineData("#r \"$$(")]
         public void IsTextualTriggerCharacterTest(string markup)
-        {
-            VerifyTextualTriggerCharacter(markup, shouldTriggerWithTriggerOnLettersEnabled: true, shouldTriggerWithTriggerOnLettersDisabled: true, SourceCodeKind.Script);
-        }
+            => VerifyTextualTriggerCharacter(markup, shouldTriggerWithTriggerOnLettersEnabled: true, shouldTriggerWithTriggerOnLettersDisabled: true, SourceCodeKind.Script);
 
         [ConditionalTheory(typeof(WindowsOnly))]
         [InlineData(EnterKeyRule.Never)]
         [InlineData(EnterKeyRule.AfterFullyTypedWord)]
         [InlineData(EnterKeyRule.Always)] // note: GAC completion helper uses its own EnterKeyRule
         public async Task SendEnterThroughToEditorTest(EnterKeyRule enterKeyRule)
-        {
-            await VerifySendEnterThroughToEnterAsync("#r \"System$$", "System", enterKeyRule, expected: false, SourceCodeKind.Script);
-        }
+            => await VerifySendEnterThroughToEnterAsync("#r \"System$$", "System", enterKeyRule, expected: false);
 
         [ConditionalFact(typeof(WindowsOnly))]
         public async Task GacReference()
-        {
-            await VerifyItemExistsAsync("#r \"$$", "System.Windows.Forms", expectedDescriptionOrNull: null, sourceCodeKind: SourceCodeKind.Script);
-        }
+            => await VerifyItemExistsAsync("#r \"$$", "System.Windows.Forms", expectedDescriptionOrNull: null, sourceCodeKind: SourceCodeKind.Script);
 
         [ConditionalFact(typeof(WindowsOnly))]
         public async Task GacReferenceFullyQualified()
@@ -95,7 +83,6 @@ namespace Microsoft.CodeAnalysis.Editor.CSharp.UnitTests.Completion.CompletionPr
         {
             var systemDir = Path.GetFullPath(Environment.SystemDirectory);
             var windowsDir = Directory.GetParent(systemDir);
-            var windowsDirPath = windowsDir.FullName;
             var windowsRoot = Directory.GetDirectoryRoot(systemDir);
 
             // we need to get the exact casing from the file system:

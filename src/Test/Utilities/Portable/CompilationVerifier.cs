@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -247,8 +249,8 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
             XCData expectedIL,
             bool realIL = false,
             string sequencePoints = null,
-            [CallerFilePath]string callerPath = null,
-            [CallerLineNumber]int callerLine = 0)
+            [CallerFilePath] string callerPath = null,
+            [CallerLineNumber] int callerLine = 0)
         {
             return VerifyILImpl(qualifiedMethodName, expectedIL.Value, realIL, sequencePoints, callerPath, callerLine, escapeQuotes: false);
         }
@@ -258,8 +260,8 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
             string expectedIL,
             bool realIL = false,
             string sequencePoints = null,
-            [CallerFilePath]string callerPath = null,
-            [CallerLineNumber]int callerLine = 0,
+            [CallerFilePath] string callerPath = null,
+            [CallerLineNumber] int callerLine = 0,
             string source = null)
         {
             return VerifyILImpl(qualifiedMethodName, expectedIL, realIL, sequencePoints, callerPath, callerLine, escapeQuotes: true, source: source);
@@ -268,14 +270,18 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
         public void VerifyLocalSignature(
             string qualifiedMethodName,
             string expectedSignature,
-            [CallerLineNumber]int callerLine = 0,
-            [CallerFilePath]string callerPath = null)
+            [CallerLineNumber] int callerLine = 0,
+            [CallerFilePath] string callerPath = null)
         {
             var ilBuilder = _testData.GetMethodData(qualifiedMethodName).ILBuilder;
             string actualSignature = ILBuilderVisualizer.LocalSignatureToString(ilBuilder);
             AssertEx.AssertEqualToleratingWhitespaceDifferences(expectedSignature, actualSignature, escapeQuotes: true, expectedValueSourcePath: callerPath, expectedValueSourceLine: callerLine);
         }
 
+        /// <summary>
+        /// Visualizes the IL for a given method, and ensures that it matches the expected IL.
+        /// </summary>
+        /// <param name="realIL">Controls whether the IL stream contains pseudo-tokens or real tokens.</param>
         private CompilationVerifier VerifyILImpl(
             string qualifiedMethodName,
             string expectedIL,
@@ -350,7 +356,6 @@ namespace Microsoft.CodeAnalysis.Test.Utilities
                 {
                     throw new InvalidOperationException("IL visualization function is not set");
                 }
-
 
                 return _visualizeRealIL(_lazyModuleSymbol, methodData, markers, _testData.Module.GetMethodBody(methodData.Method).AreLocalsZeroed);
             }

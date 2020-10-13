@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using Microsoft.CodeAnalysis.Text;
 
 namespace Microsoft.CodeAnalysis.Shared.Collections
@@ -9,13 +11,9 @@ namespace Microsoft.CodeAnalysis.Shared.Collections
     internal readonly struct TextSpanIntervalIntrospector : IIntervalIntrospector<TextSpan>
     {
         public int GetStart(TextSpan value)
-        {
-            return value.Start;
-        }
+            => value.Start;
 
         public int GetLength(TextSpan value)
-        {
-            return value.Length;
-        }
+            => value.Length;
     }
 }

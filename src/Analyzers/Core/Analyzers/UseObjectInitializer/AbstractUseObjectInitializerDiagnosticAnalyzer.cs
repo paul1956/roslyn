@@ -2,19 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-#nullable enable
-
 using System.Collections.Immutable;
 using System.Linq;
 using Microsoft.CodeAnalysis.CodeStyle;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.CodeAnalysis.LanguageServices;
 using Microsoft.CodeAnalysis.Text;
-using Roslyn.Utilities;
-
-#if CODE_STYLE
-using Microsoft.CodeAnalysis.Internal.Options;
-#endif
 
 namespace Microsoft.CodeAnalysis.UseObjectInitializer
 {
@@ -39,7 +32,7 @@ namespace Microsoft.CodeAnalysis.UseObjectInitializer
 
         protected AbstractUseObjectInitializerDiagnosticAnalyzer()
             : base(IDEDiagnosticIds.UseObjectInitializerDiagnosticId,
-                   CodeStyleOptions.PreferObjectInitializer,
+                   CodeStyleOptions2.PreferObjectInitializer,
                    new LocalizableResourceString(nameof(AnalyzersResources.Simplify_object_initialization), AnalyzersResources.ResourceManager, typeof(AnalyzersResources)),
                    new LocalizableResourceString(nameof(AnalyzersResources.Object_initialization_can_be_simplified), AnalyzersResources.ResourceManager, typeof(AnalyzersResources)))
         {
@@ -63,7 +56,7 @@ namespace Microsoft.CodeAnalysis.UseObjectInitializer
 
             var objectCreationExpression = (TObjectCreationExpressionSyntax)context.Node;
             var language = objectCreationExpression.Language;
-            var option = context.GetOption(CodeStyleOptions.PreferObjectInitializer, language);
+            var option = context.GetOption(CodeStyleOptions2.PreferObjectInitializer, language);
             if (!option.Value)
             {
                 // not point in analyzing if the option is off.
@@ -112,7 +105,7 @@ namespace Microsoft.CodeAnalysis.UseObjectInitializer
             var syntaxTree = context.Node.SyntaxTree;
 
             var fadeOutCode = context.GetOption(
-                CodeStyleOptions.PreferObjectInitializer_FadeOutCode, context.Node.Language);
+                CodeStyleOptions2.PreferObjectInitializer_FadeOutCode, context.Node.Language);
             if (!fadeOutCode)
             {
                 return;
@@ -129,19 +122,20 @@ namespace Microsoft.CodeAnalysis.UseObjectInitializer
                 var location1 = Location.Create(syntaxTree, TextSpan.FromBounds(
                     match.MemberAccessExpression.SpanStart, end));
 
-                RoslynDebug.AssertNotNull(UnnecessaryWithSuggestionDescriptor);
-                context.ReportDiagnostic(Diagnostic.Create(
-                    UnnecessaryWithSuggestionDescriptor, location1, additionalLocations: locations));
-
                 if (match.Statement.Span.End > match.Initializer.FullSpan.End)
                 {
-                    RoslynDebug.AssertNotNull(UnnecessaryWithoutSuggestionDescriptor);
+                    context.ReportDiagnostic(DiagnosticHelper.CreateWithLocationTags(
+                        Descriptor,
+                        location1,
+                        ReportDiagnostic.Default,
+                        additionalLocations: locations,
+                        additionalUnnecessaryLocations: ImmutableArray.Create(
+                            syntaxTree.GetLocation(TextSpan.FromBounds(match.Initializer.FullSpan.End, match.Statement.Span.End)))));
+                }
+                else
+                {
                     context.ReportDiagnostic(Diagnostic.Create(
-                        UnnecessaryWithoutSuggestionDescriptor,
-                        Location.Create(syntaxTree, TextSpan.FromBounds(
-                            match.Initializer.FullSpan.End,
-                            match.Statement.Span.End)),
-                        additionalLocations: locations));
+                        Descriptor, location1, additionalLocations: locations));
                 }
             }
         }

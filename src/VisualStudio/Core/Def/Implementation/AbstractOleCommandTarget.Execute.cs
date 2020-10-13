@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
@@ -138,14 +140,10 @@ namespace Microsoft.VisualStudio.LanguageServices.Implementation
         }
 
         private void ExecuteBrowserBackward(Action executeNextCommandTarget)
-        {
-            ExecuteBrowserNavigationCommand(navigateBackward: true, executeNextCommandTarget);
-        }
+            => ExecuteBrowserNavigationCommand(navigateBackward: true, executeNextCommandTarget);
 
         private void ExecuteBrowserForward(Action executeNextCommandTarget)
-        {
-            ExecuteBrowserNavigationCommand(navigateBackward: false, executeNextCommandTarget);
-        }
+            => ExecuteBrowserNavigationCommand(navigateBackward: false, executeNextCommandTarget);
 
         private void ExecuteBrowserNavigationCommand(bool navigateBackward, Action executeNextCommandTarget)
         {

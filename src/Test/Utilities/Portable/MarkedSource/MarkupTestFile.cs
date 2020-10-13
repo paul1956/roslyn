@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -149,7 +151,6 @@ namespace Roslyn.Test.Utilities
                             throw new ArgumentException(string.Format("Saw {0} without matching {1}", NamedSpanEndString, NamedSpanStartString));
                         }
 
-
                         PopSpan(namedSpanStartStack, tempSpans, matchIndexInOutput);
                         break;
 
@@ -211,6 +212,7 @@ namespace Roslyn.Test.Utilities
             Parse(input, out output, out cursorPositionOpt, out var dictionary);
 
             var builder = GetOrAdd(dictionary, string.Empty, _ => ArrayBuilder<TextSpan>.GetInstance());
+            builder.Sort((left, right) => left.Start - right.Start);
             spans = builder.ToImmutableAndFree();
         }
 

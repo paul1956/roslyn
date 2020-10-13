@@ -46,6 +46,13 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
         private ImmutableArray<string> _memberNotNullAttributeData = ImmutableArray<string>.Empty;
 
+        public void AddNotNullMember(string memberName)
+        {
+            VerifySealed(expected: false);
+            _memberNotNullAttributeData = _memberNotNullAttributeData.Add(memberName);
+            SetDataStored();
+        }
+
         public void AddNotNullMember(ArrayBuilder<string> memberNames)
         {
             VerifySealed(expected: false);
@@ -64,6 +71,20 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
 
         private ImmutableArray<string> _memberNotNullWhenTrueAttributeData = ImmutableArray<string>.Empty;
         private ImmutableArray<string> _memberNotNullWhenFalseAttributeData = ImmutableArray<string>.Empty;
+
+        public void AddNotNullWhenMember(bool sense, string memberName)
+        {
+            VerifySealed(expected: false);
+            if (sense)
+            {
+                _memberNotNullWhenTrueAttributeData = _memberNotNullWhenTrueAttributeData.Add(memberName);
+            }
+            else
+            {
+                _memberNotNullWhenFalseAttributeData = _memberNotNullWhenFalseAttributeData.Add(memberName);
+            }
+            SetDataStored();
+        }
 
         public void AddNotNullWhenMember(bool sense, ArrayBuilder<string> memberNames)
         {
@@ -94,6 +115,22 @@ namespace Microsoft.CodeAnalysis.CSharp.Symbols
             {
                 VerifySealed(expected: true);
                 return _memberNotNullWhenFalseAttributeData;
+            }
+        }
+
+        private UnmanagedCallersOnlyAttributeData? _unmanagedCallersOnlyAttributeData;
+        public UnmanagedCallersOnlyAttributeData? UnmanagedCallersOnlyAttributeData
+        {
+            get
+            {
+                VerifySealed(expected: true);
+                return _unmanagedCallersOnlyAttributeData;
+            }
+            set
+            {
+                VerifySealed(expected: false);
+                _unmanagedCallersOnlyAttributeData = value;
+                SetDataStored();
             }
         }
     }

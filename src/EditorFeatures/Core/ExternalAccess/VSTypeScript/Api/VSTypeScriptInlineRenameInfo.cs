@@ -2,6 +2,8 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading;
@@ -54,31 +56,25 @@ namespace Microsoft.CodeAnalysis.ExternalAccess.VSTypeScript.Api
             }
         }
 
-        public TextSpan? GetConflictEditSpan(InlineRenameLocation location, string replacementText, CancellationToken cancellationToken)
+        public TextSpan? GetConflictEditSpan(InlineRenameLocation location, string triggerText, string replacementText, CancellationToken cancellationToken)
         {
             return _info.GetConflictEditSpan(new VSTypeScriptInlineRenameLocationWrapper(
                 new InlineRenameLocation(location.Document, location.TextSpan)), replacementText, cancellationToken);
         }
 
         public string GetFinalSymbolName(string replacementText)
-        {
-            return _info.GetFinalSymbolName(replacementText);
-        }
+            => _info.GetFinalSymbolName(replacementText);
 
-        public TextSpan GetReferenceEditSpan(InlineRenameLocation location, CancellationToken cancellationToken)
+        public TextSpan GetReferenceEditSpan(InlineRenameLocation location, string triggerText, CancellationToken cancellationToken)
         {
             return _info.GetReferenceEditSpan(new VSTypeScriptInlineRenameLocationWrapper(
                 new InlineRenameLocation(location.Document, location.TextSpan)), cancellationToken);
         }
 
         public bool TryOnAfterGlobalSymbolRenamed(Workspace workspace, IEnumerable<DocumentId> changedDocumentIDs, string replacementText)
-        {
-            return _info.TryOnAfterGlobalSymbolRenamed(workspace, changedDocumentIDs, replacementText);
-        }
+            => _info.TryOnAfterGlobalSymbolRenamed(workspace, changedDocumentIDs, replacementText);
 
         public bool TryOnBeforeGlobalSymbolRenamed(Workspace workspace, IEnumerable<DocumentId> changedDocumentIDs, string replacementText)
-        {
-            return _info.TryOnBeforeGlobalSymbolRenamed(workspace, changedDocumentIDs, replacementText);
-        }
+            => _info.TryOnBeforeGlobalSymbolRenamed(workspace, changedDocumentIDs, replacementText);
     }
 }

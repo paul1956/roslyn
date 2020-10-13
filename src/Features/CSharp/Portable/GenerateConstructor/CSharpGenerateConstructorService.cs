@@ -2,6 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable disable
+
+using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Composition;
@@ -24,9 +27,13 @@ namespace Microsoft.CodeAnalysis.CSharp.GenerateConstructor
         private static readonly SyntaxAnnotation s_annotation = new SyntaxAnnotation();
 
         [ImportingConstructor]
+        [Obsolete(MefConstruction.ImportingConstructorMessage, error: true)]
         public CSharpGenerateConstructorService()
         {
         }
+
+        protected override bool ContainingTypesOrSelfHasUnsafeKeyword(INamedTypeSymbol containingType)
+           => containingType.ContainingTypesOrSelfHasUnsafeKeyword();
 
         protected override bool IsSimpleNameGeneration(SemanticDocument document, SyntaxNode node, CancellationToken cancellationToken)
             => node is SimpleNameSyntax;
@@ -153,9 +160,7 @@ namespace Microsoft.CodeAnalysis.CSharp.GenerateConstructor
             => argument.GetRefKind();
 
         protected override bool IsNamedArgument(ArgumentSyntax argument)
-        {
-            return argument.NameColon != null;
-        }
+            => argument.NameColon != null;
 
         protected override ITypeSymbol GetArgumentType(
             SemanticModel semanticModel, ArgumentSyntax argument, CancellationToken cancellationToken)
@@ -170,11 +175,9 @@ namespace Microsoft.CodeAnalysis.CSharp.GenerateConstructor
         }
 
         protected override bool IsConversionImplicit(Compilation compilation, ITypeSymbol sourceType, ITypeSymbol targetType)
-        {
-            return compilation.ClassifyConversion(sourceType, targetType).IsImplicit;
-        }
+            => compilation.ClassifyConversion(sourceType, targetType).IsImplicit;
 
-        internal override IMethodSymbol GetDelegatingConstructor(
+        protected override IMethodSymbol GetDelegatingConstructor(
             State state,
             SemanticDocument document,
             int argumentCount,

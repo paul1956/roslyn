@@ -7,6 +7,7 @@ Imports System.Composition
 Imports System.Threading.Tasks
 Imports Microsoft.CodeAnalysis.Completion
 Imports Microsoft.CodeAnalysis.Editor.UnitTests.Workspaces
+Imports Microsoft.CodeAnalysis.Host.Mef
 Imports Microsoft.CodeAnalysis.Options
 Imports Microsoft.CodeAnalysis.Text
 
@@ -27,11 +28,14 @@ Namespace Microsoft.CodeAnalysis.Editor.UnitTests.IntelliSense
                 </Project>
             </Workspace>
 
-            Dim exportProvider = ExportProviderCache.GetOrCreateExportProviderFactory(TestExportProvider.EntireAssemblyCatalogWithCSharpAndVisualBasic.WithParts(
+            Dim composition = EditorTestCompositions.EditorFeatures.AddParts(
+                GetType(NoCompilationContentTypeDefinitions),
+                GetType(NoCompilationContentTypeLanguageService),
                 GetType(CompletionItemNonExclusiveCompletionProvider),
                 GetType(CompletionItemExclusiveCompletionProvider),
-                GetType(CompletionItemExclusive2CompletionProvider))).CreateExportProvider()
-            Using workspace = TestWorkspace.Create(workspaceDefinition, exportProvider:=exportProvider)
+                GetType(CompletionItemExclusive2CompletionProvider))
+
+            Using workspace = TestWorkspace.Create(workspaceDefinition, composition:=composition)
                 Dim document = workspace.CurrentSolution.Projects.First.Documents.First
                 Dim completionService = New TestCompletionService(workspace)
 
@@ -63,9 +67,9 @@ Namespace Microsoft.CodeAnalysis.Editor.UnitTests.IntelliSense
         Private MustInherit Class TestCompletionProviderWithMockExclusivity
             Inherits CompletionProvider
 
-            Private s_isExclusive As Boolean
-            Private s_itemText As String
-            Private s_index As Integer
+            Private ReadOnly s_isExclusive As Boolean
+            Private ReadOnly s_itemText As String
+            Private ReadOnly s_index As Integer
 
             Protected Sub New(isExclusive As Boolean, text As String, index As Integer)
                 s_isExclusive = isExclusive
@@ -91,6 +95,7 @@ Namespace Microsoft.CodeAnalysis.Editor.UnitTests.IntelliSense
             Inherits TestCompletionProviderWithMockExclusivity
 
             <ImportingConstructor>
+            <Obsolete(MefConstruction.ImportingConstructorMessage, True)>
             Public Sub New()
                 MyBase.New(False, CompletionServiceTests_Exclusivity.CompletionItemNonExclusive, 1)
             End Sub
@@ -103,6 +108,7 @@ Namespace Microsoft.CodeAnalysis.Editor.UnitTests.IntelliSense
             Inherits TestCompletionProviderWithMockExclusivity
 
             <ImportingConstructor>
+            <Obsolete(MefConstruction.ImportingConstructorMessage, True)>
             Public Sub New()
                 MyBase.New(True, CompletionServiceTests_Exclusivity.CompletionItemExclusive, 2)
             End Sub
@@ -115,6 +121,7 @@ Namespace Microsoft.CodeAnalysis.Editor.UnitTests.IntelliSense
             Inherits TestCompletionProviderWithMockExclusivity
 
             <ImportingConstructor>
+            <Obsolete(MefConstruction.ImportingConstructorMessage, True)>
             Public Sub New()
                 MyBase.New(True, CompletionServiceTests_Exclusivity.CompletionItemExclusive, 3)
             End Sub
